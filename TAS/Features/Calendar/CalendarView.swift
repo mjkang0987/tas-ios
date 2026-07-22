@@ -100,34 +100,43 @@ private struct ReservationRow: View {
 
             Spacer()
 
-            if let status = reservation.status {
-                StatusBadge(status: status)
-            }
+            StatusBadge(state: reservation.displayState)
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
     }
 }
 
+/// 예약 상태 뱃지 — 웹 `RESERVATION_STATUS_BADGE_STYLES`와 동일 색/라벨.
 struct StatusBadge: View {
-    let status: ReservationStatus
+    let state: ReservationDisplayState
 
     var body: some View {
-        Text(status.label)
+        Text(state.label)
             .font(.caption2.weight(.semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(color.opacity(0.15), in: Capsule())
-            .foregroundStyle(color)
+            .background(background, in: RoundedRectangle(cornerRadius: 4))
+            .foregroundStyle(foreground)
     }
 
-    private var color: Color {
-        switch status {
-        case .active: return .blue
-        case .completed: return .green
-        case .cancelled: return .gray
-        case .noshow: return .red
-        case .requested: return .orange
+    private var foreground: Color {
+        switch state {
+        case .booked: return Color(hex: "4285F4") ?? .blue
+        case .paid: return Color(hex: "6526D9") ?? .purple
+        case .cancelled: return Color(hex: "999999") ?? .gray
+        case .noshow: return Color(hex: "EA4335") ?? .red
+        case .requested: return Color(hex: "A88417") ?? .orange
+        }
+    }
+
+    private var background: Color {
+        switch state {
+        case .booked: return Color(hex: "E8F0FE") ?? .blue.opacity(0.12)
+        case .paid: return (Color(hex: "6526D9") ?? .purple).opacity(0.08)
+        case .cancelled: return Color(hex: "F1F1F1") ?? .gray.opacity(0.15)
+        case .noshow: return Color(hex: "FCE8E6") ?? .red.opacity(0.12)
+        case .requested: return Color(hex: "FEF7E0") ?? .orange.opacity(0.12)
         }
     }
 }

@@ -35,9 +35,7 @@ struct ReservationDetailView: View {
                             }
                         }
                     }
-                    if let status = reservation.status {
-                        LabeledContent("상태") { StatusBadge(status: status) }
-                    }
+                    LabeledContent("상태") { StatusBadge(state: reservation.displayState) }
                     if let channel = reservation.channel {
                         LabeledContent("경로", value: channel.rawValue)
                     }

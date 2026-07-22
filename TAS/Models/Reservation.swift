@@ -35,6 +35,32 @@ struct Reservation: Codable, Identifiable, Hashable {
     }
 
     var isOnline: Bool { channel == .online }
+
+    /// 뱃지 표시 상태 — 웹 `getReservationState`(ReservationInfoCard)와 동일 규칙.
+    /// 결제 완료면 '결제완료', 아니면 '예약'으로 파생한다.
+    var displayState: ReservationDisplayState {
+        switch status {
+        case .cancelled: return .cancelled
+        case .noshow: return .noshow
+        case .requested: return .requested
+        default: return hasCompletedPayment ? .paid : .booked
+        }
+    }
+}
+
+/// 예약 카드/리스트 뱃지 상태 — 웹 `RESERVATION_STATUS_BADGE_STYLES` 매핑에 대응.
+enum ReservationDisplayState {
+    case booked, paid, cancelled, noshow, requested
+
+    var label: String {
+        switch self {
+        case .booked: return "예약"
+        case .paid: return "결제완료"
+        case .cancelled: return "취소"
+        case .noshow: return "노쇼"
+        case .requested: return "신청"
+        }
+    }
 }
 
 /// 예약 변경 이력 — reservations/model.ts `ReservationHistoryEntry`
