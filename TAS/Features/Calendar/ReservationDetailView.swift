@@ -5,6 +5,8 @@ struct ReservationDetailView: View {
     let reservation: Reservation
     let customer: Customer?
     let assignee: Assignee?
+    var serviceColor: Color?
+    var isNewCustomer: Bool = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -12,7 +14,12 @@ struct ReservationDetailView: View {
         NavigationStack {
             List {
                 Section("고객") {
-                    LabeledContent("이름", value: customer?.name ?? "고객 #\(reservation.customerId)")
+                    LabeledContent("이름") {
+                        HStack(spacing: 6) {
+                            Text(customer?.name ?? "고객 #\(reservation.customerId)")
+                            if isNewCustomer { NewCustomerBadge() }
+                        }
+                    }
                     if let tel = customer?.formattedTel, !tel.isEmpty {
                         LabeledContent("연락처", value: tel)
                     }
@@ -24,13 +31,16 @@ struct ReservationDetailView: View {
                 Section("예약") {
                     LabeledContent("날짜", value: reservation.date)
                     LabeledContent("시간", value: "\(reservation.startTime) – \(reservation.endTime)")
-                    LabeledContent("서비스", value: reservation.service)
+                    LabeledContent("서비스") {
+                        HStack(spacing: 6) {
+                            if let serviceColor { ColorDot(color: serviceColor, size: 8) }
+                            Text(reservation.service)
+                        }
+                    }
                     if let assignee {
                         LabeledContent("담당자") {
                             HStack(spacing: 6) {
-                                if let color = Color(hex: assignee.color) {
-                                    Circle().fill(color).frame(width: 8, height: 8)
-                                }
+                                ColorDot(color: Color(hex: assignee.color) ?? .gray)
                                 Text(assignee.name)
                             }
                         }
@@ -43,12 +53,12 @@ struct ReservationDetailView: View {
 
                 Section("결제") {
                     if let price = reservation.price {
-                        LabeledContent("금액", value: "\(price.formatted())원")
+                        LabeledContent("금액", value: formatWon(price))
                     }
                     LabeledContent("결제 완료", value: reservation.hasCompletedPayment ? "예" : "아니오")
                     if let entries = reservation.paymentEntries, !entries.isEmpty {
                         ForEach(Array(entries.enumerated()), id: \.offset) { item in
-                            LabeledContent(item.element.method.rawValue, value: "\(item.element.amount.formatted())원")
+                            LabeledContent(item.element.method.rawValue, value: formatWon(item.element.amount))
                         }
                     } else if let method = reservation.paymentMethod {
                         LabeledContent("수단", value: method.rawValue)

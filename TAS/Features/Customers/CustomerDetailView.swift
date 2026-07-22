@@ -78,9 +78,7 @@ private struct FlowTags: View {
             ForEach(Array(tags.enumerated()), id: \.offset) { item in
                 let tag = item.element
                 HStack(spacing: 6) {
-                    Circle()
-                        .fill(Color(hex: tag.color) ?? .gray)
-                        .frame(width: 10, height: 10)
+                    ColorDot(color: Color(hex: tag.color) ?? .gray, size: 10)
                     Text(tag.text)
                 }
             }

@@ -4,7 +4,12 @@ import Observation
 @MainActor
 @Observable
 final class ServicesViewModel {
-    var state: Loadable<[ServiceItem]> = .idle
+    struct Data {
+        var services: [ServiceItem]
+        var categoryBaseColors: [String: String]
+    }
+
+    var state: Loadable<Data> = .idle
 
     private let service: TASService
 
@@ -12,9 +17,9 @@ final class ServicesViewModel {
         self.service = service
     }
 
-    /// Services grouped by category, category order preserved by first appearance.
+    /// 카테고리별 그룹(첫 등장 순서 유지).
     var grouped: [(category: String, items: [ServiceItem])] {
-        let items = state.value ?? []
+        let items = state.value?.services ?? []
         var order: [String] = []
         var buckets: [String: [ServiceItem]] = [:]
         for item in items {
@@ -24,11 +29,16 @@ final class ServicesViewModel {
         return order.map { ($0, buckets[$0] ?? []) }
     }
 
+    /// 카테고리 색 — 매장 커스텀 우선(웹 getCategoryBaseColor).
+    func color(for category: String) -> Color {
+        ServiceColor.categoryColor(category, storeMap: state.value?.categoryBaseColors ?? [:])
+    }
+
     func load() async {
         state = .loading
         do {
             let response = try await service.fetchServices()
-            state = .loaded(response.services)
+            state = .loaded(Data(services: response.services, categoryBaseColors: response.categoryBaseColors))
         } catch {
             state = .failed((error as? APIError)?.errorDescription ?? error.localizedDescription)
         }
@@ -41,22 +51,22 @@ struct ServicesView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                switch viewModel.state {
-                case .idle, .loading:
-                    ProgressView("서비스 불러오는 중…")
-                case .failed(let message):
-                    ContentUnavailableView("불러오지 못했습니다", systemImage: "exclamationmark.triangle", description: Text(message))
-                case .loaded:
-                    List {
-                        ForEach(viewModel.grouped, id: \.category) { group in
-                            Section(group.category) {
-                                ForEach(group.items) { ServiceRow(item: $0) }
+            LoadableView(state: viewModel.state, loadingText: "서비스 불러오는 중…") { _ in
+                List {
+                    ForEach(viewModel.grouped, id: \.category) { group in
+                        Section {
+                            ForEach(group.items) { item in
+                                ServiceRow(item: item, color: viewModel.color(for: group.category))
+                            }
+                        } header: {
+                            HStack(spacing: 6) {
+                                ColorDot(color: viewModel.color(for: group.category))
+                                Text(group.category)
                             }
                         }
                     }
-                    .refreshable { await viewModel.load() }
                 }
+                .refreshable { await viewModel.load() }
             }
             .navigationTitle("서비스")
         }
@@ -66,15 +76,17 @@ struct ServicesView: View {
 
 private struct ServiceRow: View {
     let item: ServiceItem
+    let color: Color
 
     var body: some View {
-        HStack {
+        HStack(spacing: 10) {
+            ColorAccentBar(color: color, height: 28)
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.name).font(.body.weight(.medium))
                 Text("\(item.durationMinutes)분").font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Text("\(item.price.formatted())원").font(.subheadline).foregroundStyle(.secondary)
+            Text(formatWon(item.price)).font(.subheadline).foregroundStyle(.secondary)
         }
         .padding(.vertical, 2)
     }

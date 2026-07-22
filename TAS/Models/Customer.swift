@@ -51,6 +51,13 @@ struct Customer: Codable, Identifiable, Hashable {
     var claimNote: String?
     var preferenceNote: String?
 
+    /// isNewCustomerVisit(firstVisitDate, date) — customers/model.ts
+    /// 예약 날짜가 이 고객의 첫 방문일과 같으면 신규 방문.
+    func isNewCustomerVisit(on reservationDate: String) -> Bool {
+        guard let firstVisitDate, !firstVisitDate.isEmpty else { return false }
+        return firstVisitDate == reservationDate
+    }
+
     /// formatTel(tel) — customers/model.ts
     var formattedTel: String {
         let digits = tel.filter(\.isNumber)

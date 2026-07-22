@@ -18,15 +18,8 @@ struct CalendarView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                switch viewModel.state {
-                case .idle, .loading:
-                    ProgressView("예약 불러오는 중…")
-                case .failed(let message):
-                    ContentUnavailableView("불러오지 못했습니다", systemImage: "exclamationmark.triangle", description: Text(message))
-                case .loaded:
-                    dayList
-                }
+            LoadableView(state: viewModel.state, loadingText: "예약 불러오는 중…") { _ in
+                dayList
             }
             .navigationTitle("캘린더")
             .toolbar {
@@ -39,7 +32,9 @@ struct CalendarView: View {
                 ReservationDetailView(
                     reservation: reservation,
                     customer: viewModel.customer(reservation.customerId),
-                    assignee: viewModel.assignee(reservation.assigneeId)
+                    assignee: viewModel.assignee(reservation.assigneeId),
+                    serviceColor: viewModel.serviceColor(reservation.service),
+                    isNewCustomer: viewModel.isNewCustomer(reservation)
                 )
             }
         }
@@ -59,7 +54,9 @@ struct CalendarView: View {
                         ReservationRow(
                             reservation: reservation,
                             customerName: viewModel.customerName(reservation.customerId),
-                            assignee: viewModel.assignee(reservation.assigneeId)
+                            assignee: viewModel.assignee(reservation.assigneeId),
+                            serviceColor: viewModel.serviceColor(reservation.service),
+                            isNewCustomer: viewModel.isNewCustomer(reservation)
                         )
                     }
                     .buttonStyle(.plain)
@@ -75,6 +72,8 @@ private struct ReservationRow: View {
     let reservation: Reservation
     let customerName: String
     let assignee: Assignee?
+    let serviceColor: Color?
+    let isNewCustomer: Bool
 
     var body: some View {
         HStack(spacing: 12) {
@@ -84,13 +83,15 @@ private struct ReservationRow: View {
             }
             .frame(width: 52, alignment: .leading)
 
-            if let color = Color(hex: assignee?.color) {
-                Capsule().fill(color).frame(width: 3, height: 34)
-            }
+            ColorAccentBar(color: Color(hex: assignee?.color), height: 34)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(customerName).font(.body.weight(.semibold))
                 HStack(spacing: 6) {
+                    Text(customerName).font(.body.weight(.semibold))
+                    if isNewCustomer { NewCustomerBadge() }
+                }
+                HStack(spacing: 6) {
+                    if let serviceColor { ColorDot(color: serviceColor, size: 7) }
                     Text(reservation.service)
                     if let assignee { Text("· \(assignee.name)") }
                 }
@@ -104,40 +105,6 @@ private struct ReservationRow: View {
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
-    }
-}
-
-/// 예약 상태 뱃지 — 웹 `RESERVATION_STATUS_BADGE_STYLES`와 동일 색/라벨.
-struct StatusBadge: View {
-    let state: ReservationDisplayState
-
-    var body: some View {
-        Text(state.label)
-            .font(.caption2.weight(.semibold))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(background, in: RoundedRectangle(cornerRadius: 4))
-            .foregroundStyle(foreground)
-    }
-
-    private var foreground: Color {
-        switch state {
-        case .booked: return Color(hex: "4285F4") ?? .blue
-        case .paid: return Color(hex: "6526D9") ?? .purple
-        case .cancelled: return Color(hex: "999999") ?? .gray
-        case .noshow: return Color(hex: "EA4335") ?? .red
-        case .requested: return Color(hex: "A88417") ?? .orange
-        }
-    }
-
-    private var background: Color {
-        switch state {
-        case .booked: return Color(hex: "E8F0FE") ?? .blue.opacity(0.12)
-        case .paid: return (Color(hex: "6526D9") ?? .purple).opacity(0.08)
-        case .cancelled: return Color(hex: "F1F1F1") ?? .gray.opacity(0.15)
-        case .noshow: return Color(hex: "FCE8E6") ?? .red.opacity(0.12)
-        case .requested: return Color(hex: "FEF7E0") ?? .orange.opacity(0.12)
-        }
     }
 }
 

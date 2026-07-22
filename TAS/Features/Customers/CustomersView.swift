@@ -7,15 +7,8 @@ struct CustomersView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                switch viewModel.state {
-                case .idle, .loading:
-                    ProgressView("고객 불러오는 중…")
-                case .failed(let message):
-                    ContentUnavailableView("불러오지 못했습니다", systemImage: "exclamationmark.triangle", description: Text(message))
-                case .loaded:
-                    list
-                }
+            LoadableView(state: viewModel.state, loadingText: "고객 불러오는 중…") { _ in
+                list
             }
             .navigationTitle("고객")
             .searchable(text: $viewModel.searchText, prompt: "이름 또는 전화번호")
