@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// 고객 주소록 — 웹의 `/address` 화면에 대응하는 스켈레톤.
+/// 고객 주소록 — 웹의 `/address` 화면에 대응.
 struct CustomersView: View {
     @State private var viewModel = CustomersViewModel()
+    @State private var selected: Customer?
 
     var body: some View {
         NavigationStack {
@@ -18,6 +19,7 @@ struct CustomersView: View {
             }
             .navigationTitle("고객")
             .searchable(text: $viewModel.searchText, prompt: "이름 또는 전화번호")
+            .sheet(item: $selected) { CustomerDetailView(customer: $0) }
         }
         .task { await viewModel.load() }
     }
@@ -28,9 +30,16 @@ struct CustomersView: View {
             if items.isEmpty {
                 ContentUnavailableView.search
             } else {
-                List(items) { CustomerRow(customer: $0) }
-                    .listStyle(.plain)
-                    .refreshable { await viewModel.load() }
+                List(items) { customer in
+                    Button {
+                        selected = customer
+                    } label: {
+                        CustomerRow(customer: customer)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .listStyle(.plain)
+                .refreshable { await viewModel.load() }
             }
         }
     }
@@ -53,6 +62,7 @@ private struct CustomerRow: View {
             }
         }
         .padding(.vertical, 2)
+        .contentShape(Rectangle())
     }
 }
 
