@@ -1,0 +1,30 @@
+# iOS 빌드 검증 — GitHub macOS 러너에서 xcodebuild로 컴파일.
+# 서명·기기 불필요(시뮬레이터 대상). 실제 실행/로그인 테스트는 별도(맥/기기).
+name: iOS Build
+
+on:
+  push:
+    paths-ignore:
+      - "**/*.md"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build (iOS Simulator, no signing)
+        run: |
+          xcodebuild build \
+            -project TAS.xcodeproj \
+            -scheme TAS \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
