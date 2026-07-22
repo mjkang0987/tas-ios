@@ -43,7 +43,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.takeaseat.ios.auth</string>
+			<string>kr.co.takeaseat.app.auth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>tasios</string>

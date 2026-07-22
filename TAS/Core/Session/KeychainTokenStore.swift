@@ -6,7 +6,7 @@ import Security
 struct KeychainTokenStore {
     static let shared = KeychainTokenStore()
 
-    private let service = "com.takeaseat.ios"
+    private let service = "kr.co.takeaseat.app"
     private let account = "mobile-access-token"
 
     private var baseQuery: [String: Any] {
