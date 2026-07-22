@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// 메인 캘린더 (일 단위) — 웹의 `/day` 뷰에 대응하는 스켈레톤.
+/// 메인 캘린더 (일 단위) — 웹의 `/day` 뷰에 대응.
 struct CalendarView: View {
     @State private var viewModel = CalendarViewModel()
     @State private var selectedDate = Date()
+    @State private var selected: Reservation?
 
     private static let keyFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -34,6 +35,13 @@ struct CalendarView: View {
                         .labelsHidden()
                 }
             }
+            .sheet(item: $selected) { reservation in
+                ReservationDetailView(
+                    reservation: reservation,
+                    customer: viewModel.customer(reservation.customerId),
+                    assignee: viewModel.assignee(reservation.assigneeId)
+                )
+            }
         }
         .task { await viewModel.load() }
     }
@@ -44,9 +52,20 @@ struct CalendarView: View {
             if items.isEmpty {
                 ContentUnavailableView("예약 없음", systemImage: "calendar", description: Text("\(dateKey) 예약이 없습니다."))
             } else {
-                List(items) { ReservationRow(reservation: $0) }
-                    .listStyle(.plain)
-                    .refreshable { await viewModel.load() }
+                List(items) { reservation in
+                    Button {
+                        selected = reservation
+                    } label: {
+                        ReservationRow(
+                            reservation: reservation,
+                            customerName: viewModel.customerName(reservation.customerId),
+                            assignee: viewModel.assignee(reservation.assigneeId)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+                .listStyle(.plain)
+                .refreshable { await viewModel.load() }
             }
         }
     }
@@ -54,6 +73,8 @@ struct CalendarView: View {
 
 private struct ReservationRow: View {
     let reservation: Reservation
+    let customerName: String
+    let assignee: Assignee?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -61,30 +82,46 @@ private struct ReservationRow: View {
                 Text(reservation.startTime).font(.headline).monospacedDigit()
                 Text(reservation.endTime).font(.caption).foregroundStyle(.secondary).monospacedDigit()
             }
-            .frame(width: 56, alignment: .leading)
+            .frame(width: 52, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(reservation.service).font(.body.weight(.medium))
-                if let price = reservation.price {
-                    Text("\(price.formatted())원").font(.caption).foregroundStyle(.secondary)
+            if let color = Color(hex: assignee?.color) {
+                Capsule().fill(color).frame(width: 3, height: 34)
+            }
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(customerName).font(.body.weight(.semibold))
+                HStack(spacing: 6) {
+                    Text(reservation.service)
+                    if let assignee { Text("· \(assignee.name)") }
                 }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
 
             Spacer()
 
             if let status = reservation.status {
-                Text(status.label)
-                    .font(.caption2.weight(.semibold))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(statusColor(status).opacity(0.15), in: Capsule())
-                    .foregroundStyle(statusColor(status))
+                StatusBadge(status: status)
             }
         }
         .padding(.vertical, 4)
+        .contentShape(Rectangle())
+    }
+}
+
+struct StatusBadge: View {
+    let status: ReservationStatus
+
+    var body: some View {
+        Text(status.label)
+            .font(.caption2.weight(.semibold))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(color.opacity(0.15), in: Capsule())
+            .foregroundStyle(color)
     }
 
-    private func statusColor(_ status: ReservationStatus) -> Color {
+    private var color: Color {
         switch status {
         case .active: return .blue
         case .completed: return .green
