@@ -26,5 +26,7 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "1,2"
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        # Point the client at your takeaseat backend during development:
+        # Default backend is production (https://takeaseat.co.kr, see AppConfig).
+        # For dev/local, override without code changes:
+        # INFOPLIST_KEY_TAS_API_BASE_URL: https://dev.takeaseat.co.kr
         # INFOPLIST_KEY_TAS_API_BASE_URL: http://localhost:3000

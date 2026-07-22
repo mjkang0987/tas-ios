@@ -30,10 +30,19 @@ gate.
 The API base URL resolves in this order (`Core/Config/AppConfig.swift`):
 
 1. `TAS_API_BASE_URL` in Info.plist (set per build configuration), else
-2. the default `https://takeaseat.app`.
+2. the default `https://takeaseat.co.kr` (production).
 
-For local web development, set it to `http://localhost:3000` (add an ATS
-exception for HTTP, or run the backend over HTTPS).
+Environments:
+
+| Env    | URL                            |
+|--------|--------------------------------|
+| prod   | `https://takeaseat.co.kr`      |
+| dev    | `https://dev.takeaseat.co.kr`  |
+| local  | `http://localhost:3000`        |
+
+To target dev/local, set `TAS_API_BASE_URL` (e.g. a Debug-only
+`INFOPLIST_KEY_TAS_API_BASE_URL` build setting) — no code change needed. For
+local HTTP, add an ATS exception (or run the backend over HTTPS).
 
 ## Project layout
 
