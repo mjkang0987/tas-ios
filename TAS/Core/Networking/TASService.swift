@@ -53,4 +53,13 @@ struct TASService {
     func fetchStores() async throws -> [Store] {
         try await client.get("api/user/stores")
     }
+
+    // MARK: - Mobile auth — /api/mobile-auth/exchange
+    /// 1회성 code + nonce를 access 토큰으로 교환한다.
+    func exchangeMobileCode(code: String, nonce: String) async throws -> String {
+        struct Body: Encodable { let code: String; let nonce: String }
+        struct Response: Decodable { let accessToken: String; let expiresAt: Int }
+        let response: Response = try await client.post("api/mobile-auth/exchange", body: Body(code: code, nonce: nonce))
+        return response.accessToken
+    }
 }

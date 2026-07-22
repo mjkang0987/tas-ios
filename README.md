@@ -83,21 +83,27 @@ TAS/
 | 설정      | `/api/store`            | GET    |
 | 담당자    | `/api/assignees`        | GET    |
 
-## 로그인 (구현됨)
+## 로그인 (구현됨 — 모바일 인증 브리지)
 
-백엔드는 NextAuth v5(JWT 세션 쿠키)라, 로그인은 웹 `/login`을 **WKWebView**로
-띄워 진행한다(`Features/Login/WebAuthView.swift`). 소셜 로그인 완료 후
-`__Secure-authjs.session-token` 쿠키를 `HTTPCookieStorage.shared`로 옮겨
-`URLSession`(=`APIClient`)을 인증한다.
+clipnote-ios와 동일한 구조: `ASWebAuthenticationSession`(진짜 Safari)으로 웹
+`/login`을 열어 소셜 로그인하고, `tasios://auth/callback?code=`를 받아
+`/api/mobile-auth/exchange`에서 **Bearer 토큰**으로 교환해 Keychain에 보관한다.
+이후 모든 `APIClient` 요청에 `Authorization: Bearer`가 붙는다.
 
-> ⚠️ **Google 한계**: Google OAuth는 임베디드 웹뷰(WKWebView)를 공식적으로
-> 차단한다("disallowed_useragent"). **Kakao/Naver는 동작**한다. Google까지
-> 안정 지원하려면 백엔드에 커스텀 스킴 콜백(`tasios://auth-callback`)을 추가해
-> `ASWebAuthenticationSession`으로 전환해야 한다(백엔드 과제).
+- 흐름·계약: [`docs/auth-mobile-bridge.md`](docs/auth-mobile-bridge.md)
+- 관련 파일: `Features/Login/{WebAuthSession,AuthDeepLink,LoginView}.swift`,
+  `Core/Session/{SessionStore,KeychainTokenStore,MobileToken}.swift`
+- 커스텀 스킴 `tasios`는 `TAS/Info.plist`(`CFBundleURLTypes`)에 등록.
+
+> ✅ 진짜 Safari 컨텍스트라 **Google OAuth도 정상 동작**(임베디드 웹뷰 차단 문제 없음).
+> Kakao/Naver 포함 3사 모두 지원.
+>
+> ⚠️ **백엔드 의존**: `tas` 저장소의 모바일 브리지 엔드포인트
+> (`/api/mobile-auth/{complete,exchange}`)가 배포되어야 실제 로그인이 된다.
 
 ## Next steps (TODO)
 
-- [ ] (백엔드 협업) Google 지원용 `ASWebAuthenticationSession` + 커스텀 스킴 콜백
+- [ ] provider별 네이티브 버튼(현재는 웹 `/login`에서 선택) — 백엔드 `start?provider=` 추가 시
 - [ ] 초대코드 / 약관 동의 / 온보딩 게이트 (issues #7 #8 #9)
 - [ ] Reservation create/edit forms (POST/PUT `/api/reservations`).
 - [ ] Customer detail + point history.

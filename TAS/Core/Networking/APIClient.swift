@@ -2,9 +2,9 @@ import Foundation
 
 /// Thin async/await HTTP client for the takeaseat (TAS) backend.
 ///
-/// Auth is cookie/session based (NextAuth — see `client/auth.ts`), so we rely on
-/// the shared `HTTPCookieStorage`: once the login web flow sets the session
-/// cookie, `URLSession` replays it automatically on every request.
+/// Auth uses the mobile Bearer token from `KeychainTokenStore` (obtained via the
+/// mobile-auth bridge). The server's `getApiSession` accepts either this Bearer
+/// token or the web NextAuth cookie.
 final class APIClient {
     static let shared = APIClient()
 
@@ -60,6 +60,10 @@ final class APIClient {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        // 모바일 Bearer 토큰(있으면). 서버 getApiSession이 쿠키 대신 이걸 인식한다.
+        if let token = KeychainTokenStore.shared.token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         if let body {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try encoder.encode(body)

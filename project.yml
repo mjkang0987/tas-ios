@@ -21,11 +21,11 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.takeaseat.ios
-        GENERATE_INFOPLIST_FILE: YES
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: TAS/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "1,2"
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
         # Default backend is production (https://takeaseat.co.kr, see AppConfig).
         # For dev/local, override without code changes:
         # INFOPLIST_KEY_TAS_API_BASE_URL: https://dev.takeaseat.co.kr
