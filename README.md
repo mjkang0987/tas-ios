@@ -83,10 +83,22 @@ TAS/
 | 설정      | `/api/store`            | GET    |
 | 담당자    | `/api/assignees`        | GET    |
 
+## 로그인 (구현됨)
+
+백엔드는 NextAuth v5(JWT 세션 쿠키)라, 로그인은 웹 `/login`을 **WKWebView**로
+띄워 진행한다(`Features/Login/WebAuthView.swift`). 소셜 로그인 완료 후
+`__Secure-authjs.session-token` 쿠키를 `HTTPCookieStorage.shared`로 옮겨
+`URLSession`(=`APIClient`)을 인증한다.
+
+> ⚠️ **Google 한계**: Google OAuth는 임베디드 웹뷰(WKWebView)를 공식적으로
+> 차단한다("disallowed_useragent"). **Kakao/Naver는 동작**한다. Google까지
+> 안정 지원하려면 백엔드에 커스텀 스킴 콜백(`tasios://auth-callback`)을 추가해
+> `ASWebAuthenticationSession`으로 전환해야 한다(백엔드 과제).
+
 ## Next steps (TODO)
 
-- [ ] Implement the OAuth login flow via `ASWebAuthenticationSession`
-      (`/api/auth/signin/<google|kakao|naver>`) in `LoginView`.
+- [ ] (백엔드 협업) Google 지원용 `ASWebAuthenticationSession` + 커스텀 스킴 콜백
+- [ ] 초대코드 / 약관 동의 / 온보딩 게이트 (issues #7 #8 #9)
 - [ ] Reservation create/edit forms (POST/PUT `/api/reservations`).
 - [ ] Customer detail + point history.
 - [ ] Assignee (designer) filter on the calendar.

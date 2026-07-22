@@ -21,4 +21,11 @@ enum AppConfig {
 
     /// Cookie name carrying the invite code during social login — GUIDE.md §1-1.
     static let inviteCookieName = "tas-invite-code"
+
+    /// NextAuth v5 세션 쿠키 이름 조각. HTTPS는 `__Secure-authjs.session-token`,
+    /// 로컬(HTTP)은 `authjs.session-token` — 둘 다 이 조각을 포함한다.
+    static let sessionCookieNameFragment = "session-token"
+
+    /// 웹 로그인 페이지 (NextAuth `pages.signIn = '/login'`).
+    static var loginURL: URL { apiBaseURL.appendingPathComponent("login") }
 }
