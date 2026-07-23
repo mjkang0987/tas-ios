@@ -19,67 +19,84 @@ jobs:
         with:
           ref: claude/tas-service-ios-stlzh4
 
-      - name: Render icon from SF Symbol (AppKit)
+      - name: Render icons from SF Symbol (AppKit)
         run: |
           cat > render.swift <<'SWIFT'
           import AppKit
           import Foundation
 
           let px = 1024
+          let target: CGFloat = 560   // 심볼을 배치할 최대 변 길이
 
           // RGBA(알파 포함) 비트맵 — NSGraphicsContext가 backing 가능한 유일한 포맷
-          guard let rep = NSBitmapImageRep(
-              bitmapDataPlanes: nil, pixelsWide: px, pixelsHigh: px,
-              bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
-              colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else {
-              print("no rep"); exit(1)
+          func newRep() -> NSBitmapImageRep {
+              return NSBitmapImageRep(
+                  bitmapDataPlanes: nil, pixelsWide: px, pixelsHigh: px,
+                  bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                  colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
           }
-          guard let ctx = NSGraphicsContext(bitmapImageRep: rep) else { print("no ctx"); exit(1) }
-          NSGraphicsContext.saveGraphicsState()
-          NSGraphicsContext.current = ctx
-          let cg = ctx.cgContext
 
-          // 브랜드 퍼플 그라디언트(위 밝고 아래 어둡게)
+          // chair.lounge.fill 심볼을 지정 색으로 틴트한 NSImage
+          func tintedChair(_ color: NSColor) -> NSImage {
+              let cfg = NSImage.SymbolConfiguration(pointSize: 620, weight: .regular)
+              let base = NSImage(systemSymbolName: "chair.lounge.fill", accessibilityDescription: nil)!
+              let sym = base.withSymbolConfiguration(cfg)!
+              let rect = NSRect(origin: .zero, size: sym.size)
+              let out = NSImage(size: sym.size)
+              out.lockFocus()
+              sym.draw(at: .zero, from: rect, operation: .sourceOver, fraction: 1)
+              color.set()
+              rect.fill(using: .sourceAtop)
+              out.unlockFocus()
+              return out
+          }
+
+          // 캔버스 중앙에 심볼 배치
+          func centered(_ img: NSImage) -> NSRect {
+              let scale = target / max(img.size.width, img.size.height)
+              let dw = img.size.width * scale, dh = img.size.height * scale
+              return NSRect(x: (CGFloat(px)-dw)/2, y: (CGFloat(px)-dh)/2, width: dw, height: dh)
+          }
+
+          func writePNG(_ rep: NSBitmapImageRep, _ path: String) {
+              let png = rep.representation(using: .png, properties: [:])!
+              try! png.write(to: URL(fileURLWithPath: path))
+          }
+
+          // 1) 앱 아이콘 — 보라 그라디언트 배경 + 흰색 의자
+          let rep1 = newRep()
+          let ctx1 = NSGraphicsContext(bitmapImageRep: rep1)!
+          NSGraphicsContext.saveGraphicsState()
+          NSGraphicsContext.current = ctx1
           let cs = CGColorSpaceCreateDeviceRGB()
           let colors = [CGColor(red: 120/255, green: 62/255, blue: 226/255, alpha: 1),
                         CGColor(red: 68/255, green: 20/255, blue: 150/255, alpha: 1)] as CFArray
-          guard let grad = CGGradient(colorsSpace: cs, colors: colors, locations: [0, 1]) else {
-              print("no grad"); exit(1)
-          }
-          cg.drawLinearGradient(grad, start: CGPoint(x: 0, y: px), end: CGPoint(x: 0, y: 0), options: [])
-
-          // SF 심볼 → 흰색 틴트
-          let cfg = NSImage.SymbolConfiguration(pointSize: 620, weight: .regular)
-          guard let base = NSImage(systemSymbolName: "chair.lounge.fill", accessibilityDescription: nil),
-                let sym = base.withSymbolConfiguration(cfg) else { print("no symbol"); exit(1) }
-          sym.isTemplate = true
-          let symRect = NSRect(origin: .zero, size: sym.size)
-          let tinted = NSImage(size: sym.size)
-          tinted.lockFocus()
-          sym.draw(at: .zero, from: symRect, operation: .sourceOver, fraction: 1)
-          NSColor.white.set()
-          symRect.fill(using: .sourceAtop)
-          tinted.unlockFocus()
-          print("symbol size \(sym.size)")
-
-          // 중앙에 560pt로 배치
-          let target: CGFloat = 560
-          let scale = target / max(sym.size.width, sym.size.height)
-          let dw = sym.size.width * scale, dh = sym.size.height * scale
-          tinted.draw(in: NSRect(x: (CGFloat(px)-dw)/2, y: (CGFloat(px)-dh)/2, width: dw, height: dh),
-                      from: symRect, operation: .sourceOver, fraction: 1)
-
+          let grad = CGGradient(colorsSpace: cs, colors: colors, locations: [0, 1])!
+          ctx1.cgContext.drawLinearGradient(grad, start: CGPoint(x: 0, y: px), end: CGPoint(x: 0, y: 0), options: [])
+          let white = tintedChair(.white)
+          white.draw(in: centered(white))
           NSGraphicsContext.restoreGraphicsState()
-          guard let png = rep.representation(using: .png, properties: [:]) else { print("no png"); exit(1) }
-          try! png.write(to: URL(fileURLWithPath: "TAS/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png"))
+          writePNG(rep1, "TAS/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png")
+
+          // 2) 투명 배경 + 브랜드 퍼플(#6526D9) 의자
+          let rep2 = newRep()
+          let ctx2 = NSGraphicsContext(bitmapImageRep: rep2)!
+          NSGraphicsContext.saveGraphicsState()
+          NSGraphicsContext.current = ctx2
+          ctx2.cgContext.clear(CGRect(x: 0, y: 0, width: px, height: px))  // 배경 투명 보장
+          let purple = tintedChair(NSColor(red: 101/255, green: 38/255, blue: 217/255, alpha: 1))
+          purple.draw(in: centered(purple))
+          NSGraphicsContext.restoreGraphicsState()
+          writePNG(rep2, "TAS/Resources/chair-purple.png")
+
           print("rendered ok")
           SWIFT
           swift render.swift
 
-      - name: Commit icon
+      - name: Commit icons
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add TAS/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
-          git commit -m "Render app icon from chair.lounge.fill SF Symbol (AppKit)" || { echo "no change"; exit 0; }
+          git add TAS/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png TAS/Resources/chair-purple.png
+          git commit -m "Render chair icons: app icon (white on purple) + transparent purple chair" || { echo "no change"; exit 0; }
           git push origin claude/tas-service-ios-stlzh4
