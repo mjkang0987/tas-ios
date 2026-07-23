@@ -5,6 +5,7 @@ struct CalendarView: View {
     @State private var viewModel = CalendarViewModel()
     @State private var selectedDate = Date()
     @State private var selected: Reservation?
+    @State private var selectedAssigneeId: Int?
 
     private static let keyFormatter: DateFormatter = {
         let f = DateFormatter()
@@ -19,7 +20,10 @@ struct CalendarView: View {
     var body: some View {
         NavigationStack {
             LoadableView(state: viewModel.state, loadingText: "예약 불러오는 중…") { _ in
-                dayList
+                VStack(spacing: 0) {
+                    assigneeFilterBar
+                    dayList
+                }
             }
             .navigationTitle("캘린더")
             .toolbar {
@@ -41,8 +45,33 @@ struct CalendarView: View {
         .task { await viewModel.load() }
     }
 
+    /// 담당자 필터 바(담당자가 있을 때만). 공용 FilterChip 재사용.
+    @ViewBuilder private var assigneeFilterBar: some View {
+        let assignees = viewModel.assignees
+        if !assignees.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    FilterChip(label: "전체", isSelected: selectedAssigneeId == nil) {
+                        selectedAssigneeId = nil
+                    }
+                    ForEach(assignees) { assignee in
+                        FilterChip(
+                            label: assignee.name,
+                            color: Color(hex: assignee.color),
+                            isSelected: selectedAssigneeId == assignee.id
+                        ) {
+                            selectedAssigneeId = assignee.id
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+            }
+        }
+    }
+
     private var dayList: some View {
-        let items = viewModel.reservations(on: dateKey)
+        let items = viewModel.reservations(on: dateKey, assigneeId: selectedAssigneeId)
         return Group {
             if items.isEmpty {
                 ContentUnavailableView("예약 없음", systemImage: "calendar", description: Text("\(dateKey) 예약이 없습니다."))

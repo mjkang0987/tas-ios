@@ -20,11 +20,18 @@ final class CalendarViewModel {
         self.service = service
     }
 
-    /// 해당 날짜("YYYY-MM-DD") 예약을 시작시간 순으로.
-    func reservations(on dateKey: String) -> [Reservation] {
+    /// 해당 날짜("YYYY-MM-DD") 예약을 시작시간 순으로. assigneeId 지정 시 담당자 필터.
+    func reservations(on dateKey: String, assigneeId: Int? = nil) -> [Reservation] {
         (state.value?.reservations ?? [])
             .filter { $0.date == dateKey }
+            .filter { assigneeId == nil || $0.assigneeId == assigneeId }
             .sorted { $0.startTime < $1.startTime }
+    }
+
+    /// 담당자 목록(이름 순) — 필터 바용.
+    var assignees: [Assignee] {
+        guard let map = state.value?.assigneesById else { return [] }
+        return map.values.sorted { $0.name < $1.name }
     }
 
     func customer(_ id: Int) -> Customer? { state.value?.customersById[id] }
