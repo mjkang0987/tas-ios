@@ -25,6 +25,11 @@ struct SettingsView: View {
 
                 Section("관리") {
                     NavigationLink {
+                        ServicesView()
+                    } label: {
+                        Label("서비스", systemImage: "scissors")
+                    }
+                    NavigationLink {
                         AssigneesView()
                     } label: {
                         Label("담당자", systemImage: "person.text.rectangle")
