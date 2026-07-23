@@ -12,7 +12,6 @@ import SwiftUI
 struct LoginView: View {
     @Environment(SessionStore.self) private var session
     @State private var inviteCode = ""
-    @State private var showInvite = false
     @State private var authenticatingProvider: String?
     @FocusState private var inviteFocused: Bool
 
@@ -69,17 +68,11 @@ struct LoginView: View {
 
     // MARK: - Brand header
 
+    /// 웹 로그인 로고와 동일 — 브랜드 의자 마크만(워드마크·태그라인 없음).
     private var brandHeader: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "chair.lounge.fill")
-                .font(.system(size: 60))
-                .foregroundStyle(Color.accentColor)
-            Text("take a seat")
-                .font(.system(.largeTitle, design: .rounded).bold())
-            Text("미용실 예약·고객·매출 관리")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
+        Image(systemName: "chair.lounge.fill")
+            .font(.system(size: 64))
+            .foregroundStyle(Color.accentColor)
     }
 
     // MARK: - Login card
@@ -172,41 +165,33 @@ struct LoginView: View {
         .opacity(isAuthenticating && authenticatingProvider != provider.id ? 0.5 : 1)
     }
 
-    // MARK: - Invite code (신규 등록 시)
+    // MARK: - 초대코드 (신규 등록 시) — 웹처럼 항상 노출, provider 위.
 
     private var inviteSection: some View {
-        VStack(spacing: 10) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) { showInvite.toggle() }
-            } label: {
-                HStack(spacing: 4) {
-                    Text("초대코드가 있으신가요?")
-                        .font(.footnote)
-                    Image(systemName: showInvite ? "chevron.up" : "chevron.down")
-                        .font(.caption2)
-                }
+        VStack(alignment: .leading, spacing: 6) {
+            Text("초대코드 (신규 등록 시)")
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-
-            if showInvite {
-                TextField("6자리 코드", text: $inviteCode)
-                    .textInputAutocapitalization(.characters)
-                    .autocorrectionDisabled()
-                    .multilineTextAlignment(.center)
-                    .font(.system(size: 16, weight: .semibold))
-                    .kerning(4)
-                    .focused($inviteFocused)
-                    .submitLabel(.done)
-                    .onSubmit { inviteFocused = false }
-                    .frame(height: 44)
-                    .frame(maxWidth: .infinity)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    .onChange(of: inviteCode) { _, newValue in
-                        inviteCode = String(newValue.uppercased().prefix(6))
-                    }
-            }
+            TextField("6자리 코드 입력", text: $inviteCode)
+                .textInputAutocapitalization(.characters)
+                .autocorrectionDisabled()
+                .multilineTextAlignment(.center)
+                .font(.system(size: 16, weight: .semibold))
+                .kerning(4)
+                .focused($inviteFocused)
+                .submitLabel(.done)
+                .onSubmit { inviteFocused = false }
+                .frame(height: 46)
+                .frame(maxWidth: .infinity)
+                .background(Color(.secondarySystemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Color(.separator), lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .onChange(of: inviteCode) { _, newValue in
+                    inviteCode = String(newValue.uppercased().prefix(6))
+                }
         }
     }
 

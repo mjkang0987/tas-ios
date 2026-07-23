@@ -42,7 +42,10 @@ struct GuestOnboardingView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 10) {
+            Image(systemName: "chair.lounge.fill")
+                .font(.system(size: 46))
+                .foregroundStyle(Color.accentColor)
             Text("게스트로 시작하기")
                 .font(.title2.bold())
             Text("⚡ 30초 설정으로 바로 시작")
@@ -96,7 +99,7 @@ struct GuestOnboardingView: View {
             Text("업종 (복수 선택 가능)")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.secondary)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
                 ForEach(ShopCatalog.industries) { industry in
                     industryCard(industry)
                 }
