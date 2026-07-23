@@ -169,34 +169,36 @@ struct CalendarView: View {
             }
             .padding(.horizontal, 12)
 
-            ScrollView {
-                LazyVGrid(columns: gridColumns, spacing: 4) {
-                    ForEach(0..<leading, id: \.self) { _ in Color.clear.frame(height: 44) }
-                    ForEach(1...daysInMonth, id: \.self) { day in
-                        let date = cal.date(byAdding: .day, value: day - 1, to: firstOfMonth) ?? firstOfMonth
-                        let key = KST.dayKey.string(from: date)
-                        Button {
-                            selectedDate = date
-                            mode = .day
-                        } label: {
-                            monthDayCell(day: day, summary: summaries[key], isToday: cal.isDateInToday(date))
-                        }
-                        .buttonStyle(.plain)
+            LazyVGrid(columns: gridColumns, spacing: 4) {
+                ForEach(0..<leading, id: \.self) { _ in Color.clear.frame(height: 44) }
+                ForEach(1...daysInMonth, id: \.self) { day in
+                    let date = cal.date(byAdding: .day, value: day - 1, to: firstOfMonth) ?? firstOfMonth
+                    let key = KST.dayKey.string(from: date)
+                    Button {
+                        selectedDate = date        // 모드 전환 없이 선택만
+                    } label: {
+                        monthDayCell(day: day, summary: summaries[key],
+                                     isToday: cal.isDateInToday(date),
+                                     isSelected: cal.isDate(date, inSameDayAs: selectedDate))
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 12)
             }
+            .padding(.horizontal, 12)
+
+            Divider()
+
+            selectedDayList   // 하단: 선택 날짜 예약 리스트
         }
     }
 
-    private func monthDayCell(day: Int, summary: CalendarViewModel.PeriodSummary?, isToday: Bool) -> some View {
+    private func monthDayCell(day: Int, summary: CalendarViewModel.PeriodSummary?, isToday: Bool, isSelected: Bool) -> some View {
         VStack(spacing: 2) {
             Text("\(day)")
-                .font(.subheadline)
-                .frame(width: 26, height: 26)
-                .background(isToday ? Color.accentColor : Color.clear)
-                .foregroundStyle(isToday ? Color.white : Color.primary)
+                .font(.subheadline.weight(isSelected ? .bold : .regular))
+                .frame(width: 28, height: 28)
+                .background(isSelected ? Color.accentColor : (isToday ? Color.accentColor.opacity(0.18) : Color.clear))
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
                 .clipShape(Circle())
             if let count = summary?.count, count > 0 {
                 Text("\(count)")
@@ -210,11 +212,44 @@ struct CalendarView: View {
         .contentShape(Rectangle())
     }
 
+    /// 월 뷰 하단: 선택한 날짜의 예약 리스트.
+    @ViewBuilder private var selectedDayList: some View {
+        let items = viewModel.reservations(on: dateKey, assigneeId: selectedAssigneeId)
+        let summary = viewModel.daySummary(on: dateKey, assigneeId: selectedAssigneeId)
+        VStack(spacing: 0) {
+            HStack {
+                Text(selectedDayLabel).font(.footnote.weight(.semibold))
+                Spacer()
+                if summary.count > 0 {
+                    Text("\(summary.count)건 · \(formatWon(summary.total))").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+            .background(Color(.secondarySystemBackground))
+            if items.isEmpty {
+                Spacer()
+                Text("\(selectedDayLabel) 예약이 없습니다.").font(.footnote).foregroundStyle(.secondary)
+                Spacer()
+            } else {
+                List(items) { reservationButton($0) }.listStyle(.plain)
+            }
+        }
+    }
+
+    private var selectedDayLabel: String {
+        let cal = KST.calendar
+        return "\(cal.component(.month, from: selectedDate))월 \(cal.component(.day, from: selectedDate))일"
+    }
+
     // MARK: - 년(Year) 뷰
+
+    private var yearColumns: [GridItem] { Array(repeating: GridItem(.flexible(), spacing: 8), count: 3) }
 
     @ViewBuilder private var yearView: some View {
         let cal = KST.calendar
         let year = cal.component(.year, from: selectedDate)
+        let selMonth = cal.component(.month, from: selectedDate)
         let yearPrefix = String(format: "%04d", year)
         let monthly = viewModel.monthlySummaries(yearPrefix: yearPrefix, assigneeId: selectedAssigneeId)
         let yearTotal = monthly.values.reduce(into: (count: 0, total: 0)) { $0.count += $1.count; $0.total += $1.total }
@@ -227,38 +262,92 @@ struct CalendarView: View {
                 onNext: { shiftYear(1) }
             )
 
-            List {
+            LazyVGrid(columns: yearColumns, spacing: 8) {
                 ForEach(1...12, id: \.self) { m in
                     let key = String(format: "%04d-%02d", year, m)
-                    let summary = monthly[key]
                     Button {
                         if let d = cal.date(from: DateComponents(year: year, month: m, day: 1)) {
-                            selectedDate = d
-                            mode = .month
+                            selectedDate = d       // 모드 전환 없이 선택만
                         }
                     } label: {
-                        monthSummaryRow(month: m, summary: summary)
+                        monthCard(month: m, summary: monthly[key], isSelected: m == selMonth)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .listStyle(.plain)
+            .padding(.horizontal, 12)
+
+            Divider()
+
+            selectedMonthList(year: year, month: selMonth)  // 하단: 선택 월 예약 리스트
         }
     }
 
-    private func monthSummaryRow(month: Int, summary: CalendarViewModel.PeriodSummary?) -> some View {
-        HStack {
-            Text("\(month)월").font(.body.weight(.medium)).frame(width: 44, alignment: .leading)
-            Spacer()
-            if let summary, summary.count > 0 {
-                Text("\(summary.count)건").font(.subheadline).foregroundStyle(.secondary)
-                Text(formatWon(summary.total)).font(.subheadline.weight(.medium)).frame(minWidth: 90, alignment: .trailing)
+    private func monthCard(month: Int, summary: CalendarViewModel.PeriodSummary?, isSelected: Bool) -> some View {
+        VStack(spacing: 3) {
+            Text("\(month)월").font(.subheadline.weight(.semibold))
+            if let s = summary, s.count > 0 {
+                Text("\(s.count)건").font(.caption2).foregroundStyle(.secondary)
+                Text(formatWon(s.total)).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
             } else {
-                Text("예약 없음").font(.caption).foregroundStyle(.secondary)
+                Text("–").font(.caption2).foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 2)
+        .frame(maxWidth: .infinity, minHeight: 58)
+        .background(isSelected ? Color.accentColor.opacity(0.14) : Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5))
         .contentShape(Rectangle())
+    }
+
+    /// 년 뷰 하단: 선택한 월의 예약 리스트(날짜 포함).
+    @ViewBuilder private func selectedMonthList(year: Int, month: Int) -> some View {
+        let prefix = String(format: "%04d-%02d", year, month)
+        let items = viewModel.reservations(inMonthPrefix: prefix, assigneeId: selectedAssigneeId)
+        VStack(spacing: 0) {
+            HStack {
+                Text("\(month)월").font(.footnote.weight(.semibold))
+                Spacer()
+                Text("\(items.count)건").font(.caption).foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+            .background(Color(.secondarySystemBackground))
+            if items.isEmpty {
+                Spacer()
+                Text("\(month)월 예약이 없습니다.").font(.footnote).foregroundStyle(.secondary)
+                Spacer()
+            } else {
+                List(items) { monthReservationButton($0) }.listStyle(.plain)
+            }
+        }
+    }
+
+    /// 월 리스트용 행(날짜 포함) — 탭 시 상세.
+    private func monthReservationButton(_ r: Reservation) -> some View {
+        Button {
+            activeSheet = .detail(r)
+        } label: {
+            HStack(spacing: 10) {
+                Text(shortDate(r.date)).font(.caption.weight(.semibold)).frame(width: 42, alignment: .leading).monospacedDigit()
+                Text(r.startTime).font(.caption2).foregroundStyle(.secondary).monospacedDigit()
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(viewModel.customerName(r.customerId)).font(.subheadline.weight(.medium))
+                    Text(r.service).font(.caption2).foregroundStyle(.secondary)
+                }
+                Spacer()
+                StatusBadge(state: r.displayState)
+            }
+            .padding(.vertical, 2)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// "2026-07-23" → "07.23".
+    private func shortDate(_ dateKey: String) -> String {
+        let p = dateKey.split(separator: "-")
+        return p.count == 3 ? "\(p[1]).\(p[2])" : dateKey
     }
 
     // MARK: - 기간 이동 헤더 (월/년 공용)

@@ -29,6 +29,13 @@ final class CalendarViewModel {
             .sorted { $0.startTime < $1.startTime }
     }
 
+    /// 해당 월("YYYY-MM") 예약을 날짜·시작시간 순으로. 연 뷰의 월별 리스트용.
+    func reservations(inMonthPrefix prefix: String, assigneeId: Int? = nil) -> [Reservation] {
+        (state.value?.reservations ?? [])
+            .filter { $0.date.hasPrefix(prefix) && (assigneeId == nil || $0.assigneeId == assigneeId) }
+            .sorted { ($0.date, $0.startTime) < ($1.date, $1.startTime) }
+    }
+
     /// 담당자 목록(이름 순) — 필터 바용.
     var assignees: [Assignee] {
         guard let map = state.value?.assigneesById else { return [] }
