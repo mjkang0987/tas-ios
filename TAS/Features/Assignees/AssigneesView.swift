@@ -66,12 +66,23 @@ final class AssigneesViewModel {
             actionError = (error as? APIError)?.errorDescription ?? error.localizedDescription
         }
     }
+
+    /// 담당자 병합 — source의 예약을 target으로 옮기고 source 삭제.
+    func merge(sourceId: Int, targetId: Int) async {
+        do {
+            _ = try await service.mergeAssignees(sourceId: sourceId, targetId: targetId)
+            await load()
+        } catch {
+            actionError = (error as? APIError)?.errorDescription ?? error.localizedDescription
+        }
+    }
 }
 
 /// 담당자(디자이너) 관리 — 웹 설정 > `designer` 탭 이식(추가/수정/삭제). 설정에서 push.
 struct AssigneesView: View {
     @State private var viewModel = AssigneesViewModel()
     @State private var activeSheet: ActiveSheet?
+    @State private var mergeSource: Assignee?
 
     private enum ActiveSheet: Identifiable {
         case create
@@ -98,6 +109,8 @@ struct AssigneesView: View {
                         Button("삭제", role: .destructive) {
                             Task { await viewModel.delete(assignee.id) }
                         }
+                        Button("합치기") { mergeSource = assignee }
+                            .tint(.indigo)
                     }
                 }
             }
@@ -122,7 +135,72 @@ struct AssigneesView: View {
                 AssigneeFormView(editing: assignee) { await viewModel.save($0) }
             }
         }
+        .sheet(item: $mergeSource) { source in
+            AssigneeMergeSheet(
+                source: source,
+                candidates: viewModel.sorted.filter { $0.id != source.id },
+                onMerge: { target in await viewModel.merge(sourceId: source.id, targetId: target.id) }
+            )
+        }
         .task { await viewModel.load() }
+    }
+}
+
+/// 담당자 병합 대상 선택 시트 — source의 예약을 선택 담당자로 옮기고 source 삭제.
+private struct AssigneeMergeSheet: View {
+    let source: Assignee
+    let candidates: [Assignee]
+    let onMerge: (Assignee) async -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var target: Assignee?
+    @State private var isMerging = false
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if candidates.isEmpty {
+                    ContentUnavailableView("합칠 담당자 없음", systemImage: "person.2.slash")
+                } else {
+                    List(candidates) { a in
+                        Button {
+                            target = a
+                        } label: {
+                            HStack(spacing: 10) {
+                                ColorDot(color: Color(hex: a.color) ?? .gray, size: 9)
+                                Text(a.name)
+                                Spacer()
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .navigationTitle("\(source.name) 합치기")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
+            }
+            .disabled(isMerging)
+            .confirmationDialog(confirmMessage, isPresented: confirmBinding, titleVisibility: .visible) {
+                if let target {
+                    Button("\(target.name)(으)로 합치기", role: .destructive) {
+                        Task { isMerging = true; await onMerge(target); dismiss() }
+                    }
+                }
+                Button("취소", role: .cancel) {}
+            }
+        }
+    }
+
+    private var confirmBinding: Binding<Bool> {
+        Binding(get: { target != nil }, set: { if !$0 { target = nil } })
+    }
+
+    private var confirmMessage: String {
+        guard let target else { return "" }
+        return "\(source.name)의 예약이 \(target.name)(으)로 이동하고 \(source.name)은(는) 삭제됩니다."
     }
 }
 

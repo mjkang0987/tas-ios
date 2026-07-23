@@ -111,6 +111,16 @@ struct TASService {
         let _: OkResponse = try await client.delete("api/assignees", body: Body(id: id))
     }
 
+    /// 담당자 병합 — POST /api/assignees/merge (body=`{sourceId, targetId}`). 예약은 target으로 이동.
+    @discardableResult
+    func mergeAssignees(sourceId: Int, targetId: Int) async throws -> Bool {
+        if guest.isActive { return guest.mergeAssignees(sourceId: sourceId, targetId: targetId) }
+        struct Body: Encodable { let sourceId: Int; let targetId: Int }
+        struct Resp: Decodable { let merged: Bool? }
+        let resp: Resp = try await client.post("api/assignees/merge", body: Body(sourceId: sourceId, targetId: targetId))
+        return resp.merged ?? true
+    }
+
     /// 서비스 카탈로그 + 카테고리 색 저장 — PUT /api/services (body=`{services, categoryBaseColors}`).
     @discardableResult
     func saveServices(_ services: [ServiceItem], categoryBaseColors: [String: String]) async throws -> ServicesResponse {

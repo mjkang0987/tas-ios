@@ -192,6 +192,23 @@ final class GuestStore {
         return assignees
     }
 
+    /// 담당자 병합 — source의 예약을 target으로 옮기고 source 삭제(웹 /api/assignees/merge).
+    @discardableResult
+    func mergeAssignees(sourceId: Int, targetId: Int) -> Bool {
+        guard sourceId != targetId else { return false }
+        var ok = false
+        mutate { s in
+            guard s.assignees.contains(where: { $0.id == sourceId }),
+                  s.assignees.contains(where: { $0.id == targetId }) else { return }
+            for i in s.reservations.indices where s.reservations[i].assigneeId == sourceId {
+                s.reservations[i].assigneeId = targetId
+            }
+            s.assignees.removeAll { $0.id == sourceId }
+            ok = true
+        }
+        return ok
+    }
+
     /// 담당자 삭제 — 스케줄은 함께 사라지고, 예약은 보존하되 assigneeId를 분리(nil)한다(웹과 동일).
     func deleteAssignee(id: Int) {
         mutate { s in
