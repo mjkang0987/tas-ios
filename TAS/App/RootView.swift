@@ -12,8 +12,10 @@ struct RootView: View {
         case .signedOut:
             LoginView()
         case .guest:
-            // 게스트: 온보딩 완료 전이면 온보딩, 완료면 메인.
-            if guest.isOnboarded {
+            // 게스트 진입 순서: 약관 동의 → 온보딩 → 메인.
+            if !guest.hasConsented {
+                GuestConsentView()
+            } else if guest.isOnboarded {
                 MainTabView()
             } else {
                 GuestOnboardingView()

@@ -18,6 +18,8 @@ struct GuestSnapshot: Codable {
     var useMembershipSystem: Bool?
     var useCouponSystem: Bool?
     var useOnlineBooking: Bool?
+    /// 동의한 약관 버전(웹 `guestTermsVersion`). 현재 버전과 같아야 진입 허용.
+    var termsAgreedVersion: String?
 
     /// 웹 `hasGuestData()` — 온보딩 완료했거나 실제 데이터가 하나라도 있으면 true.
     var hasData: Bool {

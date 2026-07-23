@@ -42,6 +42,19 @@ final class GuestStore {
 
     var isOnboarded: Bool { snapshot.onboarded }
 
+    // MARK: - Terms consent (약관 동의)
+
+    /// 현재 약관 버전 — 웹 `CURRENT_TERMS_VERSION`. 개정 시 이 값을 올려 재동의를 받는다.
+    static let currentTermsVersion = "2026-06-16"
+
+    /// 게스트가 현재 버전 약관에 동의했는지(웹 `getGuestTermsVersion() === CURRENT_TERMS_VERSION`).
+    var hasConsented: Bool { snapshot.termsAgreedVersion == Self.currentTermsVersion }
+
+    /// 약관 동의 기록 — 온보딩 이전 단계.
+    func agreeToTerms() {
+        mutate { $0.termsAgreedVersion = Self.currentTermsVersion }
+    }
+
     // MARK: - Persistence
 
     /// 스냅샷을 수정하고 즉시 디스크에 저장.
