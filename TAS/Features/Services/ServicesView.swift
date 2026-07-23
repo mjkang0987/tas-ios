@@ -99,11 +99,8 @@ struct ServicesView: View {
         }
     }
 
+    // 설정에서 NavigationLink로 push되므로 자체 NavigationStack 없이 상위 스택을 상속.
     var body: some View {
-        NavigationStack { content }
-    }
-
-    @ViewBuilder private var content: some View {
         LoadableView(state: viewModel.state, loadingText: "서비스 불러오는 중…") { _ in
             if viewModel.services.isEmpty {
                 ContentUnavailableView {

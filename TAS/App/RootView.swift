@@ -27,7 +27,7 @@ struct RootView: View {
 }
 
 /// Primary navigation, mirroring the web app's top-level pages
-/// (캘린더 `/`, 주소록 `/address`, 서비스, 설정).
+/// (캘린더 `/`, 주소록 `/address`, 설정 — 서비스는 설정 하위로).
 struct MainTabView: View {
     var body: some View {
         TabView {
@@ -36,9 +36,6 @@ struct MainTabView: View {
 
             CustomersView()
                 .tabItem { Label("고객", systemImage: "person.2") }
-
-            ServicesView()
-                .tabItem { Label("서비스", systemImage: "menucard") }
 
             SettingsView()
                 .tabItem { Label("설정", systemImage: "gearshape") }
