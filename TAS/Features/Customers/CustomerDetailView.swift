@@ -7,8 +7,14 @@ struct CustomerDetailView: View {
     var reservations: [Reservation] = []
     /// "수정" 탭 시 편집 폼을 여는 콜백(제공되지 않으면 수정 버튼 숨김).
     var onEdit: ((Customer) -> Void)? = nil
+    /// 매장이 적립금 기능을 쓰면 "적립금 조정" 노출.
+    var pointsEnabled: Bool = false
+    var service: TASService = TASService()
+    /// 적립금 조정 저장 후 상위 리로드 + 상세 닫기.
+    var onChanged: () async -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
+    @State private var showPointAdjust = false
 
     var body: some View {
         NavigationStack {
@@ -21,6 +27,9 @@ struct CustomerDetailView: View {
                     }
                     if let first = customer.firstVisitDate, !first.isEmpty {
                         LabeledContent("첫 방문", value: first)
+                    }
+                    if pointsEnabled {
+                        Button("적립금 조정") { showPointAdjust = true }
                     }
                 }
 
@@ -80,6 +89,13 @@ struct CustomerDetailView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("완료") { dismiss() }
                 }
+            }
+            .sheet(isPresented: $showPointAdjust) {
+                PointAdjustView(
+                    customer: customer,
+                    service: service,
+                    onCompleted: { await onChanged(); dismiss() }
+                )
             }
         }
     }

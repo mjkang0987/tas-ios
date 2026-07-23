@@ -2,6 +2,7 @@ import SwiftUI
 
 /// 고객 주소록 — 웹의 `/address` 화면에 대응.
 struct CustomersView: View {
+    @Environment(SessionStore.self) private var session
     @State private var viewModel = CustomersViewModel()
     @State private var activeSheet: ActiveSheet?
 
@@ -43,7 +44,10 @@ struct CustomersView: View {
                         customer: customer,
                         stats: viewModel.stats(for: customer.id),
                         reservations: viewModel.reservations(for: customer.id),
-                        onEdit: { activeSheet = .edit($0) }
+                        onEdit: { activeSheet = .edit($0) },
+                        pointsEnabled: session.currentStore?.usePointSystem ?? false,
+                        service: TASService(),
+                        onChanged: { await viewModel.load() }
                     )
                 case .create:
                     CustomerFormView(
@@ -107,4 +111,5 @@ private struct CustomerRow: View {
 
 #Preview {
     CustomersView()
+        .environment(SessionStore())
 }
