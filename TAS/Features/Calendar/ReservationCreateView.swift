@@ -168,19 +168,17 @@ struct ReservationCreateView: View {
 
     // MARK: - 담당자
 
+    @State private var assigneeId = 0
+
     @ViewBuilder private var assigneeSection: some View {
         if !assignees.isEmpty {
             Section("담당자") {
-                Picker("담당자", selection: $selectedAssigneeBinding) {
+                Picker("담당자", selection: $assigneeId) {
                     ForEach(assignees) { a in Text(a.name).tag(a.id) }
                 }
+                .onChange(of: assigneeId) { _, _ in errorMessage = nil }
             }
         }
-    }
-
-    @State private var assigneeId = 0
-    private var selectedAssigneeBinding: Binding<Int> {
-        Binding(get: { assigneeId }, set: { assigneeId = $0; errorMessage = nil })
     }
 
     // MARK: - 날짜/시간
