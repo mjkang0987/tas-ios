@@ -14,6 +14,7 @@ struct LoginView: View {
     @State private var inviteCode = ""
     @State private var showInvite = false
     @State private var authenticatingProvider: String?
+    @FocusState private var inviteFocused: Bool
 
     /// 웹 `ALL_PROVIDERS`와 동일 — id / 라벨 / 배경 / 글자 / 테두리 색.
     private struct Provider: Identifiable {
@@ -49,6 +50,13 @@ struct LoginView: View {
         }
         .background(Color(.systemBackground))
         .scrollBounceBehavior(.basedOnSize)
+        .scrollDismissesKeyboard(.interactively)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("완료") { inviteFocused = false }
+            }
+        }
         .alert("로그인 오류", isPresented: Binding(
             get: { session.lastError != nil },
             set: { if !$0 { session.lastError = nil } }
@@ -145,6 +153,9 @@ struct LoginView: View {
                     .multilineTextAlignment(.center)
                     .font(.system(size: 16, weight: .semibold))
                     .kerning(4)
+                    .focused($inviteFocused)
+                    .submitLabel(.done)
+                    .onSubmit { inviteFocused = false }
                     .frame(height: 44)
                     .frame(maxWidth: .infinity)
                     .background(Color(.secondarySystemBackground))
