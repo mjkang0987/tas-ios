@@ -63,7 +63,20 @@ final class SessionStore {
     }
 
     /// 게스트 모드 종료(로컬 데이터는 유지) → 로그인 화면으로.
+    /// (온보딩의 "로그인으로 돌아가기"용 — 데이터 보존)
     func exitGuest() {
+        GuestStore.shared.deactivate()
+        currentStore = nil
+        state = .signedOut
+    }
+
+    /// 현재 게스트 모드인지.
+    var isGuest: Bool { state == .guest }
+
+    /// 게스트 로그아웃 — 로컬 데이터를 전부 삭제하고 로그인 화면으로.
+    /// (게스트는 계정이 없어 데이터가 기기에만 있으므로 로그아웃 = 삭제)
+    func logoutGuest() {
+        GuestStore.shared.reset()
         GuestStore.shared.deactivate()
         currentStore = nil
         state = .signedOut

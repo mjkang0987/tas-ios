@@ -39,9 +39,18 @@ struct SettingsView: View {
                 Section("계정") {
                     if let user = session.user {
                         LabeledContent("권한", value: user.role.rawValue)
+                        Button("로그아웃", role: .destructive) {
+                            session.signOut()
+                        }
+                    } else if session.isGuest {
+                        LabeledContent("모드", value: "게스트")
+                        Button("로그아웃 (게스트 데이터 삭제)", role: .destructive) {
+                            session.logoutGuest()
+                        }
                     }
-                    Button("로그아웃", role: .destructive) {
-                        session.signOut()
+                } footer: {
+                    if session.isGuest {
+                        Text("게스트 데이터는 이 기기에만 저장돼요. 로그아웃하면 모두 삭제됩니다. 로그인하면 데이터를 계정으로 옮길 수 있어요.")
                     }
                 }
 
