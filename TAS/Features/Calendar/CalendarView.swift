@@ -70,13 +70,28 @@ struct CalendarView: View {
         }
     }
 
+    /// 당일 요약(건수·매출) 헤더.
+    private func daySummaryHeader(count: Int, total: Int) -> some View {
+        HStack {
+            Text("\(count)건").font(.subheadline.weight(.semibold))
+            Spacer()
+            Text("매출 \(formatWon(total))").font(.subheadline).foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color(.secondarySystemBackground))
+    }
+
     private var dayList: some View {
         let items = viewModel.reservations(on: dateKey, assigneeId: selectedAssigneeId)
         return Group {
             if items.isEmpty {
                 ContentUnavailableView("예약 없음", systemImage: "calendar", description: Text("\(dateKey) 예약이 없습니다."))
             } else {
-                List(items) { reservation in
+                let summary = viewModel.daySummary(on: dateKey, assigneeId: selectedAssigneeId)
+                VStack(spacing: 0) {
+                    daySummaryHeader(count: summary.count, total: summary.total)
+                    List(items) { reservation in
                     Button {
                         selected = reservation
                     } label: {
@@ -92,6 +107,7 @@ struct CalendarView: View {
                 }
                 .listStyle(.plain)
                 .refreshable { await viewModel.load() }
+                }
             }
         }
     }

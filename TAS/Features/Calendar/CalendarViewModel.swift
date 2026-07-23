@@ -34,6 +34,16 @@ final class CalendarViewModel {
         return map.values.sorted { $0.name < $1.name }
     }
 
+    /// 당일 요약: 건수 + 매출 합계(취소·노쇼 제외).
+    func daySummary(on dateKey: String, assigneeId: Int? = nil) -> (count: Int, total: Int) {
+        let items = reservations(on: dateKey, assigneeId: assigneeId)
+        let total = items
+            .filter { $0.status != .cancelled && $0.status != .noshow }
+            .compactMap(\.price)
+            .reduce(0, +)
+        return (items.count, total)
+    }
+
     func customer(_ id: Int) -> Customer? { state.value?.customersById[id] }
     func assignee(_ id: Int?) -> Assignee? { id.flatMap { state.value?.assigneesById[$0] } }
     func serviceColor(_ name: String) -> Color? { state.value?.serviceColorByName[name] }
