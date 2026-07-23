@@ -3,6 +3,9 @@ name: Render App Icon
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/render-icon.yml"
 
 permissions:
   contents: write
