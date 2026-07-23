@@ -118,13 +118,14 @@ struct TASService {
     /// 매장 기본 정보 저장(이름·기능 토글) — PATCH /api/store.
     /// 응답은 부분 echo라 Store로 못 받으므로, 성공 시 입력을 현재 매장에 반영해 돌려준다.
     @discardableResult
-    func updateStore(current: Store, name: String, usePointSystem: Bool, useMembershipSystem: Bool, useOnlineBooking: Bool) async throws -> Store {
+    func updateStore(current: Store, name: String, shopType: String?, usePointSystem: Bool, useMembershipSystem: Bool, useOnlineBooking: Bool) async throws -> Store {
         if guest.isActive {
-            return guest.updateStoreSettings(name: name, usePointSystem: usePointSystem,
+            return guest.updateStoreSettings(name: name, shopType: shopType, usePointSystem: usePointSystem,
                                              useMembershipSystem: useMembershipSystem, useOnlineBooking: useOnlineBooking)
         }
         struct Body: Encodable {
             let storeName: String
+            let shopType: String?
             let usePointSystem: Bool
             let useMembershipSystem: Bool
             let useOnlineBooking: Bool
@@ -132,11 +133,12 @@ struct TASService {
         // 응답은 부분 echo(id/name 없음) → error 여부만 확인.
         struct PatchResponse: Decodable { let error: String? }
         let resp: PatchResponse = try await client.patch("api/store", body: Body(
-            storeName: name, usePointSystem: usePointSystem,
+            storeName: name, shopType: shopType, usePointSystem: usePointSystem,
             useMembershipSystem: useMembershipSystem, useOnlineBooking: useOnlineBooking))
         if let error = resp.error { throw APIError.server(status: 400, message: error) }
         var updated = current
         updated.name = name
+        updated.shopType = shopType
         updated.usePointSystem = usePointSystem
         updated.useMembershipSystem = useMembershipSystem
         updated.useOnlineBooking = useOnlineBooking

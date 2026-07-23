@@ -151,4 +151,38 @@ enum ShopCatalog {
         [Assignee(id: 1, name: "원장", nameI18n: nil, schedule: defaultSchedule(),
                   status: .active, phone: "", note: "", color: "#6526D9")]
     }
+
+    // MARK: - 업종 조회 (웹 getPrimaryIndustry / shopType 라벨)
+
+    private static let byValue: [String: ShopIndustry] =
+        Dictionary(industries.map { ($0.value, $0) }, uniquingKeysWith: { first, _ in first })
+
+    /// value 토큰 → 업종.
+    static func industry(value: String) -> ShopIndustry? { byValue[value] }
+
+    /// shopType("hair,nail") → 첫 유효 업종(웹 getPrimaryIndustry).
+    static func primaryIndustry(shopType: String?) -> ShopIndustry? {
+        guard let shopType else { return nil }
+        for token in shopType.split(separator: ",") {
+            if let ind = byValue[token.trimmingCharacters(in: .whitespaces)] { return ind }
+        }
+        return nil
+    }
+
+    /// shopType 토큰들을 사람이 읽는 라벨로("hair,nail" → "헤어샵·네일샵").
+    static func shopTypeLabel(_ shopType: String?) -> String? {
+        guard let shopType else { return nil }
+        let labels = shopType.split(separator: ",").compactMap {
+            byValue[$0.trimmingCharacters(in: .whitespaces)]?.label
+        }
+        return labels.isEmpty ? nil : labels.joined(separator: "·")
+    }
+
+    /// 업종 선택 드롭다운용 — 카테고리 순서대로 (분류명, 업종들) 그룹.
+    static var industryGroups: [(category: String, items: [ShopIndustry])] {
+        categories.compactMap { cat in
+            let items = industries.filter { $0.category == cat.key }
+            return items.isEmpty ? nil : (cat.name, items)
+        }
+    }
 }

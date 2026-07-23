@@ -10,6 +10,8 @@ struct StoreSettingsEditView: View {
     var service = TASService()
 
     @State private var name = ""
+    /// 선택한 대표 업종 value("hair" 등). 빈 문자열이면 "선택 안 함".
+    @State private var shopType = ""
     @State private var usePointSystem = false
     @State private var useMembershipSystem = false
     @State private var useOnlineBooking = false
@@ -21,8 +23,15 @@ struct StoreSettingsEditView: View {
             Form {
                 Section("매장") {
                     TextField("매장 이름", text: $name)
-                    if let type = session.currentStore?.shopType {
-                        LabeledContent("업종", value: type)
+                    Picker("업종", selection: $shopType) {
+                        Text("선택 안 함").tag("")
+                        ForEach(ShopCatalog.industryGroups, id: \.category) { group in
+                            Section(group.category) {
+                                ForEach(group.items) { ind in
+                                    Text("\(ind.emoji) \(ind.label)").tag(ind.value)
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -58,6 +67,8 @@ struct StoreSettingsEditView: View {
     private func setup() {
         guard let store = session.currentStore else { return }
         name = store.name
+        // 여러 업종이 있어도 웹처럼 대표(첫) 업종 1개를 선택값으로.
+        shopType = ShopCatalog.primaryIndustry(shopType: store.shopType)?.value ?? ""
         usePointSystem = store.usePointSystem ?? false
         useMembershipSystem = store.useMembershipSystem ?? false
         useOnlineBooking = store.useOnlineBooking ?? false
@@ -73,6 +84,7 @@ struct StoreSettingsEditView: View {
             let updated = try await service.updateStore(
                 current: current,
                 name: trimmed,
+                shopType: shopType.isEmpty ? nil : shopType,
                 usePointSystem: usePointSystem,
                 useMembershipSystem: useMembershipSystem,
                 useOnlineBooking: useOnlineBooking

@@ -10,8 +10,8 @@ struct SettingsView: View {
             List {
                 Section("매장") {
                     LabeledContent("이름", value: session.currentStore?.name ?? "-")
-                    if let type = session.currentStore?.shopType {
-                        LabeledContent("업종", value: type)
+                    if let label = ShopCatalog.shopTypeLabel(session.currentStore?.shopType) {
+                        LabeledContent("업종", value: label)
                     }
                     if let slug = session.currentStore?.bookingSlug {
                         LabeledContent("예약 슬러그", value: slug)
