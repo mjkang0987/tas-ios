@@ -101,8 +101,15 @@ struct ServicesView: View {
 
     var body: some View {
         LoadableView(state: viewModel.state, loadingText: "서비스 불러오는 중…") { _ in
-            List {
-                ForEach(viewModel.grouped, id: \.category) { group in
+            if viewModel.services.isEmpty {
+                ContentUnavailableView {
+                    Label("서비스 없음", systemImage: "scissors")
+                } description: {
+                    Text("우측 상단 + 로 서비스를 추가하세요.\n예약 등록 시 여기서 만든 서비스를 선택합니다.")
+                }
+            } else {
+                List {
+                    ForEach(viewModel.grouped, id: \.category) { group in
                     Section {
                         ForEach(group.items) { item in
                             Button {
@@ -122,6 +129,7 @@ struct ServicesView: View {
                             ColorDot(color: viewModel.color(group.category), size: 8)
                             Text(group.category)
                         }
+                    }
                     }
                 }
             }

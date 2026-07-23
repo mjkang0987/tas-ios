@@ -125,6 +125,11 @@ enum ShopCatalog {
                 result.append(item)
             }
         }
+        // 뷰티 외 업종(음식·의료·피트니스 등)은 프리셋이 없어 카탈로그가 비면
+        // 예약에서 서비스를 못 고르는 막다른 길이 된다 → 편집 가능한 기본 서비스 1개 시드.
+        if result.isEmpty {
+            result = [ServiceItem(name: "기본 서비스", durationMinutes: 60, category: "기본", price: 0)]
+        }
         return result
     }
 
