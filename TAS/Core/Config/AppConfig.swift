@@ -27,10 +27,23 @@ enum AppConfig {
 
     /// 모바일 로그인 시작 URL. 웹 `/login`을 ASWebAuth로 열되, 로그인 완료 후
     /// 모바일 브리지(`/api/mobile-auth/complete?nonce=…`)로 돌아오도록 callbackUrl을 실어 보낸다.
-    static func mobileLoginURL(nonce: String) -> URL? {
-        let completePath = "/api/mobile-auth/complete?nonce=\(nonce)"
-        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
-        let encoded = completePath.addingPercentEncoding(withAllowedCharacters: allowed) ?? completePath
-        return URL(string: "\(loginURL.absoluteString)?callbackUrl=\(encoded)&mobile=1")
+    ///
+    /// - Parameters:
+    ///   - provider: 선택한 소셜 provider(`google`/`kakao`/`naver`). 웹 `/login`이 자동 시작 힌트로 사용.
+    ///   - invite: 신규 등록용 초대코드. 웹 `/login`이 `router.query.invite`로 읽어 쿠키에 세팅.
+    static func mobileLoginURL(nonce: String, provider: String? = nil, invite: String? = nil) -> URL? {
+        guard var components = URLComponents(url: loginURL, resolvingAgainstBaseURL: false) else { return nil }
+        var items: [URLQueryItem] = [
+            URLQueryItem(name: "callbackUrl", value: "/api/mobile-auth/complete?nonce=\(nonce)"),
+            URLQueryItem(name: "mobile", value: "1"),
+        ]
+        if let provider, !provider.isEmpty {
+            items.append(URLQueryItem(name: "provider", value: provider))
+        }
+        if let invite, !invite.isEmpty {
+            items.append(URLQueryItem(name: "invite", value: invite))
+        }
+        components.queryItems = items
+        return components.url
     }
 }

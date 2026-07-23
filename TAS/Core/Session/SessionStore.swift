@@ -48,10 +48,14 @@ final class SessionStore {
     }
 
     /// 소셜 로그인: 웹 `/login`을 ASWebAuth로 열고 code 교환 → 토큰 저장 → 세션 로드.
-    func signIn() async {
+    ///
+    /// - Parameters:
+    ///   - provider: 탭한 소셜 provider(`google`/`kakao`/`naver`). nil이면 웹에서 직접 선택.
+    ///   - invite: 신규 등록용 초대코드(선택).
+    func signIn(provider: String? = nil, invite: String? = nil) async {
         lastError = nil
         let nonce = Self.makeNonce()
-        guard let startURL = AppConfig.mobileLoginURL(nonce: nonce) else {
+        guard let startURL = AppConfig.mobileLoginURL(nonce: nonce, provider: provider, invite: invite) else {
             lastError = "로그인 주소 구성에 실패했습니다."
             return
         }
