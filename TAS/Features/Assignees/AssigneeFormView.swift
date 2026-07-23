@@ -18,7 +18,7 @@ struct AssigneeFormView: View {
     @State private var color = AssigneeFormView.colorPalette[0]
     @State private var phone = ""
     @State private var note = ""
-    @State private var schedule: [DaySchedule] = ShopIndustry.defaultSchedule()
+    @State private var schedule: [DaySchedule] = ShopCatalog.defaultSchedule()
     @State private var errorMessage: String?
     @State private var isSaving = false
 
