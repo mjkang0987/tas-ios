@@ -20,6 +20,10 @@ struct GuestSnapshot: Codable {
     var useOnlineBooking: Bool?
     /// 동의한 약관 버전(웹 `guestTermsVersion`). 현재 버전과 같아야 진입 허용.
     var termsAgreedVersion: String?
+    // 영업 스케줄(웹 storeSettings)
+    var businessHours: BusinessHours?
+    var closedDates: [String] = []
+    var closedWeekdays: [Int] = []
 
     /// 웹 `hasGuestData()` — 온보딩 완료했거나 실제 데이터가 하나라도 있으면 true.
     var hasData: Bool {

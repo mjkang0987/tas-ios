@@ -145,6 +145,23 @@ struct TASService {
         return updated
     }
 
+    /// 영업시간·휴무 저장 — PUT /api/store (body=`{businessHours, closedDates, closedWeekdays}`).
+    @discardableResult
+    func updateSchedule(current: Store, businessHours: BusinessHours, closedDates: [String], closedWeekdays: [Int]) async throws -> Store {
+        if guest.isActive {
+            return guest.updateSchedule(businessHours: businessHours, closedDates: closedDates, closedWeekdays: closedWeekdays)
+        }
+        struct Body: Encodable { let businessHours: BusinessHours; let closedDates: [String]; let closedWeekdays: [Int] }
+        struct Resp: Decodable { let error: String? }
+        let resp: Resp = try await client.put("api/store", body: Body(businessHours: businessHours, closedDates: closedDates, closedWeekdays: closedWeekdays))
+        if let e = resp.error { throw APIError.server(status: 400, message: e) }
+        var updated = current
+        updated.businessHours = businessHours
+        updated.closedDates = closedDates
+        updated.closedWeekdays = closedWeekdays
+        return updated
+    }
+
     // MARK: - Session / stores — /api/user/stores
     func fetchStores() async throws -> [Store] {
         if guest.isActive { return [guest.syntheticStore] }

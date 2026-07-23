@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(SessionStore.self) private var session
     @State private var showStoreEdit = false
+    @State private var showHoursEdit = false
 
     var body: some View {
         NavigationStack {
@@ -17,6 +18,8 @@ struct SettingsView: View {
                         LabeledContent("예약 슬러그", value: slug)
                     }
                     Button("매장 정보 편집") { showStoreEdit = true }
+                        .disabled(session.currentStore == nil)
+                    Button("영업시간·휴무 설정") { showHoursEdit = true }
                         .disabled(session.currentStore == nil)
                 }
 
@@ -68,6 +71,9 @@ struct SettingsView: View {
             .navigationTitle("설정")
             .sheet(isPresented: $showStoreEdit) {
                 StoreSettingsEditView().environment(session)
+            }
+            .sheet(isPresented: $showHoursEdit) {
+                StoreHoursEditView().environment(session)
             }
         }
     }

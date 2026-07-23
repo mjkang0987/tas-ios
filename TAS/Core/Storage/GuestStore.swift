@@ -221,7 +221,21 @@ final class GuestStore {
             useCouponSystem: snapshot.useCouponSystem,
             useOnlineBooking: snapshot.useOnlineBooking,
             bookingSlug: nil,
-            categoryBaseColors: snapshot.categoryBaseColors
+            categoryBaseColors: snapshot.categoryBaseColors,
+            businessHours: snapshot.businessHours,
+            closedDates: snapshot.closedDates,
+            closedWeekdays: snapshot.closedWeekdays
         )
+    }
+
+    /// 영업시간·휴무 저장(웹 PUT /api/store storeSettings에 대응).
+    @discardableResult
+    func updateSchedule(businessHours: BusinessHours, closedDates: [String], closedWeekdays: [Int]) -> Store {
+        mutate { s in
+            s.businessHours = businessHours
+            s.closedDates = closedDates
+            s.closedWeekdays = closedWeekdays
+        }
+        return syntheticStore
     }
 }
