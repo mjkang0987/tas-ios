@@ -1,0 +1,70 @@
+# 로그인 화면의 그 의자(SF 심볼 chair.lounge.fill)를 macOS에서 PNG로 렌더링.
+name: Render App Icon
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: claude/tas-service-ios-stlzh4
+
+      - name: Render icon from SF Symbol
+        run: |
+          cat > render.swift <<'SWIFT'
+          import SwiftUI
+          import AppKit
+
+          struct IconView: View {
+              var body: some View {
+                  ZStack {
+                      LinearGradient(
+                          colors: [Color(red: 120/255, green: 62/255, blue: 226/255),
+                                   Color(red: 68/255, green: 20/255, blue: 150/255)],
+                          startPoint: .top, endPoint: .bottom)
+                      Image(systemName: "chair.lounge.fill")
+                          .resizable()
+                          .scaledToFit()
+                          .frame(width: 560, height: 560)
+                          .foregroundStyle(.white)
+                  }
+                  .frame(width: 1024, height: 1024)
+              }
+          }
+
+          let renderer = ImageRenderer(content: IconView())
+          renderer.scale = 1
+          guard let ns = renderer.nsImage,
+                let tiff = ns.tiffRepresentation,
+                let bitmap = NSBitmapImageRep(data: tiff) else {
+              print("render failed"); exit(1)
+          }
+          let flat = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1024, pixelsHigh: 1024,
+              bitsPerSample: 8, samplesPerPixel: 3, hasAlpha: false, isPlanar: false,
+              colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+          NSGraphicsContext.saveGraphicsState()
+          NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: flat)
+          bitmap.draw(in: NSRect(x: 0, y: 0, width: 1024, height: 1024))
+          NSGraphicsContext.restoreGraphicsState()
+          guard let png = flat.representation(using: .png, properties: [:]) else {
+              print("png failed"); exit(1)
+          }
+          try! png.write(to: URL(fileURLWithPath: "TAS/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png"))
+          print("rendered ok")
+          SWIFT
+          swift render.swift
+
+      - name: Commit icon
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add TAS/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+          git commit -m "Render app icon from chair.lounge.fill SF Symbol" || { echo "no change"; exit 0; }
+          git push origin claude/tas-service-ios-stlzh4
