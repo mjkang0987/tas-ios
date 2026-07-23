@@ -42,6 +42,7 @@ jobs:
               }
           }
 
+          MainActor.assumeIsolated {
           let renderer = ImageRenderer(content: IconView())
           renderer.scale = 1
           guard let ns = renderer.nsImage,
@@ -61,6 +62,7 @@ jobs:
           }
           try! png.write(to: URL(fileURLWithPath: "TAS/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png"))
           print("rendered ok")
+          }
           SWIFT
           swift render.swift
 
