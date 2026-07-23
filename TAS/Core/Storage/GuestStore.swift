@@ -127,9 +127,37 @@ final class GuestStore {
         return customer
     }
 
-    /// 다음 예약/고객 정수 id(현재 최대 +1) — 폼에서 신규 레코드 id 부여용.
+    /// 담당자 목록 전체 저장(웹 PUT /api/assignees와 동일한 일괄 교체 모델).
+    @discardableResult
+    func saveAssignees(_ assignees: [Assignee]) -> [Assignee] {
+        mutate { $0.assignees = assignees }
+        return assignees
+    }
+
+    /// 담당자 삭제 — 스케줄은 함께 사라지고, 예약은 보존하되 assigneeId를 분리(nil)한다(웹과 동일).
+    func deleteAssignee(id: Int) {
+        mutate { s in
+            s.assignees.removeAll { $0.id == id }
+            for i in s.reservations.indices where s.reservations[i].assigneeId == id {
+                s.reservations[i].assigneeId = nil
+            }
+        }
+    }
+
+    /// 서비스 카탈로그 + 카테고리 색 전체 저장(웹 PUT /api/services).
+    @discardableResult
+    func saveServices(_ services: [ServiceItem], categoryBaseColors: [String: String]) -> ServicesResponse {
+        mutate { s in
+            s.services = services
+            s.categoryBaseColors = categoryBaseColors
+        }
+        return ServicesResponse(services: services, categoryBaseColors: categoryBaseColors)
+    }
+
+    /// 다음 예약/고객/담당자 정수 id(현재 최대 +1) — 폼에서 신규 레코드 id 부여용.
     var nextReservationId: Int { (snapshot.reservations.map(\.id).max() ?? 0) + 1 }
     var nextCustomerId: Int { (snapshot.customers.map(\.id).max() ?? 0) + 1 }
+    var nextAssigneeId: Int { (snapshot.assignees.map(\.id).max() ?? 0) + 1 }
 
     // MARK: - Read envelopes (TASService가 API 응답 대신 반환)
 

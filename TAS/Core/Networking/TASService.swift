@@ -84,6 +84,31 @@ struct TASService {
         return try await client.get("api/assignees")
     }
 
+    /// 담당자 목록 전체 저장 — PUT /api/assignees (body=`{assignees}`, 응답 `{assignees}`).
+    /// 웹과 동일한 일괄 교체 모델(추가·수정 모두 전체 배열을 보낸다).
+    @discardableResult
+    func saveAssignees(_ assignees: [Assignee]) async throws -> [Assignee] {
+        if guest.isActive { return guest.saveAssignees(assignees) }
+        struct Body: Encodable { let assignees: [Assignee] }
+        let env: AssigneesResponse = try await client.put("api/assignees", body: Body(assignees: assignees))
+        return env.assignees
+    }
+
+    /// 담당자 삭제 — DELETE /api/assignees (body=`{id}`). 예약은 보존, assigneeId만 분리.
+    func deleteAssignee(id: Int) async throws {
+        if guest.isActive { guest.deleteAssignee(id: id); return }
+        struct Body: Encodable { let id: Int }
+        let _: OkResponse = try await client.delete("api/assignees", body: Body(id: id))
+    }
+
+    /// 서비스 카탈로그 + 카테고리 색 저장 — PUT /api/services (body=`{services, categoryBaseColors}`).
+    @discardableResult
+    func saveServices(_ services: [ServiceItem], categoryBaseColors: [String: String]) async throws -> ServicesResponse {
+        if guest.isActive { return guest.saveServices(services, categoryBaseColors: categoryBaseColors) }
+        struct Body: Encodable { let services: [ServiceItem]; let categoryBaseColors: [String: String] }
+        return try await client.put("api/services", body: Body(services: services, categoryBaseColors: categoryBaseColors))
+    }
+
     // MARK: - Store — /api/store
     func fetchStore() async throws -> Store {
         if guest.isActive { return guest.syntheticStore }
