@@ -1,0 +1,53 @@
+# 시뮬레이터에서 앱을 실제 실행해 스크린샷 캡처(정적). CI(macOS)에서만 가능.
+name: iOS Screenshot
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/ios-screenshot.yml"
+      - "TAS/**"
+
+jobs:
+  screenshot:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build for simulator
+        run: |
+          xcodebuild build \
+            -project TAS.xcodeproj -scheme TAS \
+            -sdk iphonesimulator -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO | tail -20
+
+      - name: Boot a simulator
+        run: |
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin); devs=[x for v in d['devices'].values() for x in v if 'iPhone' in x['name']]; print(devs[0]['udid'])")
+          echo "Using device $DEVICE"
+          echo "DEVICE=$DEVICE" >> "$GITHUB_ENV"
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+
+      - name: Install & launch app
+        run: |
+          APP=$(find build/Build/Products -name "TAS.app" -type d | head -1)
+          echo "App: $APP"
+          xcrun simctl install "$DEVICE" "$APP"
+          xcrun simctl launch "$DEVICE" kr.co.takeaseat.app || true
+          sleep 10
+
+      - name: Capture screenshot
+        run: |
+          xcrun simctl io "$DEVICE" screenshot screen.png
+          sips -Z 1000 screen.png || true
+          ls -la screen.png
+
+      - name: Upload screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-screenshot
+          path: screen.png
+          if-no-files-found: error
