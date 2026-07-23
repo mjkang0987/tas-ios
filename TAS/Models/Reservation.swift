@@ -15,18 +15,18 @@ struct Reservation: Codable, Identifiable, Hashable {
     var endTime: String         // "HH:mm"
     var service: String
     var customerId: Int
-    var assigneeId: Int?
-    var status: ReservationStatus?
-    var price: Int?
-    var memo: String?
-    var paymentCompleted: Bool?
-    var paymentMethod: PaymentMethod?
-    var paymentEntries: [PaymentEntry]?
-    var pointEarned: Int?
-    var naverBookingId: String?
-    var naverBookingUrl: String?
-    var naverDeposit: Int?
-    var channel: ReservationChannel?
+    var assigneeId: Int? = nil
+    var status: ReservationStatus? = nil
+    var price: Int? = nil
+    var memo: String? = nil
+    var paymentCompleted: Bool? = nil
+    var paymentMethod: PaymentMethod? = nil
+    var paymentEntries: [PaymentEntry]? = nil
+    var pointEarned: Int? = nil
+    var naverBookingId: String? = nil
+    var naverBookingUrl: String? = nil
+    var naverDeposit: Int? = nil
+    var channel: ReservationChannel? = nil
 
     /// hasCompletedPayment(reservation) — reservations/model.ts
     var hasCompletedPayment: Bool {

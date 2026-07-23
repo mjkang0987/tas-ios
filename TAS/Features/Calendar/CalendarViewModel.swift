@@ -10,6 +10,7 @@ final class CalendarViewModel {
         var customersById: [Int: Customer]
         var assigneesById: [Int: Assignee]
         var serviceColorByName: [String: Color]
+        var services: [ServiceItem]
     }
 
     var state: Loadable<Data> = .idle
@@ -33,6 +34,25 @@ final class CalendarViewModel {
         guard let map = state.value?.assigneesById else { return [] }
         return map.values.sorted { $0.name < $1.name }
     }
+
+    // MARK: - 예약 생성 폼용 데이터
+
+    /// 고객 목록.
+    var customers: [Customer] { Array((state.value?.customersById ?? [:]).values) }
+
+    /// 재직 중 담당자(휴직·퇴직 제외), 이름 순 — 웹 splitAssigneesByStatus(active).
+    var activeAssignees: [Assignee] {
+        assignees.filter { $0.status != .leave && $0.status != .retired }
+    }
+
+    /// 서비스 카탈로그(선택용).
+    var serviceCatalog: [ServiceItem] { state.value?.services ?? [] }
+
+    /// 다음 예약/고객 정수 id(max+1) — 웹 getNextNumericId.
+    var nextReservationId: Int { ((state.value?.reservations.map(\.id).max()) ?? 0) + 1 }
+    var nextCustomerId: Int { ((state.value?.customersById.keys.max()) ?? 0) + 1 }
+
+    func reload() async { await load() }
 
     /// 당일 요약: 건수 + 매출 합계(취소·노쇼 제외).
     func daySummary(on dateKey: String, assigneeId: Int? = nil) -> (count: Int, total: Int) {
@@ -81,7 +101,8 @@ final class CalendarViewModel {
                 reservations: res.reservations,
                 customersById: customersById,
                 assigneesById: assigneesById,
-                serviceColorByName: serviceColorByName
+                serviceColorByName: serviceColorByName,
+                services: svc.services
             ))
         } catch {
             state = .failed((error as? APIError)?.errorDescription ?? error.localizedDescription)

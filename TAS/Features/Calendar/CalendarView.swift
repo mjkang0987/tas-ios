@@ -9,6 +9,7 @@ struct CalendarView: View {
     @State private var selected: Reservation?
     @State private var selectedAssigneeId: Int?
     @State private var mode: Mode = .day
+    @State private var showingCreate = false
 
     private var dateKey: String { KST.dayKey.string(from: selectedDate) }
 
@@ -36,6 +37,14 @@ struct CalendarView: View {
                     .pickerStyle(.segmented)
                     .frame(width: 120)
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingCreate = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .disabled(viewModel.state.value == nil)
+                }
             }
             .sheet(item: $selected) { reservation in
                 ReservationDetailView(
@@ -44,6 +53,18 @@ struct CalendarView: View {
                     assignee: viewModel.assignee(reservation.assigneeId),
                     serviceColor: viewModel.serviceColor(reservation.service),
                     isNewCustomer: viewModel.isNewCustomer(reservation)
+                )
+            }
+            .sheet(isPresented: $showingCreate) {
+                ReservationCreateView(
+                    service: TASService(),
+                    customers: viewModel.customers,
+                    assignees: viewModel.activeAssignees,
+                    catalog: viewModel.serviceCatalog,
+                    initialDate: selectedDate,
+                    nextReservationId: viewModel.nextReservationId,
+                    nextCustomerId: viewModel.nextCustomerId,
+                    onSaved: { Task { await viewModel.reload() } }
                 )
             }
         }

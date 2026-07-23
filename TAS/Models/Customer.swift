@@ -43,13 +43,13 @@ struct Customer: Codable, Identifiable, Hashable {
     var id: Int
     var name: String
     var tel: String
-    var points: Int?
-    var firstVisitDate: String?
-    var pointHistories: [PointHistoryEntry]?
-    var memoTags: [CustomerMemoTag]?
-    var allergyNote: String?
-    var claimNote: String?
-    var preferenceNote: String?
+    var points: Int? = nil
+    var firstVisitDate: String? = nil
+    var pointHistories: [PointHistoryEntry]? = nil
+    var memoTags: [CustomerMemoTag]? = nil
+    var allergyNote: String? = nil
+    var claimNote: String? = nil
+    var preferenceNote: String? = nil
 
     /// isNewCustomerVisit(firstVisitDate, date) — customers/model.ts
     /// 예약 날짜가 이 고객의 첫 방문일과 같으면 신규 방문.
