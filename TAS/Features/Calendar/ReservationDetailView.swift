@@ -19,6 +19,8 @@ struct ReservationDetailView: View {
     /// 이 예약의 변경 이력(최신순) + 담당자 이름 해석기.
     var history: [ReservationHistoryEntry] = []
     var assigneeName: (Int?) -> String = { _ in "미지정" }
+    /// 매장 적립률(%) — 결제 시 자동 적립용. 0이면 적립 없음.
+    var pointRate: Int = 0
 
     @Environment(\.dismiss) private var dismiss
     @State private var confirming: Confirm?
@@ -138,6 +140,8 @@ struct ReservationDetailView: View {
             .sheet(isPresented: $showPayment) {
                 ReservationPaymentView(
                     reservation: reservation,
+                    customer: customer,
+                    pointRate: pointRate,
                     service: service,
                     onCompleted: { await onChanged(); dismiss() }
                 )

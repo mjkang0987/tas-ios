@@ -4,11 +4,19 @@ import SwiftUI
 struct CalendarView: View {
     enum Mode: String, CaseIterable { case day = "일", week = "주", month = "월", year = "년" }
 
+    @Environment(SessionStore.self) private var session
     @State private var viewModel = CalendarViewModel()
     @State private var selectedDate = Date()
     @State private var selectedAssigneeId: Int?
     @State private var mode: Mode = .day
     @State private var activeSheet: ActiveSheet?
+
+    /// 매장 적립률(%) — 적립 기능이 켜졌을 때만, 아니면 0.
+    private var pointRate: Int {
+        guard session.currentStore?.usePointSystem == true,
+              let p = session.currentStore?.pointSettings, p.enableServiceRate else { return 0 }
+        return p.serviceRate
+    }
 
     /// 예약 상세/추가 시트를 하나의 `.sheet(item:)`로 통합
     /// (같은 뷰에 `.sheet` 여러 개를 붙이면 SwiftUI에서 충돌해 안 뜨는 버그를 회피).
@@ -69,7 +77,8 @@ struct CalendarView: View {
                         onChanged: { await viewModel.reload() },
                         onEdit: { activeSheet = .edit($0) },
                         history: viewModel.history(forReservation: reservation.id),
-                        assigneeName: { viewModel.assignee($0)?.name ?? "미지정" }
+                        assigneeName: { viewModel.assignee($0)?.name ?? "미지정" },
+                        pointRate: pointRate
                     )
                 case .create:
                     ReservationCreateView(
@@ -512,4 +521,5 @@ private struct ReservationRow: View {
 
 #Preview {
     CalendarView()
+        .environment(SessionStore())
 }
