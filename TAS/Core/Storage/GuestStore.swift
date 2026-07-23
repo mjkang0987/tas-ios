@@ -77,6 +77,60 @@ final class GuestStore {
         mutate { $0.onboarded = true }
     }
 
+    // MARK: - Write (로컬 스냅샷 CRUD) — TASService가 게스트일 때 호출
+
+    /// 새 예약 추가. (id는 폼에서 부여해 넘긴다.)
+    @discardableResult
+    func createReservation(_ reservation: Reservation) -> Reservation {
+        mutate { $0.reservations.append(reservation) }
+        return reservation
+    }
+
+    /// 예약 수정(prev.id 기준으로 교체).
+    @discardableResult
+    func updateReservation(prev: Reservation, updated: Reservation) -> Reservation {
+        mutate { s in
+            if let i = s.reservations.firstIndex(where: { $0.id == prev.id }) {
+                s.reservations[i] = updated
+            }
+        }
+        return updated
+    }
+
+    /// 상태 변경(취소/노쇼/복원 등). 없으면 nil.
+    func setReservationStatus(id: Int, status: ReservationStatus) -> Reservation? {
+        var result: Reservation?
+        mutate { s in
+            if let i = s.reservations.firstIndex(where: { $0.id == id }) {
+                s.reservations[i].status = status
+                result = s.reservations[i]
+            }
+        }
+        return result
+    }
+
+    /// 예약 영구 삭제.
+    func deleteReservation(id: Int) {
+        mutate { $0.reservations.removeAll { $0.id == id } }
+    }
+
+    /// 고객 등록/수정(id 기준 upsert).
+    @discardableResult
+    func upsertCustomer(_ customer: Customer) -> Customer {
+        mutate { s in
+            if let i = s.customers.firstIndex(where: { $0.id == customer.id }) {
+                s.customers[i] = customer
+            } else {
+                s.customers.append(customer)
+            }
+        }
+        return customer
+    }
+
+    /// 다음 예약/고객 정수 id(현재 최대 +1) — 폼에서 신규 레코드 id 부여용.
+    var nextReservationId: Int { (snapshot.reservations.map(\.id).max() ?? 0) + 1 }
+    var nextCustomerId: Int { (snapshot.customers.map(\.id).max() ?? 0) + 1 }
+
     // MARK: - Read envelopes (TASService가 API 응답 대신 반환)
 
     var reservationsResponse: ReservationsResponse {

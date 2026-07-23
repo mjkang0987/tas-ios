@@ -37,8 +37,19 @@ final class APIClient {
     }
 
     @discardableResult
+    func patch<Body: Encodable, Response: Decodable>(_ path: String, body: Body) async throws -> Response {
+        try await send(path, method: "PATCH", body: body)
+    }
+
+    @discardableResult
     func delete<Response: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> Response {
         try await send(path, method: "DELETE", query: query, body: Optional<Empty>.none)
+    }
+
+    /// body를 실어 보내는 DELETE — 웹 예약/고객 삭제가 `{ id }`를 본문으로 받는다.
+    @discardableResult
+    func delete<Body: Encodable, Response: Decodable>(_ path: String, body: Body) async throws -> Response {
+        try await send(path, method: "DELETE", body: body)
     }
 
     // MARK: - Core
