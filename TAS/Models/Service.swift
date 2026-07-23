@@ -14,7 +14,7 @@ struct ServiceItem: Codable, Identifiable, Hashable {
     var durationMinutes: Int
     var category: String
     var price: Int
-    var nameI18n: NameI18n?
+    var nameI18n: NameI18n? = nil
 
     var id: String { name }
 
