@@ -54,6 +54,33 @@ final class CalendarViewModel {
 
     func reload() async { await load() }
 
+    /// 기간 요약 — 건수(전체) + 매출(취소·노쇼 제외). 월/년 뷰 집계용.
+    struct PeriodSummary: Equatable { var count: Int; var total: Int }
+
+    /// 월 그리드용: "YYYY-MM" 프리픽스의 일자별 요약("YYYY-MM-DD" → 요약).
+    func dailySummaries(monthPrefix: String, assigneeId: Int? = nil) -> [String: PeriodSummary] {
+        aggregate(prefix: monthPrefix, keyLength: 10, assigneeId: assigneeId)
+    }
+
+    /// 연 리스트용: "YYYY" 프리픽스의 월별 요약("YYYY-MM" → 요약).
+    func monthlySummaries(yearPrefix: String, assigneeId: Int? = nil) -> [String: PeriodSummary] {
+        aggregate(prefix: yearPrefix, keyLength: 7, assigneeId: assigneeId)
+    }
+
+    /// 예약을 한 번 훑어 prefix로 필터하고, date의 앞 keyLength 글자를 키로 집계.
+    private func aggregate(prefix: String, keyLength: Int, assigneeId: Int?) -> [String: PeriodSummary] {
+        var out: [String: PeriodSummary] = [:]
+        for r in state.value?.reservations ?? [] where r.date.hasPrefix(prefix) {
+            guard assigneeId == nil || r.assigneeId == assigneeId else { continue }
+            let key = String(r.date.prefix(keyLength))
+            var s = out[key] ?? PeriodSummary(count: 0, total: 0)
+            s.count += 1
+            if r.status != .cancelled && r.status != .noshow { s.total += r.price ?? 0 }
+            out[key] = s
+        }
+        return out
+    }
+
     /// 당일 요약: 건수 + 매출 합계(취소·노쇼 제외).
     func daySummary(on dateKey: String, assigneeId: Int? = nil) -> (count: Int, total: Int) {
         let items = reservations(on: dateKey, assigneeId: assigneeId)

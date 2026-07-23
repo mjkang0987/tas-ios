@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// 메인 캘린더 — 일/주 뷰. 웹의 `/day`·`/week`에 대응.
+/// 메인 캘린더 — 일/주/월/년 뷰. 웹의 `/day`·`/week`·`/month`·`/year`에 대응.
 struct CalendarView: View {
-    enum Mode: String, CaseIterable { case day = "일", week = "주" }
+    enum Mode: String, CaseIterable { case day = "일", week = "주", month = "월", year = "년" }
 
     @State private var viewModel = CalendarViewModel()
     @State private var selectedDate = Date()
@@ -31,10 +31,13 @@ struct CalendarView: View {
         NavigationStack {
             LoadableView(state: viewModel.state, loadingText: "예약 불러오는 중…") { _ in
                 VStack(spacing: 0) {
+                    modePicker
                     assigneeFilterBar
                     switch mode {
                     case .day: dayList
                     case .week: weekList
+                    case .month: monthView
+                    case .year: yearView
                     }
                 }
             }
@@ -43,13 +46,6 @@ struct CalendarView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     DatePicker("", selection: $selectedDate, displayedComponents: .date)
                         .labelsHidden()
-                }
-                ToolbarItem(placement: .principal) {
-                    Picker("", selection: $mode) {
-                        ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 120)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -126,6 +122,167 @@ struct CalendarView: View {
                 .padding(.vertical, 8)
             }
         }
+    }
+
+    // MARK: - 뷰 모드 선택 (일/주/월/년)
+
+    private var modePicker: some View {
+        Picker("", selection: $mode) {
+            ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+    }
+
+    // MARK: - 월(Month) 뷰
+
+    private static let weekdaySymbols = ["월", "화", "수", "목", "금", "토", "일"]
+    private var gridColumns: [GridItem] { Array(repeating: GridItem(.flexible(), spacing: 4), count: 7) }
+
+    @ViewBuilder private var monthView: some View {
+        let cal = KST.calendar
+        let comps = cal.dateComponents([.year, .month], from: selectedDate)
+        let firstOfMonth = cal.date(from: comps) ?? selectedDate
+        let monthPrefix = KST.monthKey.string(from: firstOfMonth)
+        let summaries = viewModel.dailySummaries(monthPrefix: monthPrefix, assigneeId: selectedAssigneeId)
+        let daysInMonth = cal.range(of: .day, in: .month, for: firstOfMonth)?.count ?? 30
+        let weekday = cal.component(.weekday, from: firstOfMonth)   // 1=일…7=토
+        let leading = (weekday - cal.firstWeekday + 7) % 7           // 월요일 시작 오프셋
+        let monthTotal = summaries.values.reduce(into: (count: 0, total: 0)) { $0.count += $1.count; $0.total += $1.total }
+
+        VStack(spacing: 8) {
+            periodHeader(
+                title: KST.monthLabel.string(from: firstOfMonth),
+                subtitle: monthTotal.count > 0 ? "\(monthTotal.count)건 · \(formatWon(monthTotal.total))" : "예약 없음",
+                onPrev: { shiftMonth(-1) },
+                onNext: { shiftMonth(1) }
+            )
+
+            LazyVGrid(columns: gridColumns, spacing: 4) {
+                ForEach(Array(Self.weekdaySymbols.enumerated()), id: \.offset) { i, s in
+                    Text(s)
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(i >= 5 ? Color.secondary : Color.primary)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .padding(.horizontal, 12)
+
+            ScrollView {
+                LazyVGrid(columns: gridColumns, spacing: 4) {
+                    ForEach(0..<leading, id: \.self) { _ in Color.clear.frame(height: 52) }
+                    ForEach(1...daysInMonth, id: \.self) { day in
+                        let date = cal.date(byAdding: .day, value: day - 1, to: firstOfMonth) ?? firstOfMonth
+                        let key = KST.dayKey.string(from: date)
+                        Button {
+                            selectedDate = date
+                            mode = .day
+                        } label: {
+                            monthDayCell(day: day, summary: summaries[key], isToday: cal.isDateInToday(date))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.bottom, 12)
+            }
+        }
+    }
+
+    private func monthDayCell(day: Int, summary: CalendarViewModel.PeriodSummary?, isToday: Bool) -> some View {
+        VStack(spacing: 3) {
+            Text("\(day)")
+                .font(.callout)
+                .frame(width: 30, height: 30)
+                .background(isToday ? Color.accentColor : Color.clear)
+                .foregroundStyle(isToday ? Color.white : Color.primary)
+                .clipShape(Circle())
+            if let count = summary?.count, count > 0 {
+                Text("\(count)")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Color.accentColor)
+            } else {
+                Text(" ").font(.caption2)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 52)
+        .contentShape(Rectangle())
+    }
+
+    // MARK: - 년(Year) 뷰
+
+    @ViewBuilder private var yearView: some View {
+        let cal = KST.calendar
+        let year = cal.component(.year, from: selectedDate)
+        let yearPrefix = String(format: "%04d", year)
+        let monthly = viewModel.monthlySummaries(yearPrefix: yearPrefix, assigneeId: selectedAssigneeId)
+        let yearTotal = monthly.values.reduce(into: (count: 0, total: 0)) { $0.count += $1.count; $0.total += $1.total }
+
+        VStack(spacing: 8) {
+            periodHeader(
+                title: "\(year)년",
+                subtitle: yearTotal.count > 0 ? "\(yearTotal.count)건 · \(formatWon(yearTotal.total))" : "예약 없음",
+                onPrev: { shiftYear(-1) },
+                onNext: { shiftYear(1) }
+            )
+
+            List {
+                ForEach(1...12, id: \.self) { m in
+                    let key = String(format: "%04d-%02d", year, m)
+                    let summary = monthly[key]
+                    Button {
+                        if let d = cal.date(from: DateComponents(year: year, month: m, day: 1)) {
+                            selectedDate = d
+                            mode = .month
+                        }
+                    } label: {
+                        monthSummaryRow(month: m, summary: summary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .listStyle(.plain)
+        }
+    }
+
+    private func monthSummaryRow(month: Int, summary: CalendarViewModel.PeriodSummary?) -> some View {
+        HStack {
+            Text("\(month)월").font(.body.weight(.medium)).frame(width: 44, alignment: .leading)
+            Spacer()
+            if let summary, summary.count > 0 {
+                Text("\(summary.count)건").font(.subheadline).foregroundStyle(.secondary)
+                Text(formatWon(summary.total)).font(.subheadline.weight(.medium)).frame(minWidth: 90, alignment: .trailing)
+            } else {
+                Text("예약 없음").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
+    }
+
+    // MARK: - 기간 이동 헤더 (월/년 공용)
+
+    private func periodHeader(title: String, subtitle: String, onPrev: @escaping () -> Void, onNext: @escaping () -> Void) -> some View {
+        HStack {
+            Button(action: onPrev) { Image(systemName: "chevron.left") }
+            Spacer()
+            VStack(spacing: 2) {
+                Text(title).font(.headline)
+                Text(subtitle).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button(action: onNext) { Image(systemName: "chevron.right") }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 4)
+    }
+
+    private func shiftMonth(_ delta: Int) {
+        if let d = KST.calendar.date(byAdding: .month, value: delta, to: selectedDate) { selectedDate = d }
+    }
+    private func shiftYear(_ delta: Int) {
+        if let d = KST.calendar.date(byAdding: .year, value: delta, to: selectedDate) { selectedDate = d }
     }
 
     /// 예약 행 버튼 — 일/주 뷰 공용.
