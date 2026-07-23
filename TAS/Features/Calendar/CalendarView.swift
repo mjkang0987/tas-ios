@@ -6,10 +6,22 @@ struct CalendarView: View {
 
     @State private var viewModel = CalendarViewModel()
     @State private var selectedDate = Date()
-    @State private var selected: Reservation?
     @State private var selectedAssigneeId: Int?
     @State private var mode: Mode = .day
-    @State private var showingCreate = false
+    @State private var activeSheet: ActiveSheet?
+
+    /// 예약 상세/추가 시트를 하나의 `.sheet(item:)`로 통합
+    /// (같은 뷰에 `.sheet` 여러 개를 붙이면 SwiftUI에서 충돌해 안 뜨는 버그를 회피).
+    private enum ActiveSheet: Identifiable {
+        case detail(Reservation)
+        case create
+        var id: String {
+            switch self {
+            case .detail(let r): return "detail-\(r.id)"
+            case .create: return "create"
+            }
+        }
+    }
 
     private var dateKey: String { KST.dayKey.string(from: selectedDate) }
 
@@ -39,33 +51,35 @@ struct CalendarView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        showingCreate = true
+                        activeSheet = .create
                     } label: {
                         Image(systemName: "plus")
                     }
                     .disabled(viewModel.state.value == nil)
                 }
             }
-            .sheet(item: $selected) { reservation in
-                ReservationDetailView(
-                    reservation: reservation,
-                    customer: viewModel.customer(reservation.customerId),
-                    assignee: viewModel.assignee(reservation.assigneeId),
-                    serviceColor: viewModel.serviceColor(reservation.service),
-                    isNewCustomer: viewModel.isNewCustomer(reservation)
-                )
-            }
-            .sheet(isPresented: $showingCreate) {
-                ReservationCreateView(
-                    service: TASService(),
-                    customers: viewModel.customers,
-                    assignees: viewModel.activeAssignees,
-                    catalog: viewModel.serviceCatalog,
-                    initialDate: selectedDate,
-                    nextReservationId: viewModel.nextReservationId,
-                    nextCustomerId: viewModel.nextCustomerId,
-                    onSaved: { Task { await viewModel.reload() } }
-                )
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .detail(let reservation):
+                    ReservationDetailView(
+                        reservation: reservation,
+                        customer: viewModel.customer(reservation.customerId),
+                        assignee: viewModel.assignee(reservation.assigneeId),
+                        serviceColor: viewModel.serviceColor(reservation.service),
+                        isNewCustomer: viewModel.isNewCustomer(reservation)
+                    )
+                case .create:
+                    ReservationCreateView(
+                        service: TASService(),
+                        customers: viewModel.customers,
+                        assignees: viewModel.activeAssignees,
+                        catalog: viewModel.serviceCatalog,
+                        initialDate: selectedDate,
+                        nextReservationId: viewModel.nextReservationId,
+                        nextCustomerId: viewModel.nextCustomerId,
+                        onSaved: { Task { await viewModel.reload() } }
+                    )
+                }
             }
         }
         .task { await viewModel.load() }
@@ -100,7 +114,7 @@ struct CalendarView: View {
     /// 예약 행 버튼 — 일/주 뷰 공용.
     private func reservationButton(_ reservation: Reservation) -> some View {
         Button {
-            selected = reservation
+            activeSheet = .detail(reservation)
         } label: {
             ReservationRow(
                 reservation: reservation,
