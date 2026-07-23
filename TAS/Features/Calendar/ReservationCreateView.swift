@@ -15,6 +15,8 @@ struct ReservationCreateView: View {
     let initialDate: Date
     let nextReservationId: Int
     let nextCustomerId: Int
+    /// 편집 대상 예약. nil이면 신규 생성, 있으면 해당 예약을 수정(PUT).
+    var editing: Reservation? = nil
     let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -70,7 +72,7 @@ struct ReservationCreateView: View {
                     Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
                 }
             }
-            .navigationTitle("예약 추가")
+            .navigationTitle(editing == nil ? "예약 추가" : "예약 변경")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -294,12 +296,47 @@ struct ReservationCreateView: View {
     private func setupInitial() {
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = Self.seoul
+        if let editing {
+            prefill(from: editing, cal: cal)
+            return
+        }
         date = initialDate
         // 시작 기본 10:00, 종료 +30분.
         let base = cal.date(bySettingHour: 10, minute: 0, second: 0, of: initialDate) ?? initialDate
         startTime = base
         setEndTime(cal.date(byAdding: .minute, value: 30, to: base) ?? base)
         assigneeId = assignees.first?.id ?? 0
+    }
+
+    /// 편집 모드: 기존 예약 값으로 폼을 채운다. 종료·가격은 수동으로 취급해 자동 재계산이 덮지 않게 한다.
+    private func prefill(from r: Reservation, cal: Calendar) {
+        customerId = r.customerId
+        if let c = customers.first(where: { $0.id == r.customerId }) {
+            customerName = c.name
+            customerTel = c.tel
+        }
+        selectedServices = r.service.split(separator: "+").map(String.init)
+        date = parseDate(r.date, cal: cal) ?? initialDate
+        startTime = parseTime(r.startTime, on: date, cal: cal) ?? date
+        isEndManual = true
+        setEndTime(parseTime(r.endTime, on: date, cal: cal) ?? startTime)
+        if let p = r.price { price = p; isPriceManual = true }
+        memo = r.memo ?? ""
+        assigneeId = r.assigneeId ?? (assignees.first?.id ?? 0)
+    }
+
+    /// "YYYY-MM-DD" → Date(정오, KST) — 종일 표기의 경계 문제를 피하려 정오로.
+    private func parseDate(_ s: String, cal: Calendar) -> Date? {
+        let p = s.split(separator: "-").compactMap { Int($0) }
+        guard p.count == 3 else { return nil }
+        return cal.date(from: DateComponents(timeZone: Self.seoul, year: p[0], month: p[1], day: p[2], hour: 12))
+    }
+
+    /// "HH:mm"을 주어진 날짜에 얹은 Date(KST).
+    private func parseTime(_ s: String, on day: Date, cal: Calendar) -> Date? {
+        let p = s.split(separator: ":").compactMap { Int($0) }
+        guard p.count == 2 else { return nil }
+        return cal.date(bySettingHour: p[0], minute: p[1], second: 0, of: day)
     }
 
     private func recomputeEndTime() {
@@ -351,20 +388,36 @@ struct ReservationCreateView: View {
                 _ = try await service.upsertCustomer(newCustomer)
                 resolvedCustomerId = newCustomer.id
             }
-            let reservation = Reservation(
-                id: nextReservationId,
-                date: KST.dayKey.string(from: date),
-                startTime: timeString(startTime),
-                endTime: timeString(endTime),
-                service: selectedServices.joined(separator: "+"),
-                customerId: resolvedCustomerId,
-                assigneeId: assigneeId == 0 ? nil : assigneeId,
-                status: .active,
-                price: price,
-                memo: memo.trimmingCharacters(in: .whitespaces).isEmpty ? nil : memo.trimmingCharacters(in: .whitespaces),
-                channel: .phone
-            )
-            _ = try await service.createReservation(reservation)
+            let trimmedMemo = memo.trimmingCharacters(in: .whitespaces)
+            let resolvedMemo = trimmedMemo.isEmpty ? nil : trimmedMemo
+            if let editing {
+                // 편집: 기존 값 복사 후 폼이 다루는 필드만 덮어써 결제·네이버·상태 등은 보존.
+                var updated = editing
+                updated.date = KST.dayKey.string(from: date)
+                updated.startTime = timeString(startTime)
+                updated.endTime = timeString(endTime)
+                updated.service = selectedServices.joined(separator: "+")
+                updated.customerId = resolvedCustomerId
+                updated.assigneeId = assigneeId == 0 ? nil : assigneeId
+                updated.price = price
+                updated.memo = resolvedMemo
+                _ = try await service.updateReservation(prev: editing, updated: updated)
+            } else {
+                let reservation = Reservation(
+                    id: nextReservationId,
+                    date: KST.dayKey.string(from: date),
+                    startTime: timeString(startTime),
+                    endTime: timeString(endTime),
+                    service: selectedServices.joined(separator: "+"),
+                    customerId: resolvedCustomerId,
+                    assigneeId: assigneeId == 0 ? nil : assigneeId,
+                    status: .active,
+                    price: price,
+                    memo: resolvedMemo,
+                    channel: .phone
+                )
+                _ = try await service.createReservation(reservation)
+            }
             onSaved()
             dismiss()
         } catch {

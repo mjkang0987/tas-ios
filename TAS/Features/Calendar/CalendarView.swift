@@ -15,10 +15,12 @@ struct CalendarView: View {
     private enum ActiveSheet: Identifiable {
         case detail(Reservation)
         case create
+        case edit(Reservation)
         var id: String {
             switch self {
             case .detail(let r): return "detail-\(r.id)"
             case .create: return "create"
+            case .edit(let r): return "edit-\(r.id)"
             }
         }
     }
@@ -66,7 +68,10 @@ struct CalendarView: View {
                         customer: viewModel.customer(reservation.customerId),
                         assignee: viewModel.assignee(reservation.assigneeId),
                         serviceColor: viewModel.serviceColor(reservation.service),
-                        isNewCustomer: viewModel.isNewCustomer(reservation)
+                        isNewCustomer: viewModel.isNewCustomer(reservation),
+                        service: TASService(),
+                        onChanged: { await viewModel.reload() },
+                        onEdit: { activeSheet = .edit($0) }
                     )
                 case .create:
                     ReservationCreateView(
@@ -77,6 +82,18 @@ struct CalendarView: View {
                         initialDate: selectedDate,
                         nextReservationId: viewModel.nextReservationId,
                         nextCustomerId: viewModel.nextCustomerId,
+                        onSaved: { Task { await viewModel.reload() } }
+                    )
+                case .edit(let reservation):
+                    ReservationCreateView(
+                        service: TASService(),
+                        customers: viewModel.customers,
+                        assignees: viewModel.activeAssignees,
+                        catalog: viewModel.serviceCatalog,
+                        initialDate: selectedDate,
+                        nextReservationId: viewModel.nextReservationId,
+                        nextCustomerId: viewModel.nextCustomerId,
+                        editing: reservation,
                         onSaved: { Task { await viewModel.reload() } }
                     )
                 }
