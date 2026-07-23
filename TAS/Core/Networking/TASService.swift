@@ -6,7 +6,6 @@ import Foundation
 /// 게스트(오프라인) 모드에선 API 대신 `GuestStore`의 로컬 스냅샷을 읽고 쓴다
 /// (웹 `if (shouldUseLocalDb()) { …localDb } else { fetch(/api/…) }`와 동일).
 /// 화면/뷰모델은 이 타입만 거치므로 모드 분기를 몰라도 된다.
-@MainActor
 struct TASService {
     private let client: APIClient
 
