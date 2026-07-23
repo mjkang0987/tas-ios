@@ -12,9 +12,12 @@ struct CustomerDetailView: View {
     var service: TASService = TASService()
     /// 적립금 조정 저장 후 상위 리로드 + 상세 닫기.
     var onChanged: () async -> Void = {}
+    /// 병합 대상 후보(이 고객 제외). 비어있지 않으면 "합치기" 노출.
+    var mergeCandidates: [Customer] = []
 
     @Environment(\.dismiss) private var dismiss
     @State private var showPointAdjust = false
+    @State private var showMerge = false
 
     var body: some View {
         NavigationStack {
@@ -30,6 +33,9 @@ struct CustomerDetailView: View {
                     }
                     if pointsEnabled {
                         Button("적립금 조정") { showPointAdjust = true }
+                    }
+                    if !mergeCandidates.isEmpty {
+                        Button("다른 고객과 합치기") { showMerge = true }
                     }
                 }
 
@@ -93,6 +99,14 @@ struct CustomerDetailView: View {
             .sheet(isPresented: $showPointAdjust) {
                 PointAdjustView(
                     customer: customer,
+                    service: service,
+                    onCompleted: { await onChanged(); dismiss() }
+                )
+            }
+            .sheet(isPresented: $showMerge) {
+                CustomerMergePicker(
+                    source: customer,
+                    candidates: mergeCandidates,
                     service: service,
                     onCompleted: { await onChanged(); dismiss() }
                 )

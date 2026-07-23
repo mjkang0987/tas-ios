@@ -72,6 +72,16 @@ struct TASService {
         return customer
     }
 
+    /// 고객 병합 — POST /api/customers/merge (body=`{sourceIds, targetId}`).
+    @discardableResult
+    func mergeCustomers(sourceId: Int, targetId: Int) async throws -> Bool {
+        if guest.isActive { return guest.mergeCustomers(sourceId: sourceId, targetId: targetId) }
+        struct Body: Encodable { let sourceIds: [Int]; let targetId: Int }
+        struct Resp: Decodable { let merged: Bool? }
+        let resp: Resp = try await client.post("api/customers/merge", body: Body(sourceIds: [sourceId], targetId: targetId))
+        return resp.merged ?? true
+    }
+
     // MARK: - Services — /api/services
     func fetchServices() async throws -> ServicesResponse {
         if guest.isActive { return guest.servicesResponse }

@@ -146,6 +146,45 @@ final class GuestStore {
         return customer
     }
 
+    /// 고객 병합 — source를 target으로 합친다(웹 /api/customers/merge와 동일 규칙).
+    /// 예약 이전 + 적립금 합산 + 적립 이력 병합 + 첫방문일 최소 + 메모태그 병합(중복 제외) + source 삭제.
+    @discardableResult
+    func mergeCustomers(sourceId: Int, targetId: Int) -> Bool {
+        guard sourceId != targetId else { return false }
+        var ok = false
+        mutate { s in
+            guard let si = s.customers.firstIndex(where: { $0.id == sourceId }),
+                  let ti = s.customers.firstIndex(where: { $0.id == targetId }) else { return }
+            let source = s.customers[si]
+            var target = s.customers[ti]
+            // 예약 이전
+            for i in s.reservations.indices where s.reservations[i].customerId == sourceId {
+                s.reservations[i].customerId = targetId
+            }
+            // 적립금 합산 + 이력 병합
+            target.points = (target.points ?? 0) + (source.points ?? 0)
+            target.pointHistories = (target.pointHistories ?? []) + (source.pointHistories ?? [])
+            // 첫 방문일 = 더 이른 날짜
+            target.firstVisitDate = Self.earliest(target.firstVisitDate, source.firstVisitDate)
+            // 메모태그 병합(text 중복 제외)
+            let existing = Set((target.memoTags ?? []).map(\.text))
+            let merged = (target.memoTags ?? []) + (source.memoTags ?? []).filter { !existing.contains($0.text) }
+            target.memoTags = merged.isEmpty ? nil : merged
+            s.customers[ti] = target
+            s.customers.removeAll { $0.id == sourceId }
+            ok = true
+        }
+        return ok
+    }
+
+    /// 두 날짜 문자열("YYYY-MM-DD") 중 이른 것. 한쪽이 nil이면 다른 쪽.
+    private static func earliest(_ a: String?, _ b: String?) -> String? {
+        switch (a, b) {
+        case let (x?, y?): return x < y ? x : y
+        default: return a ?? b
+        }
+    }
+
     /// 담당자 목록 전체 저장(웹 PUT /api/assignees와 동일한 일괄 교체 모델).
     @discardableResult
     func saveAssignees(_ assignees: [Assignee]) -> [Assignee] {

@@ -47,7 +47,8 @@ struct CustomersView: View {
                         onEdit: { activeSheet = .edit($0) },
                         pointsEnabled: session.currentStore?.usePointSystem ?? false,
                         service: TASService(),
-                        onChanged: { await viewModel.load() }
+                        onChanged: { await viewModel.load() },
+                        mergeCandidates: viewModel.allCustomers.filter { $0.id != customer.id }
                     )
                 case .create:
                     CustomerFormView(
