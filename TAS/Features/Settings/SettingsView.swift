@@ -3,6 +3,7 @@ import SwiftUI
 /// 설정 — 매장 정보 및 로그아웃. 웹의 `/settings/*` 허브에 대응하는 스켈레톤.
 struct SettingsView: View {
     @Environment(SessionStore.self) private var session
+    @State private var showStoreEdit = false
 
     var body: some View {
         NavigationStack {
@@ -15,6 +16,8 @@ struct SettingsView: View {
                     if let slug = session.currentStore?.bookingSlug {
                         LabeledContent("예약 슬러그", value: slug)
                     }
+                    Button("매장 정보 편집") { showStoreEdit = true }
+                        .disabled(session.currentStore == nil)
                 }
 
                 Section("기능") {
@@ -68,6 +71,9 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("설정")
+            .sheet(isPresented: $showStoreEdit) {
+                StoreSettingsEditView().environment(session)
+            }
         }
     }
 }

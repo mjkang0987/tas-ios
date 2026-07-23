@@ -1,0 +1,86 @@
+import SwiftUI
+
+/// 매장 정보 편집 — 이름 + 기능 토글(적립금·회원권·온라인예약).
+/// 웹 설정 > 매장관리의 PATCH /api/store 필드 중 앱에서 노출하는 부분만 편집한다.
+/// (업종·예약 슬러그는 재온보딩 영역이라 표시 전용으로 남긴다.)
+struct StoreSettingsEditView: View {
+    @Environment(SessionStore.self) private var session
+    @Environment(\.dismiss) private var dismiss
+
+    var service = TASService()
+
+    @State private var name = ""
+    @State private var usePointSystem = false
+    @State private var useMembershipSystem = false
+    @State private var useOnlineBooking = false
+    @State private var errorMessage: String?
+    @State private var isSaving = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("매장") {
+                    TextField("매장 이름", text: $name)
+                    if let type = session.currentStore?.shopType {
+                        LabeledContent("업종", value: type)
+                    }
+                }
+
+                Section {
+                    Toggle("적립금", isOn: $usePointSystem)
+                    Toggle("회원권", isOn: $useMembershipSystem)
+                    Toggle("온라인예약", isOn: $useOnlineBooking)
+                } header: {
+                    Text("기능")
+                } footer: {
+                    Text("기능을 켜면 해당 메뉴가 노출됩니다. 세부 설정은 각 화면에서 이어집니다.")
+                }
+
+                if let errorMessage {
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                }
+            }
+            .navigationTitle("매장 정보")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("취소") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("저장") { Task { await save() } }
+                        .disabled(isSaving)
+                }
+            }
+            .onAppear(perform: setup)
+        }
+    }
+
+    private func setup() {
+        guard let store = session.currentStore else { return }
+        name = store.name
+        usePointSystem = store.usePointSystem ?? false
+        useMembershipSystem = store.useMembershipSystem ?? false
+        useOnlineBooking = store.useOnlineBooking ?? false
+    }
+
+    private func save() async {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty { errorMessage = "매장 이름을 입력해주세요."; return }
+        guard let current = session.currentStore else { errorMessage = "매장 정보를 불러오지 못했습니다."; return }
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            let updated = try await service.updateStore(
+                current: current,
+                name: trimmed,
+                usePointSystem: usePointSystem,
+                useMembershipSystem: useMembershipSystem,
+                useOnlineBooking: useOnlineBooking
+            )
+            session.currentStore = updated
+            dismiss()
+        } catch {
+            errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
+        }
+    }
+}

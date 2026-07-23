@@ -154,6 +154,18 @@ final class GuestStore {
         return ServicesResponse(services: services, categoryBaseColors: categoryBaseColors)
     }
 
+    /// 매장 기본 정보 저장(이름·기능 토글) — 웹 PATCH /api/store에 대응하는 로컬 버전.
+    @discardableResult
+    func updateStoreSettings(name: String, usePointSystem: Bool, useMembershipSystem: Bool, useOnlineBooking: Bool) -> Store {
+        mutate { s in
+            s.storeName = name
+            s.usePointSystem = usePointSystem
+            s.useMembershipSystem = useMembershipSystem
+            s.useOnlineBooking = useOnlineBooking
+        }
+        return syntheticStore
+    }
+
     /// 다음 예약/고객/담당자 정수 id(현재 최대 +1) — 폼에서 신규 레코드 id 부여용.
     var nextReservationId: Int { (snapshot.reservations.map(\.id).max() ?? 0) + 1 }
     var nextCustomerId: Int { (snapshot.customers.map(\.id).max() ?? 0) + 1 }
