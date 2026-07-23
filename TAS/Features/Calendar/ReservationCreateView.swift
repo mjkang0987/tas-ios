@@ -59,9 +59,10 @@ struct ReservationCreateView: View {
             Form {
                 customerSection
                 serviceSection
+                priceSection
                 assigneeSection
                 dateTimeSection
-                priceMemoSection
+                memoSection
                 if let errorMessage {
                     Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
                 }
@@ -85,7 +86,7 @@ struct ReservationCreateView: View {
 
     private var customerSection: some View {
         Section("고객") {
-            TextField("고객명", text: $customerName)
+            TextField("고객명 검색 또는 신규 입력", text: $customerName)
                 .focused($focusedField, equals: .name)
                 .onChange(of: customerName) { _, _ in
                     if customerId != 0 { customerId = 0; customerTel = "" }  // 이름 재입력 → 신규 전환
@@ -124,24 +125,47 @@ struct ReservationCreateView: View {
 
     // MARK: - 서비스
 
+    /// 서비스 목록을 카테고리 헤더 + 항목으로 평탄화(웹 예약폼: 카테고리별 그룹).
+    private enum ServiceRow: Identifiable {
+        case header(String)
+        case item(ServiceItem)
+        var id: String {
+            switch self {
+            case .header(let c): return "h-\(c)"
+            case .item(let s): return "s-\(s.name)"
+            }
+        }
+    }
+
+    private var serviceRows: [ServiceRow] {
+        var seen = Set<String>()
+        var categories: [String] = []
+        for item in catalog where !seen.contains(item.category) {
+            seen.insert(item.category); categories.append(item.category)
+        }
+        var rows: [ServiceRow] = []
+        for category in categories {
+            rows.append(.header(category))
+            for item in catalog where item.category == category { rows.append(.item(item)) }
+        }
+        return rows
+    }
+
     private var serviceSection: some View {
         Section {
             if catalog.isEmpty {
                 Text("등록된 서비스가 없습니다. 설정에서 먼저 추가해주세요.")
                     .font(.footnote).foregroundStyle(.secondary)
             } else {
-                ForEach(catalog) { item in
-                    Button { toggleService(item.name) } label: {
-                        HStack(spacing: 10) {
-                            ColorDot(color: ServiceColor.categoryColor(item.category), size: 8)
-                            Text(item.name)
-                            Spacer()
-                            Text(formatWon(item.price)).font(.caption).foregroundStyle(.secondary)
-                            Image(systemName: selectedServices.contains(item.name) ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(selectedServices.contains(item.name) ? Color.accentColor : Color(.tertiaryLabel))
-                        }
+                ForEach(serviceRows) { row in
+                    switch row {
+                    case .header(let category):
+                        Text(category)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    case .item(let item):
+                        serviceItemRow(item)
                     }
-                    .buttonStyle(.plain)
                 }
             }
         } header: {
@@ -154,6 +178,29 @@ struct ReservationCreateView: View {
                 }
             }
         }
+    }
+
+    /// 서비스 항목 행 — 웹처럼 체크박스(왼쪽) + 색 배경 칩 + "가격 · 소요시간"(오른쪽).
+    private func serviceItemRow(_ item: ServiceItem) -> some View {
+        let selected = selectedServices.contains(item.name)
+        let color = ServiceColor.categoryColor(item.category)
+        return Button { toggleService(item.name) } label: {
+            HStack(spacing: 10) {
+                Image(systemName: selected ? "checkmark.square.fill" : "square")
+                    .foregroundStyle(selected ? Color.accentColor : Color(.tertiaryLabel))
+                Text(item.name)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(color)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(color.opacity(0.12))
+                    .clipShape(Capsule())
+                Spacer()
+                Text("\(formatWon(item.price)) · \(item.durationMinutes)분")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private func toggleService(_ name: String) {
@@ -196,20 +243,24 @@ struct ReservationCreateView: View {
         }
     }
 
-    // MARK: - 가격/메모
+    // MARK: - 가격 (웹: 서비스 바로 아래)
 
-    private var priceMemoSection: some View {
-        Section {
+    private var priceSection: some View {
+        Section("가격") {
             HStack {
-                Text("가격")
-                Spacer()
                 TextField("0", value: $price, format: .number)
                     .keyboardType(.numberPad)
-                    .multilineTextAlignment(.trailing)
                     .focused($focusedField, equals: .price)
                     .onChange(of: price) { _, _ in isPriceManual = true }
                 Text("원").foregroundStyle(.secondary)
             }
+        }
+    }
+
+    // MARK: - 메모
+
+    private var memoSection: some View {
+        Section("메모") {
             TextField("메모", text: $memo, axis: .vertical)
                 .focused($focusedField, equals: .memo)
                 .lineLimit(1...3)
