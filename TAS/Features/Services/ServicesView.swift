@@ -100,6 +100,10 @@ struct ServicesView: View {
     }
 
     var body: some View {
+        NavigationStack { content }
+    }
+
+    @ViewBuilder private var content: some View {
         LoadableView(state: viewModel.state, loadingText: "서비스 불러오는 중…") { _ in
             if viewModel.services.isEmpty {
                 ContentUnavailableView {
