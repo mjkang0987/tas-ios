@@ -38,7 +38,7 @@ struct MainTabView: View {
                 .tabItem { Label("고객", systemImage: "person.2") }
 
             ServicesView()
-                .tabItem { Label("서비스", systemImage: "scissors") }
+                .tabItem { Label("서비스", systemImage: "menucard") }
 
             SettingsView()
                 .tabItem { Label("설정", systemImage: "gearshape") }
