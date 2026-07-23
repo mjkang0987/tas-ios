@@ -1,5 +1,9 @@
-# TestFlight 자동 업로드 — 수동 트리거(workflow_dispatch)로만 실행.
-# App Store Connect API 키(클라우드 서명)를 사용해 아카이브·서명·업로드까지 자동화한다.
+# TestFlight 자동 업로드.
+# 실행 방법 2가지:
+#   1) 수동: Actions → TestFlight Upload → Run workflow
+#   2) 자동: 커밋 메시지에 [tf] 를 넣어 push (예: "게스트 CRUD 완료 [tf]")
+#      → 매 push마다 올리지 않고, [tf] 표시한 커밋만 업로드해 빌드 폭주를 막는다.
+# App Store Connect API 키(클라우드 서명)로 아카이브·서명·업로드까지 자동화.
 # 필요한 GitHub Secrets: ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_BASE64, ASC_TEAM_ID
 # (설정 방법은 docs/TESTFLIGHT.md 참고. 시크릿이 없으면 초반에 실패하고 안내한다.)
 name: TestFlight Upload
@@ -11,10 +15,14 @@ on:
         description: "표시 버전(CFBundleShortVersionString). 비우면 프로젝트 설정값 사용."
         required: false
         default: ""
+  push:
+    branches: [claude/tas-service-ios-stlzh4]
 
 jobs:
   upload:
     runs-on: macos-latest
+    # 수동 실행은 항상, push는 커밋 메시지에 [tf]가 있을 때만 업로드.
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[tf]')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
