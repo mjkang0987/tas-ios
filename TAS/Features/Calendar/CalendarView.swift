@@ -416,17 +416,52 @@ struct CalendarView: View {
 
     @ViewBuilder private var dayList: some View {
         let items = viewModel.reservations(on: dateKey, assigneeId: selectedAssigneeId)
-        if items.isEmpty {
-            ContentUnavailableView("예약 없음", systemImage: "calendar", description: Text("\(dateKey) 예약이 없습니다."))
-        } else {
-            let summary = viewModel.daySummary(on: dateKey, assigneeId: selectedAssigneeId)
-            VStack(spacing: 0) {
-                daySummaryHeader(count: summary.count, total: summary.total)
-                List(items) { reservationButton($0) }
-                    .listStyle(.plain)
-                    .refreshable { await viewModel.load() }
+        let summary = viewModel.daySummary(on: dateKey, assigneeId: selectedAssigneeId)
+        VStack(spacing: 0) {
+            daySummaryHeader(count: summary.count, total: summary.total)
+            if items.isEmpty {
+                ContentUnavailableView("예약 없음", systemImage: "calendar", description: Text("\(dateKey) 예약이 없습니다."))
+            } else {
+                let range = timelineRange(for: items)
+                DayTimelineView(
+                    reservations: items,
+                    startHour: range.0,
+                    endHour: range.1,
+                    customerName: { viewModel.customerName($0) },
+                    color: { timelineColor($0) },
+                    onTap: { activeSheet = .detail($0) }
+                )
             }
         }
+    }
+
+    /// 타임라인 세로 범위(시) — 영업시간 기준 + 당일 예약을 포함하도록 확장.
+    private func timelineRange(for items: [Reservation]) -> (Int, Int) {
+        var startH = 9, endH = 21
+        if let bh = session.currentStore?.businessHours {
+            if let s = hourOf(bh.start) { startH = s }
+            if let e = hourOf(bh.end) { endH = (minuteOf(bh.end) ?? 0) > 0 ? e + 1 : e }
+        }
+        for r in items {
+            if let s = hourOf(r.startTime) { startH = min(startH, s) }
+            if let e = hourOf(r.endTime) { endH = max(endH, (minuteOf(r.endTime) ?? 0) > 0 ? e + 1 : e) }
+        }
+        startH = max(0, min(startH, 23))
+        endH = max(startH + 1, min(endH, 24))
+        return (startH, endH)
+    }
+
+    /// 블록 색 — 취소·노쇼는 회색, 아니면 담당자 색 우선(없으면 서비스 색).
+    private func timelineColor(_ r: Reservation) -> Color {
+        if r.status == .cancelled || r.status == .noshow { return .gray }
+        if let c = Color(hex: viewModel.assignee(r.assigneeId)?.color) { return c }
+        return viewModel.serviceColor(r.service) ?? .accentColor
+    }
+
+    private func hourOf(_ hhmm: String) -> Int? { Int(hhmm.split(separator: ":").first ?? "") }
+    private func minuteOf(_ hhmm: String) -> Int? {
+        let p = hhmm.split(separator: ":")
+        return p.count == 2 ? Int(p[1]) : nil
     }
 
     // MARK: - 주(Week) 뷰
