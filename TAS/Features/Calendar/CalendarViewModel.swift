@@ -11,6 +11,14 @@ final class CalendarViewModel {
         var assigneesById: [Int: Assignee]
         var serviceColorByName: [String: Color]
         var services: [ServiceItem]
+        var history: [ReservationHistoryEntry]
+    }
+
+    /// 해당 예약의 변경 이력(최신순).
+    func history(forReservation id: Int) -> [ReservationHistoryEntry] {
+        (state.value?.history ?? [])
+            .filter { $0.reservationId == id }
+            .sorted { $0.timestamp > $1.timestamp }
     }
 
     var state: Loadable<Data> = .idle
@@ -142,7 +150,8 @@ final class CalendarViewModel {
                 customersById: customersById,
                 assigneesById: assigneesById,
                 serviceColorByName: serviceColorByName,
-                services: svc.services
+                services: svc.services,
+                history: res.history ?? []
             ))
         } catch {
             state = .failed((error as? APIError)?.errorDescription ?? error.localizedDescription)

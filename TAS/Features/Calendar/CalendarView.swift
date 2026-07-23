@@ -67,7 +67,9 @@ struct CalendarView: View {
                         isNewCustomer: viewModel.isNewCustomer(reservation),
                         service: TASService(),
                         onChanged: { await viewModel.reload() },
-                        onEdit: { activeSheet = .edit($0) }
+                        onEdit: { activeSheet = .edit($0) },
+                        history: viewModel.history(forReservation: reservation.id),
+                        assigneeName: { viewModel.assignee($0)?.name ?? "미지정" }
                     )
                 case .create:
                     ReservationCreateView(

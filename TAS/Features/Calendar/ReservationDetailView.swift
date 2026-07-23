@@ -16,6 +16,9 @@ struct ReservationDetailView: View {
     var onChanged: () async -> Void = {}
     /// "변경" 탭 시 편집 폼을 여는 콜백(제공되지 않으면 변경 버튼 숨김).
     var onEdit: ((Reservation) -> Void)? = nil
+    /// 이 예약의 변경 이력(최신순) + 담당자 이름 해석기.
+    var history: [ReservationHistoryEntry] = []
+    var assigneeName: (Int?) -> String = { _ in "미지정" }
 
     @Environment(\.dismiss) private var dismiss
     @State private var confirming: Confirm?
@@ -98,6 +101,16 @@ struct ReservationDetailView: View {
 
                 if let memo = reservation.memo, !memo.isEmpty {
                     Section("메모") { Text(memo) }
+                }
+
+                if !history.isEmpty {
+                    Section {
+                        NavigationLink {
+                            ReservationHistoryView(entries: history, assigneeName: assigneeName)
+                        } label: {
+                            Label("변경 이력 (\(history.count))", systemImage: "clock.arrow.circlepath")
+                        }
+                    }
                 }
 
                 if let actionError {

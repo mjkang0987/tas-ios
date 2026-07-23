@@ -99,28 +99,34 @@ final class GuestStore {
         return reservation
     }
 
-    /// 예약 수정(prev.id 기준으로 교체).
+    /// 예약 수정(prev.id 기준으로 교체) + 변경 이력 기록(웹과 동일).
     @discardableResult
     func updateReservation(prev: Reservation, updated: Reservation) -> Reservation {
         mutate { s in
             if let i = s.reservations.firstIndex(where: { $0.id == prev.id }) {
                 s.reservations[i] = updated
             }
+            s.history.append(ReservationHistoryEntry(reservationId: prev.id, before: prev, after: updated, timestamp: Self.nowISO()))
         }
         return updated
     }
 
-    /// 상태 변경(취소/노쇼/복원 등). 없으면 nil.
+    /// 상태 변경(취소/노쇼/복원 등) + 변경 이력 기록. 없으면 nil.
     func setReservationStatus(id: Int, status: ReservationStatus) -> Reservation? {
         var result: Reservation?
         mutate { s in
             if let i = s.reservations.firstIndex(where: { $0.id == id }) {
+                let before = s.reservations[i]
                 s.reservations[i].status = status
                 result = s.reservations[i]
+                s.history.append(ReservationHistoryEntry(reservationId: id, before: before, after: s.reservations[i], timestamp: Self.nowISO()))
             }
         }
         return result
     }
+
+    /// 현재 시각 ISO8601 문자열(이력 timestamp용).
+    private static func nowISO() -> String { ISO8601DateFormatter().string(from: Date()) }
 
     /// 예약 영구 삭제.
     func deleteReservation(id: Int) {
