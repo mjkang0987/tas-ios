@@ -12,7 +12,13 @@ struct CustomersView: View {
             }
             .navigationTitle("고객")
             .searchable(text: $viewModel.searchText, prompt: "이름 또는 전화번호")
-            .sheet(item: $selected) { CustomerDetailView(customer: $0) }
+            .sheet(item: $selected) { customer in
+                CustomerDetailView(
+                    customer: customer,
+                    stats: viewModel.stats(for: customer.id),
+                    reservations: viewModel.reservations(for: customer.id)
+                )
+            }
         }
         .task { await viewModel.load() }
     }

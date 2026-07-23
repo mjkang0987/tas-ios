@@ -3,6 +3,8 @@ import SwiftUI
 /// 고객 상세 (읽기) — 웹 `/address` 상세에 대응하는 스켈레톤.
 struct CustomerDetailView: View {
     let customer: Customer
+    var stats: CustomersViewModel.VisitStats? = nil
+    var reservations: [Reservation] = []
 
     @Environment(\.dismiss) private var dismiss
 
@@ -17,6 +19,18 @@ struct CustomerDetailView: View {
                     }
                     if let first = customer.firstVisitDate, !first.isEmpty {
                         LabeledContent("첫 방문", value: first)
+                    }
+                }
+
+                if let stats {
+                    Section("방문 통계") {
+                        HStack {
+                            statCell("방문", stats.visits, .green)
+                            Divider()
+                            statCell("취소", stats.cancels, .gray)
+                            Divider()
+                            statCell("노쇼", stats.noshows, .red)
+                        }
                     }
                 }
 
@@ -45,6 +59,12 @@ struct CustomerDetailView: View {
                         ForEach(histories) { PointHistoryRow(entry: $0) }
                     }
                 }
+
+                if !reservations.isEmpty {
+                    Section("최근 예약") {
+                        ForEach(reservations.prefix(10)) { CustomerReservationRow(reservation: $0) }
+                    }
+                }
             }
             .navigationTitle(customer.name)
             .navigationBarTitleDisplayMode(.inline)
@@ -65,6 +85,30 @@ struct CustomerDetailView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title).font(.caption).foregroundStyle(.secondary)
             Text(body)
+        }
+    }
+
+    private func statCell(_ label: String, _ count: Int, _ color: Color) -> some View {
+        VStack(spacing: 2) {
+            Text("\(count)").font(.title3.weight(.bold)).foregroundStyle(color)
+            Text(label).font(.caption).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct CustomerReservationRow: View {
+    let reservation: Reservation
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(reservation.service).font(.subheadline)
+                Text("\(reservation.date) \(reservation.startTime)")
+                    .font(.caption2).foregroundStyle(.secondary).monospacedDigit()
+            }
+            Spacer()
+            StatusBadge(state: reservation.displayState)
         }
     }
 }
