@@ -97,8 +97,30 @@ struct LoginView: View {
                     providerButton(provider)
                 }
             }
+
+            guestButton
         }
         .frame(maxWidth: 380)
+    }
+
+    /// 웹 `게스트로 사용하기` — 로그인 없이 로컬(오프라인) 모드로 시작.
+    private var guestButton: some View {
+        Button {
+            session.enterGuest()
+        } label: {
+            Text("게스트로 사용하기")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color(.separator), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(isAuthenticating)
+        .padding(.top, 4)
     }
 
     private func providerButton(_ provider: Provider) -> some View {

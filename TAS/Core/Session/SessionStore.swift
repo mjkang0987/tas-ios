@@ -14,6 +14,7 @@ final class SessionStore {
     enum State: Equatable {
         case loading
         case signedOut
+        case guest
         case signedIn(SessionUser)
     }
 
@@ -38,13 +39,34 @@ final class SessionStore {
     var isSignedIn: Bool { user != nil }
 
     /// 앱 시작 시: 저장된 토큰이 있으면 검증(매장 조회)해 세션 복원.
+    /// 토큰이 없어도 게스트 데이터(온보딩 완료)가 있으면 게스트 모드로 복귀.
     func bootstrap() async {
         state = .loading
-        guard keychain.token != nil else {
-            state = .signedOut
+        if keychain.token != nil {
+            await loadSession()
             return
         }
-        await loadSession()
+        if GuestStore.shared.hasOnboardedData {
+            enterGuest()
+            return
+        }
+        state = .signedOut
+    }
+
+    // MARK: - Guest (게스트 · 오프라인 로컬)
+
+    /// 게스트 모드 진입: 로컬 스냅샷 활성화. 온보딩 여부는 RootView가 분기.
+    func enterGuest() {
+        GuestStore.shared.activate()
+        currentStore = GuestStore.shared.syntheticStore
+        state = .guest
+    }
+
+    /// 게스트 모드 종료(로컬 데이터는 유지) → 로그인 화면으로.
+    func exitGuest() {
+        GuestStore.shared.deactivate()
+        currentStore = nil
+        state = .signedOut
     }
 
     /// 소셜 로그인: 웹 `/login`을 ASWebAuth로 열고 code 교환 → 토큰 저장 → 세션 로드.

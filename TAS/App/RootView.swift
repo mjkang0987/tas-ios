@@ -3,6 +3,7 @@ import SwiftUI
 /// Top-level router: login gate → main tabs.
 struct RootView: View {
     @Environment(SessionStore.self) private var session
+    @Environment(GuestStore.self) private var guest
 
     var body: some View {
         switch session.state {
@@ -10,6 +11,13 @@ struct RootView: View {
             ProgressView("불러오는 중…")
         case .signedOut:
             LoginView()
+        case .guest:
+            // 게스트: 온보딩 완료 전이면 온보딩, 완료면 메인.
+            if guest.isOnboarded {
+                MainTabView()
+            } else {
+                GuestOnboardingView()
+            }
         case .signedIn:
             MainTabView()
         }

@@ -8,6 +8,7 @@ struct TASApp: App {
         WindowGroup {
             RootView()
                 .environment(session)
+                .environment(GuestStore.shared)
                 .task { await session.bootstrap() }
         }
     }
