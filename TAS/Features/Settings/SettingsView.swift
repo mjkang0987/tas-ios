@@ -23,6 +23,14 @@ struct SettingsView: View {
                     Toggle("온라인예약", isOn: .constant(session.currentStore?.useOnlineBooking ?? false)).disabled(true)
                 }
 
+                Section("관리") {
+                    NavigationLink {
+                        AssigneesView()
+                    } label: {
+                        Label("담당자", systemImage: "person.text.rectangle")
+                    }
+                }
+
                 Section("계정") {
                     if let user = session.user {
                         LabeledContent("권한", value: user.role.rawValue)
