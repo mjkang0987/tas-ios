@@ -224,7 +224,8 @@ final class GuestStore {
             categoryBaseColors: snapshot.categoryBaseColors,
             businessHours: snapshot.businessHours,
             closedDates: snapshot.closedDates,
-            closedWeekdays: snapshot.closedWeekdays
+            closedWeekdays: snapshot.closedWeekdays,
+            pointSettings: snapshot.pointSettings
         )
     }
 
@@ -236,6 +237,13 @@ final class GuestStore {
             s.closedDates = closedDates
             s.closedWeekdays = closedWeekdays
         }
+        return syntheticStore
+    }
+
+    /// 적립금 설정 저장.
+    @discardableResult
+    func updatePointSettings(_ settings: PointSettings) -> Store {
+        mutate { $0.pointSettings = settings }
         return syntheticStore
     }
 }

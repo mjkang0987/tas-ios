@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(SessionStore.self) private var session
     @State private var showStoreEdit = false
     @State private var showHoursEdit = false
+    @State private var showPointSettings = false
 
     var body: some View {
         NavigationStack {
@@ -21,6 +22,9 @@ struct SettingsView: View {
                         .disabled(session.currentStore == nil)
                     Button("영업시간·휴무 설정") { showHoursEdit = true }
                         .disabled(session.currentStore == nil)
+                    if session.currentStore?.usePointSystem == true {
+                        Button("적립금 설정") { showPointSettings = true }
+                    }
                 }
 
                 Section("기능") {
@@ -74,6 +78,9 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showHoursEdit) {
                 StoreHoursEditView().environment(session)
+            }
+            .sheet(isPresented: $showPointSettings) {
+                PointSettingsEditView().environment(session)
             }
         }
     }

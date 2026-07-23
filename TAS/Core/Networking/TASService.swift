@@ -162,6 +162,19 @@ struct TASService {
         return updated
     }
 
+    /// 적립금 설정 저장 — PUT /api/store (body=`{pointSettings}`).
+    @discardableResult
+    func updatePointSettings(current: Store, pointSettings: PointSettings) async throws -> Store {
+        if guest.isActive { return guest.updatePointSettings(pointSettings) }
+        struct Body: Encodable { let pointSettings: PointSettings }
+        struct Resp: Decodable { let error: String? }
+        let resp: Resp = try await client.put("api/store", body: Body(pointSettings: pointSettings))
+        if let e = resp.error { throw APIError.server(status: 400, message: e) }
+        var updated = current
+        updated.pointSettings = pointSettings
+        return updated
+    }
+
     // MARK: - Session / stores — /api/user/stores
     func fetchStores() async throws -> [Store] {
         if guest.isActive { return [guest.syntheticStore] }

@@ -24,6 +24,7 @@ struct GuestSnapshot: Codable {
     var businessHours: BusinessHours?
     var closedDates: [String] = []
     var closedWeekdays: [Int] = []
+    var pointSettings: PointSettings?
 
     /// 웹 `hasGuestData()` — 온보딩 완료했거나 실제 데이터가 하나라도 있으면 true.
     var hasData: Bool {
