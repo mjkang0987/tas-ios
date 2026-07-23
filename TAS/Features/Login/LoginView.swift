@@ -98,9 +98,30 @@ struct LoginView: View {
                 }
             }
 
+            orDivider
+
             guestButton
         }
         .frame(maxWidth: 380)
+    }
+
+    /// 소셜 로그인과 게스트 사이 "또는" 구분선(clipnote 로그인과 동일).
+    private var orDivider: some View {
+        HStack(spacing: 12) {
+            line
+            Text("또는")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            line
+        }
+        .padding(.top, 8)
+    }
+
+    private var line: some View {
+        Rectangle()
+            .fill(Color(.separator))
+            .frame(height: 1)
+            .frame(maxWidth: .infinity)
     }
 
     /// 웹 `게스트로 사용하기` — 로그인 없이 로컬(오프라인) 모드로 시작.
