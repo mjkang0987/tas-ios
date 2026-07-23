@@ -34,6 +34,9 @@ struct ReservationCreateView: View {
     @State private var price = 0
     @State private var isPriceManual = false
     @State private var memo = ""
+    // 프로그램적 변경이 onChange를 통해 "수동 편집"으로 오인되는 것 방지(값이 실제로 바뀔 때만 억제).
+    @State private var suppressPriceChange = false
+    @State private var suppressEndChange = false
     // 상태
     @State private var errorMessage: String?
     @State private var isSaving = false
@@ -209,8 +212,22 @@ struct ReservationCreateView: View {
         // 소요시간 → 종료시간 자동(수동 편집 전), 가격 자동(수동 편집 전).
         isEndManual = false
         recomputeEndTime()
-        if !isPriceManual { price = totalPrice }
+        if !isPriceManual { setPrice(totalPrice) }
         errorMessage = nil
+    }
+
+    /// price를 프로그램적으로 설정(수동 플래그가 켜지지 않게 억제).
+    private func setPrice(_ value: Int) {
+        guard value != price else { return }
+        suppressPriceChange = true
+        price = value
+    }
+
+    /// endTime을 프로그램적으로 설정(수동 플래그가 켜지지 않게 억제).
+    private func setEndTime(_ value: Date) {
+        guard value != endTime else { return }
+        suppressEndChange = true
+        endTime = value
     }
 
     // MARK: - 담당자
@@ -239,7 +256,10 @@ struct ReservationCreateView: View {
                 .onChange(of: startTime) { _, _ in if !isEndManual { recomputeEndTime() }; errorMessage = nil }
             DatePicker("종료", selection: $endTime, displayedComponents: .hourAndMinute)
                 .environment(\.timeZone, Self.seoul)
-                .onChange(of: endTime) { _, _ in isEndManual = true; errorMessage = nil }
+                .onChange(of: endTime) { _, _ in
+                    if suppressEndChange { suppressEndChange = false } else { isEndManual = true }
+                    errorMessage = nil
+                }
         }
     }
 
@@ -251,7 +271,9 @@ struct ReservationCreateView: View {
                 TextField("0", value: $price, format: .number)
                     .keyboardType(.numberPad)
                     .focused($focusedField, equals: .price)
-                    .onChange(of: price) { _, _ in isPriceManual = true }
+                    .onChange(of: price) { _, _ in
+                        if suppressPriceChange { suppressPriceChange = false } else { isPriceManual = true }
+                    }
                 Text("원").foregroundStyle(.secondary)
             }
         }
@@ -276,7 +298,7 @@ struct ReservationCreateView: View {
         // 시작 기본 10:00, 종료 +30분.
         let base = cal.date(bySettingHour: 10, minute: 0, second: 0, of: initialDate) ?? initialDate
         startTime = base
-        endTime = cal.date(byAdding: .minute, value: 30, to: base) ?? base
+        setEndTime(cal.date(byAdding: .minute, value: 30, to: base) ?? base)
         assigneeId = assignees.first?.id ?? 0
     }
 
@@ -284,7 +306,7 @@ struct ReservationCreateView: View {
         guard totalDuration > 0 else { return }
         var cal = Calendar(identifier: .gregorian)
         cal.timeZone = Self.seoul
-        endTime = cal.date(byAdding: .minute, value: totalDuration, to: startTime) ?? startTime
+        setEndTime(cal.date(byAdding: .minute, value: totalDuration, to: startTime) ?? startTime)
     }
 
     private func timeString(_ d: Date) -> String {

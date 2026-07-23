@@ -66,7 +66,13 @@ final class CalendarViewModel {
 
     func customer(_ id: Int) -> Customer? { state.value?.customersById[id] }
     func assignee(_ id: Int?) -> Assignee? { id.flatMap { state.value?.assigneesById[$0] } }
-    func serviceColor(_ name: String) -> Color? { state.value?.serviceColorByName[name] }
+    /// 서비스명 → 색. "커트+일반펌"처럼 조합된 문자열이면 첫 서비스 색으로 폴백.
+    func serviceColor(_ name: String) -> Color? {
+        guard let map = state.value?.serviceColorByName else { return nil }
+        if let color = map[name] { return color }
+        let first = name.split(separator: "+").first.map(String.init) ?? name
+        return map[first]
+    }
 
     func customerName(_ id: Int) -> String {
         customer(id)?.name ?? "고객 #\(id)"
