@@ -10,24 +10,7 @@ struct CalendarView: View {
     @State private var selectedAssigneeId: Int?
     @State private var mode: Mode = .day
 
-    static let kst = TimeZone(identifier: "Asia/Seoul")!
-
-    static let keyFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.timeZone = kst
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
-
-    private static var kstCalendar: Calendar {
-        var cal = Calendar(identifier: .gregorian)
-        cal.timeZone = kst
-        cal.firstWeekday = 2 // 월요일 시작(웹 WEEKDAY_LABELS)
-        return cal
-    }
-
-    private var dateKey: String { Self.keyFormatter.string(from: selectedDate) }
+    private var dateKey: String { KST.dayKey.string(from: selectedDate) }
 
     var body: some View {
         NavigationStack {
@@ -141,11 +124,11 @@ struct CalendarView: View {
 
     /// 선택 날짜가 속한 주(월~일)의 날짜 키 배열(KST).
     private var weekDayKeys: [String] {
-        let cal = Self.kstCalendar
+        let cal = KST.calendar
         guard let interval = cal.dateInterval(of: .weekOfYear, for: selectedDate) else { return [] }
         return (0..<7).compactMap { offset in
             cal.date(byAdding: .day, value: offset, to: interval.start)
-                .map { Self.keyFormatter.string(from: $0) }
+                .map { KST.dayKey.string(from: $0) }
         }
     }
 
