@@ -21,10 +21,11 @@ struct ReservationDetailView: View {
     @State private var confirming: Confirm?
     @State private var isWorking = false
     @State private var actionError: String?
+    @State private var showPayment = false
 
-    /// 확인이 필요한 파괴적 액션.
+    /// 확인이 필요한 상태 전환 액션.
     private enum Confirm: Identifiable {
-        case cancel, noshow, restore, delete
+        case cancel, noshow, restore, delete, complete
         var id: Int { hashValue }
     }
 
@@ -121,6 +122,13 @@ struct ReservationDetailView: View {
                 }
                 Button("닫기", role: .cancel) {}
             }
+            .sheet(isPresented: $showPayment) {
+                ReservationPaymentView(
+                    reservation: reservation,
+                    service: service,
+                    onCompleted: { await onChanged(); dismiss() }
+                )
+            }
         }
     }
 
@@ -134,12 +142,19 @@ struct ReservationDetailView: View {
                     Button("예약전환") { confirming = .restore }
                     Button("삭제", role: .destructive) { confirming = .delete }
                 } else {
+                    // 결제 상태에 따라 웹 ReservationDetailFooterActions 규칙을 따른다.
+                    if reservation.hasCompletedPayment {
+                        Button("결제수단 변경") { showPayment = true }
+                        Button("예약완료") { confirming = .complete }
+                    } else {
+                        Button("결제완료") { showPayment = true }
+                    }
                     if let onEdit {
                         // dismiss()는 호출하지 않는다 — 상위 sheet(item:)의 값을 .edit로 바꾸면
                         // 시트가 교체되며, 여기서 dismiss까지 하면 교체가 취소된다.
                         Button("변경") { onEdit(reservation) }
                     }
-                    // 결제 완료 예약은 취소·노쇼 대신 변경/삭제만(웹 규칙).
+                    // 결제 완료 예약은 취소·노쇼 대신 예약완료/변경/삭제만(웹 규칙).
                     if !reservation.hasCompletedPayment {
                         Button("취소", role: .destructive) { confirming = .cancel }
                         Button("노쇼") { confirming = .noshow }
@@ -160,6 +175,7 @@ struct ReservationDetailView: View {
         case .noshow: return "노쇼로 처리할까요?"
         case .restore: return "예약으로 되돌릴까요?"
         case .delete: return "이 예약을 삭제할까요? 되돌릴 수 없습니다."
+        case .complete: return "예약을 완료 처리할까요?"
         case nil: return ""
         }
     }
@@ -170,13 +186,14 @@ struct ReservationDetailView: View {
         case .noshow: return "노쇼 처리"
         case .restore: return "예약전환"
         case .delete: return "삭제"
+        case .complete: return "예약완료"
         }
     }
 
     private func confirmRole(_ c: Confirm) -> ButtonRole? {
         switch c {
         case .cancel, .delete: return .destructive
-        case .noshow, .restore: return nil
+        case .noshow, .restore, .complete: return nil
         }
     }
 
@@ -188,6 +205,7 @@ struct ReservationDetailView: View {
             case .cancel: try await service.setReservationStatus(id: reservation.id, status: .cancelled)
             case .noshow: try await service.setReservationStatus(id: reservation.id, status: .noshow)
             case .restore: try await service.setReservationStatus(id: reservation.id, status: .active)
+            case .complete: try await service.setReservationStatus(id: reservation.id, status: .completed)
             case .delete: try await service.deleteReservation(id: reservation.id)
             }
             await onChanged()
