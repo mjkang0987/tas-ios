@@ -3,7 +3,21 @@ import SwiftUI
 /// 고객 주소록 — 웹의 `/address` 화면에 대응.
 struct CustomersView: View {
     @State private var viewModel = CustomersViewModel()
-    @State private var selected: Customer?
+    @State private var activeSheet: ActiveSheet?
+
+    /// 상세/등록/수정 시트를 하나의 `.sheet(item:)`으로 통합(다중 sheet 충돌 회피).
+    private enum ActiveSheet: Identifiable {
+        case detail(Customer)
+        case create
+        case edit(Customer)
+        var id: String {
+            switch self {
+            case .detail(let c): return "detail-\(c.id)"
+            case .create: return "create"
+            case .edit(let c): return "edit-\(c.id)"
+            }
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -12,12 +26,38 @@ struct CustomersView: View {
             }
             .navigationTitle("고객")
             .searchable(text: $viewModel.searchText, prompt: "이름 또는 전화번호")
-            .sheet(item: $selected) { customer in
-                CustomerDetailView(
-                    customer: customer,
-                    stats: viewModel.stats(for: customer.id),
-                    reservations: viewModel.reservations(for: customer.id)
-                )
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        activeSheet = .create
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .disabled(viewModel.state.value == nil)
+                }
+            }
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .detail(let customer):
+                    CustomerDetailView(
+                        customer: customer,
+                        stats: viewModel.stats(for: customer.id),
+                        reservations: viewModel.reservations(for: customer.id),
+                        onEdit: { activeSheet = .edit($0) }
+                    )
+                case .create:
+                    CustomerFormView(
+                        service: TASService(),
+                        nextCustomerId: viewModel.nextCustomerId,
+                        onSaved: { await viewModel.load() }
+                    )
+                case .edit(let customer):
+                    CustomerFormView(
+                        service: TASService(),
+                        editing: customer,
+                        onSaved: { await viewModel.load() }
+                    )
+                }
             }
         }
         .task { await viewModel.load() }
@@ -31,7 +71,7 @@ struct CustomersView: View {
             } else {
                 List(items) { customer in
                     Button {
-                        selected = customer
+                        activeSheet = .detail(customer)
                     } label: {
                         CustomerRow(customer: customer)
                     }

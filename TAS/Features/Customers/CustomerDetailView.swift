@@ -5,6 +5,8 @@ struct CustomerDetailView: View {
     let customer: Customer
     var stats: CustomersViewModel.VisitStats? = nil
     var reservations: [Reservation] = []
+    /// "수정" 탭 시 편집 폼을 여는 콜백(제공되지 않으면 수정 버튼 숨김).
+    var onEdit: ((Customer) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
 
@@ -69,6 +71,12 @@ struct CustomerDetailView: View {
             .navigationTitle(customer.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                if let onEdit {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        // dismiss() 없이 상위 sheet(item:) 값만 .edit로 바꿔 시트를 교체.
+                        Button("수정") { onEdit(customer) }
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("완료") { dismiss() }
                 }

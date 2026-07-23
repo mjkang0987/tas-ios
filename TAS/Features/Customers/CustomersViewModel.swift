@@ -35,6 +35,9 @@ final class CustomersViewModel {
         }
     }
 
+    /// 다음 고객 정수 id(현재 최대 +1) — 신규 등록 폼용(웹 getNextNumericId).
+    var nextCustomerId: Int { ((state.value?.customers.map(\.id).max()) ?? 0) + 1 }
+
     /// 고객의 예약(최근 순).
     func reservations(for id: Int) -> [Reservation] {
         (state.value?.reservationsByCustomer[id] ?? []).sorted {
