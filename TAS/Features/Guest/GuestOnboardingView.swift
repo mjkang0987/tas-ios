@@ -42,12 +42,9 @@ struct GuestOnboardingView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 44))
-                .foregroundStyle(Color.accentColor)
+        VStack(spacing: 6) {
             Text("게스트로 시작하기")
-                .font(.system(.title, design: .rounded).bold())
+                .font(.title2.bold())
             Text("⚡ 30초 설정으로 바로 시작")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -73,73 +70,67 @@ struct GuestOnboardingView: View {
 
     private var storeNameField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("매장 이름")
-                .font(.footnote.weight(.semibold))
+            Text("샵 이름")
+                .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.secondary)
-            TextField("예: 테이크어시트 헤어", text: $storeName)
+            TextField("예) 우리 매장", text: $storeName)
                 .focused($nameFocused)
                 .submitLabel(.done)
                 .onSubmit { nameFocused = false }
+                .font(.system(size: 15))
                 .padding(.horizontal, 14)
-                .frame(height: 48)
+                .frame(height: 44)
                 .background(Color(.secondarySystemBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color(.separator), lineWidth: 1)
+                )
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
     }
 
-    // MARK: - 업종 선택
+    // MARK: - 업종 선택 (웹 OnboardingStep1 — 평평한 그리드 + 세로 카드)
 
     private var industryPicker: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("업종 선택")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Text("고르면 기본 서비스가 자동으로 채워져요 (나중에 수정 가능)")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-            }
-
-            ForEach(ShopCatalog.categories, id: \.key) { category in
-                let items = ShopCatalog.industries.filter { $0.category == category.key }
-                if !items.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(category.name)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.tertiary)
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 8)], spacing: 8) {
-                            ForEach(items) { industry in
-                                industryChip(industry)
-                            }
-                        }
-                    }
+        VStack(alignment: .leading, spacing: 8) {
+            Text("업종 (복수 선택 가능)")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
+                ForEach(ShopCatalog.industries) { industry in
+                    industryCard(industry)
                 }
             }
         }
     }
 
-    private func industryChip(_ industry: ShopIndustry) -> some View {
+    private func industryCard(_ industry: ShopIndustry) -> some View {
         let selected = selectedTypes.contains(industry.value)
         return Button {
             if selected { selectedTypes.remove(industry.value) }
             else { selectedTypes.insert(industry.value) }
         } label: {
-            HStack(spacing: 6) {
+            VStack(spacing: 4) {
                 Text(industry.emoji)
+                    .font(.system(size: 24))
                 Text(industry.label)
-                    .font(.subheadline)
-                    .foregroundStyle(selected ? Color.accentColor : .primary)
-                    .lineLimit(1)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text(industry.desc)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
+            .padding(.vertical, 14)
             .padding(.horizontal, 8)
-            .background(selected ? Color.accentColor.opacity(0.12) : Color(.secondarySystemBackground))
+            .background(selected ? Color.accentColor.opacity(0.06) : Color(.secondarySystemBackground))
             .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(selected ? Color.accentColor : Color(.separator), lineWidth: 2)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
     }
