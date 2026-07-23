@@ -52,7 +52,7 @@ struct ReservationPaymentView: View {
                     Text("결제 종류·금액")
                 } footer: {
                     Text("합계 \(formatWon(enteredTotal)) · 예약가 \(formatWon(reservation.price ?? 0))")
-                        .foregroundStyle(enteredTotal == (reservation.price ?? 0) ? .secondary : .orange)
+                        .foregroundStyle(enteredTotal == (reservation.price ?? 0) ? Color.secondary : Color.orange)
                 }
 
                 if let errorMessage {
