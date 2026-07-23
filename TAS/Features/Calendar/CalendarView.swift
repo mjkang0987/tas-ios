@@ -1,19 +1,31 @@
 import SwiftUI
 
-/// 메인 캘린더 (일 단위) — 웹의 `/day` 뷰에 대응.
+/// 메인 캘린더 — 일/주 뷰. 웹의 `/day`·`/week`에 대응.
 struct CalendarView: View {
+    enum Mode: String, CaseIterable { case day = "일", week = "주" }
+
     @State private var viewModel = CalendarViewModel()
     @State private var selectedDate = Date()
     @State private var selected: Reservation?
     @State private var selectedAssigneeId: Int?
+    @State private var mode: Mode = .day
 
-    private static let keyFormatter: DateFormatter = {
+    static let kst = TimeZone(identifier: "Asia/Seoul")!
+
+    static let keyFormatter: DateFormatter = {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
-        f.timeZone = TimeZone(identifier: "Asia/Seoul")
+        f.timeZone = kst
         f.dateFormat = "yyyy-MM-dd"
         return f
     }()
+
+    private static var kstCalendar: Calendar {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = kst
+        cal.firstWeekday = 2 // 월요일 시작(웹 WEEKDAY_LABELS)
+        return cal
+    }
 
     private var dateKey: String { Self.keyFormatter.string(from: selectedDate) }
 
@@ -22,7 +34,10 @@ struct CalendarView: View {
             LoadableView(state: viewModel.state, loadingText: "예약 불러오는 중…") { _ in
                 VStack(spacing: 0) {
                     assigneeFilterBar
-                    dayList
+                    switch mode {
+                    case .day: dayList
+                    case .week: weekList
+                    }
                 }
             }
             .navigationTitle("캘린더")
@@ -30,6 +45,13 @@ struct CalendarView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     DatePicker("", selection: $selectedDate, displayedComponents: .date)
                         .labelsHidden()
+                }
+                ToolbarItem(placement: .principal) {
+                    Picker("", selection: $mode) {
+                        ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 120)
                 }
             }
             .sheet(item: $selected) { reservation in
@@ -45,7 +67,8 @@ struct CalendarView: View {
         .task { await viewModel.load() }
     }
 
-    /// 담당자 필터 바(담당자가 있을 때만). 공용 FilterChip 재사용.
+    // MARK: - 담당자 필터 바 (공용 FilterChip)
+
     @ViewBuilder private var assigneeFilterBar: some View {
         let assignees = viewModel.assignees
         if !assignees.isEmpty {
@@ -70,7 +93,24 @@ struct CalendarView: View {
         }
     }
 
-    /// 당일 요약(건수·매출) 헤더.
+    /// 예약 행 버튼 — 일/주 뷰 공용.
+    private func reservationButton(_ reservation: Reservation) -> some View {
+        Button {
+            selected = reservation
+        } label: {
+            ReservationRow(
+                reservation: reservation,
+                customerName: viewModel.customerName(reservation.customerId),
+                assignee: viewModel.assignee(reservation.assigneeId),
+                serviceColor: viewModel.serviceColor(reservation.service),
+                isNewCustomer: viewModel.isNewCustomer(reservation)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - 일(Day) 뷰
+
     private func daySummaryHeader(count: Int, total: Int) -> some View {
         HStack {
             Text("\(count)건").font(.subheadline.weight(.semibold))
@@ -82,34 +122,68 @@ struct CalendarView: View {
         .background(Color(.secondarySystemBackground))
     }
 
-    private var dayList: some View {
+    @ViewBuilder private var dayList: some View {
         let items = viewModel.reservations(on: dateKey, assigneeId: selectedAssigneeId)
-        return Group {
-            if items.isEmpty {
-                ContentUnavailableView("예약 없음", systemImage: "calendar", description: Text("\(dateKey) 예약이 없습니다."))
-            } else {
-                let summary = viewModel.daySummary(on: dateKey, assigneeId: selectedAssigneeId)
-                VStack(spacing: 0) {
-                    daySummaryHeader(count: summary.count, total: summary.total)
-                    List(items) { reservation in
-                    Button {
-                        selected = reservation
-                    } label: {
-                        ReservationRow(
-                            reservation: reservation,
-                            customerName: viewModel.customerName(reservation.customerId),
-                            assignee: viewModel.assignee(reservation.assigneeId),
-                            serviceColor: viewModel.serviceColor(reservation.service),
-                            isNewCustomer: viewModel.isNewCustomer(reservation)
-                        )
+        if items.isEmpty {
+            ContentUnavailableView("예약 없음", systemImage: "calendar", description: Text("\(dateKey) 예약이 없습니다."))
+        } else {
+            let summary = viewModel.daySummary(on: dateKey, assigneeId: selectedAssigneeId)
+            VStack(spacing: 0) {
+                daySummaryHeader(count: summary.count, total: summary.total)
+                List(items) { reservationButton($0) }
+                    .listStyle(.plain)
+                    .refreshable { await viewModel.load() }
+            }
+        }
+    }
+
+    // MARK: - 주(Week) 뷰
+
+    /// 선택 날짜가 속한 주(월~일)의 날짜 키 배열(KST).
+    private var weekDayKeys: [String] {
+        let cal = Self.kstCalendar
+        guard let interval = cal.dateInterval(of: .weekOfYear, for: selectedDate) else { return [] }
+        return (0..<7).compactMap { offset in
+            cal.date(byAdding: .day, value: offset, to: interval.start)
+                .map { Self.keyFormatter.string(from: $0) }
+        }
+    }
+
+    private static let weekdayLabels = ["월", "화", "수", "목", "금", "토", "일"]
+
+    private var weekList: some View {
+        List {
+            ForEach(Array(weekDayKeys.enumerated()), id: \.element) { index, key in
+                let items = viewModel.reservations(on: key, assigneeId: selectedAssigneeId)
+                let summary = viewModel.daySummary(on: key, assigneeId: selectedAssigneeId)
+                Section {
+                    if items.isEmpty {
+                        Text("예약 없음").font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        ForEach(items) { reservationButton($0) }
                     }
-                    .buttonStyle(.plain)
-                }
-                .listStyle(.plain)
-                .refreshable { await viewModel.load() }
+                } header: {
+                    HStack {
+                        Text(weekdayHeader(key, index: index)).font(.subheadline.weight(.semibold))
+                        Spacer()
+                        if summary.count > 0 {
+                            Text("\(summary.count)건 · \(formatWon(summary.total))")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
         }
+        .listStyle(.insetGrouped)
+        .refreshable { await viewModel.load() }
+    }
+
+    /// "MM.dd 요일" 헤더.
+    private func weekdayHeader(_ key: String, index: Int) -> String {
+        let parts = key.split(separator: "-")
+        let label = index < Self.weekdayLabels.count ? Self.weekdayLabels[index] : ""
+        guard parts.count == 3 else { return label }
+        return "\(parts[1]).\(parts[2]) \(label)"
     }
 }
 
