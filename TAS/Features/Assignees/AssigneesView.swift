@@ -133,20 +133,20 @@ private struct AssigneeRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            ColorDot(color: Color(hex: assignee.color) ?? .gray, size: 10)
-            VStack(alignment: .leading, spacing: 3) {
+            ColorDot(color: Color(hex: assignee.color) ?? .gray, size: 9)
+            VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(assignee.name).font(.body.weight(.medium))
+                    Text(assignee.name).font(.subheadline.weight(.medium))
                     if let status = assignee.status { AssigneeStatusText(status: status) }
                 }
-                Text(scheduleSummary).font(.caption).foregroundStyle(.secondary)
+                Text(scheduleSummary).font(.caption2).foregroundStyle(.secondary)
                 if let phone = assignee.phone, !phone.isEmpty {
                     Text(phone).font(.caption2).foregroundStyle(.secondary)
                 }
             }
             Spacer()
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 1)
     }
 
     private var scheduleSummary: String {

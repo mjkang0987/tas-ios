@@ -155,14 +155,14 @@ private struct ServiceRow: View {
 
     var body: some View {
         HStack {
-            Text(item.name).font(.body)
+            Text(item.name).font(.subheadline)
             Spacer()
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(formatWon(item.price)).font(.subheadline.weight(.medium))
-                Text("\(item.durationMinutes)분").font(.caption).foregroundStyle(.secondary)
+            VStack(alignment: .trailing, spacing: 1) {
+                Text(formatWon(item.price)).font(.footnote.weight(.medium))
+                Text("\(item.durationMinutes)분").font(.caption2).foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 1)
         .contentShape(Rectangle())
     }
 }

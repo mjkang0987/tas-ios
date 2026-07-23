@@ -89,18 +89,18 @@ private struct CustomerRow: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(customer.name).font(.body.weight(.medium))
-                Text(customer.formattedTel).font(.caption).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(customer.name).font(.subheadline.weight(.medium))
+                Text(customer.formattedTel).font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
             if let points = customer.points, points > 0 {
                 Text("\(points.formatted())P")
-                    .font(.caption.weight(.semibold))
+                    .font(.caption2.weight(.semibold))
                     .foregroundStyle(.tint)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 1)
         .contentShape(Rectangle())
     }
 }

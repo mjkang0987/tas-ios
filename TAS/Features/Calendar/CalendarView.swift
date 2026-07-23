@@ -119,7 +119,7 @@ struct CalendarView: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.vertical, 6)
             }
         }
     }
@@ -132,7 +132,7 @@ struct CalendarView: View {
         }
         .pickerStyle(.segmented)
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 
     // MARK: - 월(Month) 뷰
@@ -171,7 +171,7 @@ struct CalendarView: View {
 
             ScrollView {
                 LazyVGrid(columns: gridColumns, spacing: 4) {
-                    ForEach(0..<leading, id: \.self) { _ in Color.clear.frame(height: 52) }
+                    ForEach(0..<leading, id: \.self) { _ in Color.clear.frame(height: 44) }
                     ForEach(1...daysInMonth, id: \.self) { day in
                         let date = cal.date(byAdding: .day, value: day - 1, to: firstOfMonth) ?? firstOfMonth
                         let key = KST.dayKey.string(from: date)
@@ -191,10 +191,10 @@ struct CalendarView: View {
     }
 
     private func monthDayCell(day: Int, summary: CalendarViewModel.PeriodSummary?, isToday: Bool) -> some View {
-        VStack(spacing: 3) {
+        VStack(spacing: 2) {
             Text("\(day)")
-                .font(.callout)
-                .frame(width: 30, height: 30)
+                .font(.subheadline)
+                .frame(width: 26, height: 26)
                 .background(isToday ? Color.accentColor : Color.clear)
                 .foregroundStyle(isToday ? Color.white : Color.primary)
                 .clipShape(Circle())
@@ -206,7 +206,7 @@ struct CalendarView: View {
                 Text(" ").font(.caption2)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 52)
+        .frame(maxWidth: .infinity, minHeight: 44)
         .contentShape(Rectangle())
     }
 
@@ -305,12 +305,12 @@ struct CalendarView: View {
 
     private func daySummaryHeader(count: Int, total: Int) -> some View {
         HStack {
-            Text("\(count)건").font(.subheadline.weight(.semibold))
+            Text("\(count)건").font(.footnote.weight(.semibold))
             Spacer()
-            Text("매출 \(formatWon(total))").font(.subheadline).foregroundStyle(.secondary)
+            Text("매출 \(formatWon(total))").font(.footnote).foregroundStyle(.secondary)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 5)
         .background(Color(.secondarySystemBackground))
     }
 
@@ -387,26 +387,26 @@ private struct ReservationRow: View {
     let isNewCustomer: Bool
 
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(reservation.startTime).font(.headline).monospacedDigit()
-                Text(reservation.endTime).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(reservation.startTime).font(.subheadline.weight(.semibold)).monospacedDigit()
+                Text(reservation.endTime).font(.caption2).foregroundStyle(.secondary).monospacedDigit()
             }
-            .frame(width: 52, alignment: .leading)
+            .frame(width: 44, alignment: .leading)
 
-            ColorAccentBar(color: Color(hex: assignee?.color), height: 34)
+            ColorAccentBar(color: Color(hex: assignee?.color), height: 28)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(customerName).font(.body.weight(.semibold))
+                    Text(customerName).font(.subheadline.weight(.semibold))
                     if isNewCustomer { NewCustomerBadge() }
                 }
-                HStack(spacing: 6) {
-                    if let serviceColor { ColorDot(color: serviceColor, size: 7) }
+                HStack(spacing: 5) {
+                    if let serviceColor { ColorDot(color: serviceColor, size: 6) }
                     Text(reservation.service)
                     if let assignee { Text("· \(assignee.name)") }
                 }
-                .font(.caption)
+                .font(.caption2)
                 .foregroundStyle(.secondary)
             }
 
@@ -414,7 +414,7 @@ private struct ReservationRow: View {
 
             StatusBadge(state: reservation.displayState)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
         .contentShape(Rectangle())
     }
 }
