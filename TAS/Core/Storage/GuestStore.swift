@@ -269,6 +269,32 @@ final class GuestStore {
         NoticesResponse(notices: snapshot.notices)
     }
 
+    var couponsResponse: CouponsResponse {
+        CouponsResponse(products: snapshot.couponProducts)
+    }
+
+    // MARK: - 쿠폰 상품 CRUD (게스트 로컬)
+
+    @discardableResult
+    func createCoupon(_ product: CouponProduct) -> CouponProduct {
+        mutate { $0.couponProducts.append(product) }
+        return product
+    }
+
+    @discardableResult
+    func updateCoupon(_ product: CouponProduct) -> CouponProduct {
+        mutate { s in
+            if let i = s.couponProducts.firstIndex(where: { $0.id == product.id }) {
+                s.couponProducts[i] = product
+            }
+        }
+        return product
+    }
+
+    func deleteCoupon(id: String) {
+        mutate { $0.couponProducts.removeAll { $0.id == id } }
+    }
+
     // MARK: - 공지 CRUD (게스트 로컬)
 
     @discardableResult

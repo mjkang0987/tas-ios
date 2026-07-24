@@ -49,6 +49,13 @@ struct SettingsView: View {
                     } label: {
                         Label("공지", systemImage: "megaphone")
                     }
+                    if session.currentStore?.useCouponSystem == true {
+                        NavigationLink {
+                            CouponsView()
+                        } label: {
+                            Label("쿠폰", systemImage: "ticket")
+                        }
+                    }
                     NavigationLink {
                         RevenueView()
                     } label: {

@@ -170,6 +170,47 @@ struct TASService {
         let _: Resp = try await client.delete("api/notices", body: Body(id: id))
     }
 
+    // MARK: - Coupons — /api/coupons (상품 등록만; 발급·차감은 웹도 추후)
+    func fetchCoupons() async throws -> CouponsResponse {
+        if guest.isActive { return guest.couponsResponse }
+        return try await client.get("api/coupons")
+    }
+
+    @discardableResult
+    func createCoupon(_ p: CouponProduct) async throws -> CouponProduct {
+        if guest.isActive { return guest.createCoupon(p) }
+        struct Body: Encodable {
+            let name: String; let discountType: CouponDiscountType; let discountValue: Int
+            let maxDiscount: Int?; let minOrderAmount: Int?; let validDays: Int?; let code: String?
+        }
+        struct Resp: Decodable { let product: CouponProduct? }
+        let resp: Resp = try await client.post("api/coupons", body: Body(
+            name: p.name, discountType: p.discountType, discountValue: p.discountValue,
+            maxDiscount: p.maxDiscount, minOrderAmount: p.minOrderAmount, validDays: p.validDays, code: p.code))
+        return resp.product ?? p
+    }
+
+    @discardableResult
+    func updateCoupon(_ p: CouponProduct) async throws -> CouponProduct {
+        if guest.isActive { return guest.updateCoupon(p) }
+        struct Body: Encodable {
+            let id: String; let name: String; let discountType: CouponDiscountType; let discountValue: Int
+            let maxDiscount: Int?; let minOrderAmount: Int?; let validDays: Int?; let code: String?; let status: String
+        }
+        struct Resp: Decodable { let ok: Bool? }
+        let _: Resp = try await client.put("api/coupons", body: Body(
+            id: p.id, name: p.name, discountType: p.discountType, discountValue: p.discountValue,
+            maxDiscount: p.maxDiscount, minOrderAmount: p.minOrderAmount, validDays: p.validDays, code: p.code, status: p.status))
+        return p
+    }
+
+    func deleteCoupon(id: String) async throws {
+        if guest.isActive { guest.deleteCoupon(id: id); return }
+        struct Body: Encodable { let id: String }
+        struct Resp: Decodable { let deleted: Bool?; let archived: Bool? }
+        let _: Resp = try await client.delete("api/coupons", body: Body(id: id))
+    }
+
     // MARK: - Store — /api/store
     func fetchStore() async throws -> Store {
         if guest.isActive { return guest.syntheticStore }
