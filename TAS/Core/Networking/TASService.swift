@@ -129,6 +129,47 @@ struct TASService {
         return try await client.put("api/services", body: Body(services: services, categoryBaseColors: categoryBaseColors))
     }
 
+    // MARK: - Notices — /api/notices
+    func fetchNotices() async throws -> NoticesResponse {
+        if guest.isActive { return guest.noticesResponse }
+        return try await client.get("api/notices")
+    }
+
+    /// 공지 생성 — POST /api/notices (응답=생성된 공지).
+    @discardableResult
+    func createNotice(_ notice: StoreNotice) async throws -> StoreNotice {
+        if guest.isActive { return guest.createNotice(notice) }
+        struct Body: Encodable {
+            let category: NoticeCategory; let title: String; let body: String
+            let visible: Bool; let pinned: Bool
+        }
+        return try await client.post("api/notices", body: Body(
+            category: notice.category, title: notice.title, body: notice.body,
+            visible: notice.visible, pinned: notice.pinned))
+    }
+
+    /// 공지 수정 — PUT /api/notices (body에 id 포함, 응답 `{ok}`).
+    @discardableResult
+    func updateNotice(_ notice: StoreNotice) async throws -> StoreNotice {
+        if guest.isActive { return guest.updateNotice(notice) }
+        struct Body: Encodable {
+            let id: String; let category: NoticeCategory; let title: String; let body: String
+            let visible: Bool; let pinned: Bool
+        }
+        let _: OkResponse = try await client.put("api/notices", body: Body(
+            id: notice.id, category: notice.category, title: notice.title, body: notice.body,
+            visible: notice.visible, pinned: notice.pinned))
+        return notice
+    }
+
+    /// 공지 삭제 — DELETE /api/notices (body=`{id}`).
+    func deleteNotice(id: String) async throws {
+        if guest.isActive { guest.deleteNotice(id: id); return }
+        struct Body: Encodable { let id: String }
+        struct Resp: Decodable { let deleted: Bool? }
+        let _: Resp = try await client.delete("api/notices", body: Body(id: id))
+    }
+
     // MARK: - Store — /api/store
     func fetchStore() async throws -> Store {
         if guest.isActive { return guest.syntheticStore }

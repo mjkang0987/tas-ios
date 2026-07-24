@@ -45,6 +45,11 @@ struct SettingsView: View {
                         Label("담당자", systemImage: "person.text.rectangle")
                     }
                     NavigationLink {
+                        NoticesView()
+                    } label: {
+                        Label("공지", systemImage: "megaphone")
+                    }
+                    NavigationLink {
                         RevenueView()
                     } label: {
                         Label("매출", systemImage: "wonsign.circle")

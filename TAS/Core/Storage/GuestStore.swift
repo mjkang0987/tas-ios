@@ -265,6 +265,32 @@ final class GuestStore {
         AssigneesResponse(assignees: snapshot.assignees)
     }
 
+    var noticesResponse: NoticesResponse {
+        NoticesResponse(notices: snapshot.notices)
+    }
+
+    // MARK: - 공지 CRUD (게스트 로컬)
+
+    @discardableResult
+    func createNotice(_ notice: StoreNotice) -> StoreNotice {
+        mutate { $0.notices.append(notice) }
+        return notice
+    }
+
+    @discardableResult
+    func updateNotice(_ notice: StoreNotice) -> StoreNotice {
+        mutate { s in
+            if let i = s.notices.firstIndex(where: { $0.id == notice.id }) {
+                s.notices[i] = notice
+            }
+        }
+        return notice
+    }
+
+    func deleteNotice(id: String) {
+        mutate { $0.notices.removeAll { $0.id == id } }
+    }
+
     /// 게스트용 합성 매장 — 로그인 매장 대신 스냅샷 정보로 구성.
     var syntheticStore: Store {
         Store(
