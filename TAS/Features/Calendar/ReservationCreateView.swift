@@ -6,12 +6,15 @@ import SwiftUI
 /// 고객(기존 검색 or 신규 이름+연락처) → 서비스(다중선택, 소요시간·가격 자동) →
 /// 담당자 → 날짜 → 시작/종료 시간(종료는 소요시간으로 자동) → 가격(자동, 수정 가능) → 메모.
 /// 저장 시 신규 고객이면 먼저 upsert 후 예약 생성(게스트=로컬/로그인=API 자동 분기).
-/// (결제수단·포인트·담당자 가용성/중복 체크는 다음 단계.)
+/// 담당자 가용성(중복 예약)은 `ReservationOverlap`로 겹침을 감지해 경고·확인한다.
+/// (결제수단·포인트 입력은 다음 단계.)
 struct ReservationCreateView: View {
     let service: TASService
     let customers: [Customer]
     let assignees: [Assignee]            // 재직 중
     let catalog: [ServiceItem]
+    /// 담당자 겹침(중복 예약) 체크용 — 전체 예약(날짜·담당자로 내부 필터).
+    let existingReservations: [Reservation]
     let initialDate: Date
     let nextReservationId: Int
     let nextCustomerId: Int
@@ -42,6 +45,7 @@ struct ReservationCreateView: View {
     // 상태
     @State private var errorMessage: String?
     @State private var isSaving = false
+    @State private var showConflictConfirm = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case name, tel, price, memo }
@@ -67,6 +71,7 @@ struct ReservationCreateView: View {
                 priceSection
                 assigneeSection
                 dateTimeSection
+                conflictSection
                 memoSection
                 if let errorMessage {
                     Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
@@ -79,12 +84,62 @@ struct ReservationCreateView: View {
                     Button("취소") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("저장") { Task { await save() } }
+                    Button("저장") { attemptSave() }
                         .disabled(isSaving)
                 }
             }
             .onAppear(perform: setupInitial)
+            .alert("담당자 겹침", isPresented: $showConflictConfirm) {
+                Button("취소", role: .cancel) {}
+                Button("그래도 저장", role: .destructive) { Task { await save() } }
+            } message: {
+                Text("선택한 담당자에게 시간이 겹치는 예약이 \(currentConflicts.count)건 있습니다. 그래도 저장하시겠어요?")
+            }
         }
+    }
+
+    // MARK: - 담당자 겹침(중복 예약) 경고
+
+    /// 현재 폼 선택(담당자·날짜·시간)과 겹치는 기존 예약. 서비스 미선택 시(시간 무의미) 빈 배열.
+    private var currentConflicts: [Reservation] {
+        guard !selectedServices.isEmpty else { return [] }
+        return ReservationOverlap.conflicts(
+            date: KST.dayKey.string(from: date),
+            startTime: timeString(startTime),
+            endTime: timeString(endTime),
+            assigneeId: assigneeId == 0 ? nil : assigneeId,
+            among: existingReservations,
+            excludingId: editing?.id
+        )
+    }
+
+    @ViewBuilder private var conflictSection: some View {
+        let conflicts = currentConflicts
+        if !conflicts.isEmpty {
+            Section {
+                ForEach(conflicts) { r in
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("\(r.startTime)–\(r.endTime) · \(customerLabel(r.customerId))")
+                                .font(.subheadline.weight(.medium))
+                            if !r.service.isEmpty {
+                                Text(r.service).font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            } header: {
+                Text("담당자 겹침 경고")
+            } footer: {
+                Text("선택한 담당자에게 시간이 겹치는 예약이 \(conflicts.count)건 있습니다. 확인 후 저장하세요.")
+            }
+        }
+    }
+
+    private func customerLabel(_ id: Int) -> String {
+        customers.first(where: { $0.id == id })?.name ?? "고객 #\(id)"
     }
 
     // MARK: - 고객
@@ -369,6 +424,16 @@ struct ReservationCreateView: View {
         if selectedServices.isEmpty { return "서비스를 선택해주세요." }
         if timeString(startTime) >= timeString(endTime) { return "시작 시간은 종료 시간보다 앞서야 합니다." }
         return nil
+    }
+
+    /// 저장 시도 — 유효성 통과 후, 담당자 겹침이 있으면 확인 알럿을, 없으면 바로 저장.
+    private func attemptSave() {
+        if let err = validate() { errorMessage = err; return }
+        if currentConflicts.isEmpty {
+            Task { await save() }
+        } else {
+            showConflictConfirm = true
+        }
     }
 
     private func save() async {
