@@ -3,7 +3,8 @@ import SwiftUI
 /// 결제완료/결제수단 변경 시트 — 웹 `ReservationDetailPaymentLayer` 이식(핵심).
 ///
 /// 결제 항목(수단+금액)을 1개 이상 입력해 `paymentEntries`로 저장하고 결제 완료로 표시한다.
-/// 저장은 PUT `updateReservation`(게스트=로컬). 적립금 자동 적립은 다음 단계.
+/// 저장은 PUT `updateReservation`(게스트=로컬). 결제 시 적립률 자동 적립과, 적립금(`.points`)
+/// 결제분의 고객 잔액 차감(사용 이력)을 함께 반영한다.
 struct ReservationPaymentView: View {
     let reservation: Reservation
     /// 적립 대상 고객(적립 크레딧용). 없으면 적립 생략.
@@ -33,6 +34,17 @@ struct ReservationPaymentView: View {
     private var nonPointTotal: Int { entries.filter { $0.method != .points }.map(\.amount).reduce(0, +) }
     private var defaultAward: Int { pointRate > 0 ? (nonPointTotal * pointRate) / 100 : 0 }
 
+    /// 이번 결제에서 적립금(포인트)으로 결제한 금액.
+    private var pointsUsedNow: Int { Self.pointsUsed(in: entries) }
+    /// 저장 전 이 예약이 이미 사용한 적립금(수정 시 차액만 반영하기 위함).
+    private var previouslyUsed: Int { Self.pointsUsed(in: reservation.paymentEntries ?? []) }
+    /// 이 예약에 사용 가능한 적립금 = 고객 보유분 + 기존에 이 예약이 사용한 분(재편집 허용).
+    private var availablePoints: Int { (customer?.points ?? 0) + previouslyUsed }
+
+    private static func pointsUsed(in entries: [PaymentEntry]) -> Int {
+        entries.filter { $0.method == .points }.map(\.amount).reduce(0, +)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -60,8 +72,14 @@ struct ReservationPaymentView: View {
                 } header: {
                     Text("결제 종류·금액")
                 } footer: {
-                    Text("합계 \(formatWon(enteredTotal)) · 예약가 \(formatWon(reservation.price ?? 0))")
-                        .foregroundStyle(enteredTotal == (reservation.price ?? 0) ? Color.secondary : Color.orange)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("합계 \(formatWon(enteredTotal)) · 예약가 \(formatWon(reservation.price ?? 0))")
+                            .foregroundStyle(enteredTotal == (reservation.price ?? 0) ? Color.secondary : Color.orange)
+                        if pointsUsedNow > 0 || (customer?.points ?? 0) > 0 {
+                            Text("적립금 사용 \(pointsUsedNow.formatted())P · 보유 \(availablePoints.formatted())P")
+                                .foregroundStyle(pointsUsedNow > availablePoints ? Color.red : Color.secondary)
+                        }
+                    }
                 }
 
                 if pointRate > 0 || (reservation.pointEarned ?? 0) > 0 {
@@ -124,6 +142,16 @@ struct ReservationPaymentView: View {
             errorMessage = "결제 금액을 입력해주세요."
             return
         }
+        // 적립금 사용 검증: 고객 정보가 있어야 하고, 보유 잔액을 넘길 수 없다.
+        let newUsed = pointsUsedNow
+        if newUsed > 0 && customer == nil {
+            errorMessage = "적립금 사용은 고객 정보가 필요합니다."
+            return
+        }
+        if newUsed > availablePoints {
+            errorMessage = "적립금 잔액이 부족합니다. (사용 \(newUsed.formatted())P / 보유 \(availablePoints.formatted())P)"
+            return
+        }
         isSaving = true
         defer { isSaving = false }
         var updated = reservation
@@ -139,20 +167,32 @@ struct ReservationPaymentView: View {
 
         do {
             _ = try await service.updateReservation(prev: reservation, updated: updated)
-            let delta = newEarned - previousEarned
-            if delta != 0, var c = customer {
-                let newBalance = max(0, (c.points ?? 0) + delta)
-                let entry = PointHistoryEntry(
-                    id: UUID().uuidString,
-                    type: .paymentEarn,
-                    delta: delta,
-                    balance: newBalance,
-                    description: delta > 0 ? "예약 결제 적립" : "예약 결제 적립 조정",
-                    createdAt: ISO8601DateFormatter().string(from: Date()),
-                    relatedReservationId: reservation.id
-                )
-                c.points = newBalance
-                c.pointHistories = [entry] + (c.pointHistories ?? [])
+
+            // 고객 적립금 반영: 사용(차감)과 적립을 기존분 대비 차액만큼만 조정.
+            let earnDelta = newEarned - previousEarned
+            let useDelta = newUsed - previouslyUsed
+            if (earnDelta != 0 || useDelta != 0), var c = customer {
+                var balance = c.points ?? 0
+                var histories = c.pointHistories ?? []
+                let now = ISO8601DateFormatter().string(from: Date())
+                // 사용(차감) 먼저 — useDelta>0이면 추가 사용, <0이면 사용 취소(환원).
+                if useDelta != 0 {
+                    balance = max(0, balance - useDelta)
+                    histories.insert(PointHistoryEntry(
+                        id: UUID().uuidString, type: .paymentUse, delta: -useDelta, balance: balance,
+                        description: useDelta > 0 ? "예약 결제 사용" : "예약 결제 사용 취소",
+                        createdAt: now, relatedReservationId: reservation.id), at: 0)
+                }
+                // 적립.
+                if earnDelta != 0 {
+                    balance = max(0, balance + earnDelta)
+                    histories.insert(PointHistoryEntry(
+                        id: UUID().uuidString, type: .paymentEarn, delta: earnDelta, balance: balance,
+                        description: earnDelta > 0 ? "예약 결제 적립" : "예약 결제 적립 조정",
+                        createdAt: now, relatedReservationId: reservation.id), at: 0)
+                }
+                c.points = balance
+                c.pointHistories = histories
                 _ = try await service.upsertCustomer(c)
             }
             await onCompleted()
