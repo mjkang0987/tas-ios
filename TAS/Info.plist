@@ -39,6 +39,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- 네이티브 Google 로그인 iOS OAuth 클라이언트 ID. 미설정(REPLACE…)이면 웹 위임 로그인으로 폴백.
+	     Google Cloud Console에서 발급한 iOS 클라이언트 ID로 교체. 셋업: docs/GOOGLE_SIGNIN.md -->
+	<key>GIDClientID</key>
+	<string>REPLACE_WITH_IOS_CLIENT_ID.apps.googleusercontent.com</string>
+	<!-- (선택) 백엔드 검증용 웹(서버) 클라이언트 ID. 필요 없으면 이 키 자체를 삭제해도 됨.
+	<key>GIDServerClientID</key>
+	<string>REPLACE_WITH_WEB_SERVER_CLIENT_ID.apps.googleusercontent.com</string>
+	-->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -49,6 +57,18 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>tasios</string>
+			</array>
+		</dict>
+		<!-- Google 로그인 콜백 스킴 = iOS 클라이언트 ID의 "리버스 클라이언트 ID".
+		     예: com.googleusercontent.apps.123456-abcdef — 발급값으로 교체. -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>kr.co.takeaseat.app.google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.REPLACE_WITH_REVERSED_CLIENT_ID</string>
 			</array>
 		</dict>
 	</array>

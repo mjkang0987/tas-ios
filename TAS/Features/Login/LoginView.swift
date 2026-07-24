@@ -200,9 +200,15 @@ struct LoginView: View {
     private func startLogin(_ provider: String) {
         guard !isAuthenticating else { return }
         let invite = inviteCode.trimmingCharacters(in: .whitespaces)
+        let inviteArg = invite.isEmpty ? nil : invite
         Task {
             authenticatingProvider = provider
-            await session.signIn(provider: provider, invite: invite.isEmpty ? nil : invite)
+            // Google은 네이티브 SDK 경로(설정 시)로, 나머지는 웹 위임으로.
+            if provider == "google" {
+                await session.signInGoogle(invite: inviteArg)
+            } else {
+                await session.signIn(provider: provider, invite: inviteArg)
+            }
             authenticatingProvider = nil
         }
     }

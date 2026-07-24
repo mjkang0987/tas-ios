@@ -26,6 +26,7 @@ final class SessionStore {
     private let service: TASService
     private let keychain = KeychainTokenStore.shared
     private let webAuth = WebAuthSession()
+    private let googleSignIn = GoogleSignInManager()
 
     init(service: TASService = TASService()) {
         self.service = service
@@ -109,6 +110,29 @@ final class SessionStore {
             }
         } catch {
             if !Self.isUserCancellation(error) {
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    /// Google 로그인. 네이티브 SDK가 설정돼 있으면(Info.plist `GIDClientID`) 네이티브 로그인으로
+    /// id_token을 받아 Bearer로 교환하고, 미설정이면 기존 웹 위임(`signIn`)으로 폴백한다.
+    ///
+    /// - Parameter invite: 신규 등록용 초대코드(선택). 네이티브 경로에선 교환 요청 body로 전달된다.
+    func signInGoogle(invite: String? = nil) async {
+        guard AppConfig.googleClientID != nil else {
+            await signIn(provider: "google", invite: invite)
+            return
+        }
+        lastError = nil
+        do {
+            let cred = try await googleSignIn.signIn()
+            let token = try await service.exchangeGoogleIDToken(
+                idToken: cred.idToken, serverAuthCode: cred.serverAuthCode, invite: invite)
+            keychain.save(token)
+            await loadSession()
+        } catch {
+            if !GoogleSignInManager.isUserCancellation(error) {
                 lastError = error.localizedDescription
             }
         }

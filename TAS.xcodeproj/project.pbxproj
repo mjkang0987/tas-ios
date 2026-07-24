@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C300000000000000000000C3 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = C200000000000000000000C2 /* GoogleSignIn */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		A400000000000000000000A4 /* TAS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TAS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -29,6 +33,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C300000000000000000000C3 /* GoogleSignIn in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,6 +75,9 @@
 				A600000000000000000000A6 /* TAS */,
 			);
 			name = TAS;
+			packageProductDependencies = (
+				C200000000000000000000C2 /* GoogleSignIn */,
+			);
 			productName = TAS;
 			productReference = A400000000000000000000A4 /* TAS.app */;
 			productType = "com.apple.product-type.application";
@@ -104,6 +112,9 @@
 			productRefGroup = A300000000000000000000A3 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
+			packageReferences = (
+				C100000000000000000000C1 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
 			targets = (
 				A500000000000000000000A5 /* TAS */,
 			);
@@ -262,6 +273,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C100000000000000000000C1 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C200000000000000000000C2 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C100000000000000000000C1 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A100000000000000000000A1 /* Project object */;
 }

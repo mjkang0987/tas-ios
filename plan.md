@@ -53,7 +53,9 @@
 **🤖 Claude 작업**
 - ⬜ 웹 `/login` 모바일 콜백(`nonce`/`provider`→`tasios://…?code`) 지원 확인·보완(`/api/mobile-auth/*` 브리지 존재)
 - ⬜ 구글 로그인 E2E 검증(로그인→매장 로드→게스트 종료)
-- ⬜ (선택) 완전 네이티브 SDK: iOS OAuth 클라이언트ID + `GoogleSignIn` SPM + Info.plist URL 스킴 + **백엔드 신규 엔드포인트**(네이티브 id_token→Bearer). 웹 위임보다 작업량 큼 → 나중에.
+- 🟡 **네이티브 Google SDK — iOS 구현 완료**(`GoogleSignIn` SPM + `GoogleSignInManager` + `signInGoogle` 폴백 + Info.plist 키/스킴). 셋업·계약: `docs/GOOGLE_SIGNIN.md`.
+  - 🔒 남은 준비: (사용자) Google Cloud **iOS 클라이언트 ID** 발급 → `GIDClientID`·리버스 스킴 교체 / (백엔드) `POST /api/mobile-auth/google`(id_token→Bearer) 신설.
+  - 키 미설정 동안엔 Google 버튼이 자동으로 **웹 위임 로그인**으로 폴백(무회귀).
 
 ## P1 — 게스트→로그인 데이터 이관 🔒(로그인 의존)
 

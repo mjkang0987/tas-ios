@@ -22,6 +22,24 @@ enum AppConfig {
     /// Cookie name carrying the invite code during social login — GUIDE.md §1-1.
     static let inviteCookieName = "tas-invite-code"
 
+    // MARK: - Native Google Sign-In (선택)
+
+    /// 네이티브 Google 로그인용 iOS OAuth 클라이언트 ID (Info.plist `GIDClientID`).
+    /// 값이 없거나 플레이스홀더면 nil — 이 경우 웹 위임 로그인으로 폴백한다.
+    /// 셋업은 `docs/GOOGLE_SIGNIN.md` 참고.
+    static var googleClientID: String? { configuredPlistString("GIDClientID") }
+
+    /// (선택) 백엔드 검증/서버 인가코드용 웹(서버) 클라이언트 ID (Info.plist `GIDServerClientID`).
+    static var googleServerClientID: String? { configuredPlistString("GIDServerClientID") }
+
+    /// Info.plist 문자열을 읽되, 비어 있거나 `REPLACE…` 플레이스홀더면 nil로 취급.
+    private static func configuredPlistString(_ key: String) -> String? {
+        guard let raw = Bundle.main.object(forInfoDictionaryKey: key) as? String else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty || trimmed.uppercased().contains("REPLACE") { return nil }
+        return trimmed
+    }
+
     /// 웹 로그인 페이지 (NextAuth `pages.signIn = '/login'`).
     static var loginURL: URL { apiBaseURL.appendingPathComponent("login") }
 

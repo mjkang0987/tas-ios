@@ -326,6 +326,21 @@ struct TASService {
         let response: Response = try await client.post("api/mobile-auth/exchange", body: Body(code: code, nonce: nonce))
         return response.accessToken
     }
+
+    /// 네이티브 Google id_token을 access 토큰으로 교환한다(웹 위임 없이 iOS SDK 로그인).
+    ///
+    /// 백엔드 신규 엔드포인트 `POST /api/mobile-auth/google` 필요(계약: `docs/GOOGLE_SIGNIN.md`):
+    ///   - 요청: `{ idToken, serverAuthCode?, invite? }`
+    ///   - 서버: id_token 서명·audience(iOS/서버 클라이언트 ID) 검증 → 사용자 조회/생성(초대코드 반영)
+    ///   - 응답: `{ accessToken, expiresAt }`  (기존 `/exchange`와 동일 형태)
+    func exchangeGoogleIDToken(idToken: String, serverAuthCode: String? = nil, invite: String? = nil) async throws -> String {
+        struct Body: Encodable { let idToken: String; let serverAuthCode: String?; let invite: String? }
+        struct Response: Decodable { let accessToken: String; let expiresAt: Int }
+        let response: Response = try await client.post(
+            "api/mobile-auth/google",
+            body: Body(idToken: idToken, serverAuthCode: serverAuthCode, invite: invite))
+        return response.accessToken
+    }
 }
 
 // MARK: - Write response envelopes
