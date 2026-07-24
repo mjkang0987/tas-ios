@@ -211,6 +211,41 @@ struct TASService {
         let _: Resp = try await client.delete("api/coupons", body: Body(id: id))
     }
 
+    // MARK: - Memberships — /api/memberships (상품 등록만; 발급·차감은 웹도 후속)
+    func fetchMemberships() async throws -> MembershipsResponse {
+        if guest.isActive { return guest.membershipsResponse }
+        return try await client.get("api/memberships")
+    }
+
+    @discardableResult
+    func createMembership(_ p: MembershipProduct) async throws -> MembershipProduct {
+        if guest.isActive { return guest.createMembership(p) }
+        struct Body: Encodable { let name: String; let totalCount: Int?; let validDays: Int?; let price: Int }
+        struct Resp: Decodable { let product: MembershipProduct? }
+        let resp: Resp = try await client.post("api/memberships", body: Body(
+            name: p.name, totalCount: p.totalCount, validDays: p.validDays, price: p.price))
+        return resp.product ?? p
+    }
+
+    @discardableResult
+    func updateMembership(_ p: MembershipProduct) async throws -> MembershipProduct {
+        if guest.isActive { return guest.updateMembership(p) }
+        struct Body: Encodable {
+            let id: String; let name: String; let totalCount: Int?; let validDays: Int?; let price: Int; let status: String
+        }
+        struct Resp: Decodable { let ok: Bool? }
+        let _: Resp = try await client.put("api/memberships", body: Body(
+            id: p.id, name: p.name, totalCount: p.totalCount, validDays: p.validDays, price: p.price, status: p.status))
+        return p
+    }
+
+    func deleteMembership(id: String) async throws {
+        if guest.isActive { guest.deleteMembership(id: id); return }
+        struct Body: Encodable { let id: String }
+        struct Resp: Decodable { let deleted: Bool?; let archived: Bool? }
+        let _: Resp = try await client.delete("api/memberships", body: Body(id: id))
+    }
+
     // MARK: - Store — /api/store
     func fetchStore() async throws -> Store {
         if guest.isActive { return guest.syntheticStore }

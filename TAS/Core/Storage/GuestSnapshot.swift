@@ -27,6 +27,7 @@ struct GuestSnapshot: Codable {
     var pointSettings: PointSettings?
     var notices: [StoreNotice] = []
     var couponProducts: [CouponProduct] = []
+    var membershipProducts: [MembershipProduct] = []
 
     /// 웹 `hasGuestData()` — 온보딩 완료했거나 실제 데이터가 하나라도 있으면 true.
     var hasData: Bool {

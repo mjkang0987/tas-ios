@@ -273,6 +273,32 @@ final class GuestStore {
         CouponsResponse(products: snapshot.couponProducts)
     }
 
+    var membershipsResponse: MembershipsResponse {
+        MembershipsResponse(products: snapshot.membershipProducts)
+    }
+
+    // MARK: - 회원권 상품 CRUD (게스트 로컬)
+
+    @discardableResult
+    func createMembership(_ product: MembershipProduct) -> MembershipProduct {
+        mutate { $0.membershipProducts.append(product) }
+        return product
+    }
+
+    @discardableResult
+    func updateMembership(_ product: MembershipProduct) -> MembershipProduct {
+        mutate { s in
+            if let i = s.membershipProducts.firstIndex(where: { $0.id == product.id }) {
+                s.membershipProducts[i] = product
+            }
+        }
+        return product
+    }
+
+    func deleteMembership(id: String) {
+        mutate { $0.membershipProducts.removeAll { $0.id == id } }
+    }
+
     // MARK: - 쿠폰 상품 CRUD (게스트 로컬)
 
     @discardableResult

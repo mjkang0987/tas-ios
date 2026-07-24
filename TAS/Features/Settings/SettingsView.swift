@@ -56,6 +56,13 @@ struct SettingsView: View {
                             Label("쿠폰", systemImage: "ticket")
                         }
                     }
+                    if session.currentStore?.useMembershipSystem == true {
+                        NavigationLink {
+                            MembershipsView()
+                        } label: {
+                            Label("회원권", systemImage: "creditcard")
+                        }
+                    }
                     NavigationLink {
                         RevenueView()
                     } label: {
