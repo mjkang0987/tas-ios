@@ -39,3 +39,27 @@ targets:
         # For dev/local, override without code changes:
         # INFOPLIST_KEY_TAS_API_BASE_URL: https://dev.takeaseat.co.kr
         # INFOPLIST_KEY_TAS_API_BASE_URL: http://localhost:3000
+  # 유닛 테스트(호스티드) — @testable import TAS로 순수 로직 검증. CI: ios-test.yml.
+  TASTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - TASTests
+    dependencies:
+      - target: TAS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: kr.co.takeaseat.appTests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/TAS.app/TAS"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TARGETED_DEVICE_FAMILY: "1,2"
+schemes:
+  TAS:
+    build:
+      targets:
+        TAS: all
+    test:
+      targets:
+        - TASTests
+    run: {}

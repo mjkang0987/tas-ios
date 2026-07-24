@@ -10,8 +10,19 @@
 		C300000000000000000000C3 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = C200000000000000000000C2 /* GoogleSignIn */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		DB00000000000000000000DB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A100000000000000000000A1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A500000000000000000000A5;
+			remoteInfo = TAS;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		A400000000000000000000A4 /* TAS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TAS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D200000000000000000000D2 /* TASTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TASTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -26,6 +37,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A600000000000000000000A6 /* TAS */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A600000000000000000000E6 /* Exceptions for "TAS" folder in "TAS" target */, ); path = TAS; sourceTree = "<group>"; };
+		D300000000000000000000D3 /* TASTests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = TASTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,6 +49,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D500000000000000000000D5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -44,6 +63,7 @@
 			isa = PBXGroup;
 			children = (
 				A600000000000000000000A6 /* TAS */,
+				D300000000000000000000D3 /* TASTests */,
 				A300000000000000000000A3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -52,6 +72,7 @@
 			isa = PBXGroup;
 			children = (
 				A400000000000000000000A4 /* TAS.app */,
+				D200000000000000000000D2 /* TASTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,6 +103,27 @@
 			productReference = A400000000000000000000A4 /* TAS.app */;
 			productType = "com.apple.product-type.application";
 		};
+		D100000000000000000000D1 /* TASTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D700000000000000000000D7 /* Build configuration list for PBXNativeTarget "TASTests" */;
+			buildPhases = (
+				D400000000000000000000D4 /* Sources */,
+				D500000000000000000000D5 /* Frameworks */,
+				D600000000000000000000D6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DA00000000000000000000DA /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D300000000000000000000D3 /* TASTests */,
+			);
+			name = TASTests;
+			productName = TASTests;
+			productReference = D200000000000000000000D2 /* TASTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -94,6 +136,10 @@
 				TargetAttributes = {
 					A500000000000000000000A5 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					D100000000000000000000D1 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = A500000000000000000000A5;
 					};
 				};
 			};
@@ -117,12 +163,20 @@
 			);
 			targets = (
 				A500000000000000000000A5 /* TAS */,
+				D100000000000000000000D1 /* TASTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		B500000000000000000000B5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D600000000000000000000D6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -139,7 +193,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D400000000000000000000D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DA00000000000000000000DA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A500000000000000000000A5 /* TAS */;
+			targetProxy = DB00000000000000000000DB /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A900000000000000000000A9 /* Debug */ = {
@@ -251,6 +320,42 @@
 			};
 			name = Release;
 		};
+		D800000000000000000000D8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "kr.co.takeaseat.appTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TAS.app/TAS";
+			};
+			name = Debug;
+		};
+		D900000000000000000000D9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "kr.co.takeaseat.appTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TAS.app/TAS";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -268,6 +373,15 @@
 			buildConfigurations = (
 				B100000000000000000000B1 /* Debug */,
 				B200000000000000000000B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D700000000000000000000D7 /* Build configuration list for PBXNativeTarget "TASTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D800000000000000000000D8 /* Debug */,
+				D900000000000000000000D9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
