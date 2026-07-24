@@ -341,6 +341,42 @@ struct TASService {
             body: Body(idToken: idToken, serverAuthCode: serverAuthCode, invite: invite))
         return response.accessToken
     }
+
+    // MARK: - Guest→login migration — /api/migrate-local
+    /// 게스트 로컬 스냅샷을 로그인 계정으로 이관한다(웹 POST /api/migrate-local, Bearer+owner).
+    ///
+    /// body = 스냅샷 필드(flat) + `confirm`. 이미 설정된 매장이 있으면 409(ALREADY_SETUP)를
+    /// 반환하며, `confirm: true`로 재요청하면 진행한다. owner가 아니면 403.
+    func migrateLocal(_ snapshot: GuestSnapshot, confirm: Bool) async throws -> MigrateOutcome {
+        do {
+            let _: EmptyResponse = try await client.post(
+                "api/migrate-local", body: MigrateLocalBody(snapshot: snapshot, confirm: confirm))
+            return .migrated
+        } catch APIError.server(let status, let message) where status == 409 || message == "ALREADY_SETUP" {
+            return .alreadySetup
+        }
+    }
+}
+
+/// `/api/migrate-local` 결과.
+enum MigrateOutcome: Equatable {
+    case migrated
+    case alreadySetup   // 409 ALREADY_SETUP — 사용자 확인(confirm) 필요
+}
+
+/// migrate-local 요청 body — 스냅샷 필드를 최상위로 평탄화하고 `confirm` 플래그를 더한다.
+/// (GuestSnapshot은 웹 payload와 필드명을 맞춰 두었으므로 그대로 평탄화해 보낸다.)
+struct MigrateLocalBody: Encodable {
+    let snapshot: GuestSnapshot
+    let confirm: Bool
+
+    private enum ExtraKey: String, CodingKey { case confirm }
+
+    func encode(to encoder: Encoder) throws {
+        try snapshot.encode(to: encoder)                 // 스냅샷 필드를 최상위로
+        var container = encoder.container(keyedBy: ExtraKey.self)
+        try container.encode(confirm, forKey: .confirm)
+    }
 }
 
 // MARK: - Write response envelopes

@@ -59,8 +59,11 @@
 
 ## P1 — 게스트→로그인 데이터 이관 🔒(로그인 의존)
 
-- ⬜ 로그인 직후 게스트 데이터 있으면 이관: `POST /api/migrate-local`(Bearer+**owner**), body=`GuestSnapshot` 매핑. 409 `ALREADY_SETUP`→`confirm:true` 재전송. 성공 시 `GuestStore.reset()/deactivate()`.
-- 키 없이 **로직 미리 구현 가능**(검증만 로그인 후).
+- 🟡 **로직 구현 완료**(E2E 검증만 로그인 후): 로그인 직후 게스트 데이터가 있으면 `POST /api/migrate-local`로 이관.
+  - `TASService.migrateLocal(snapshot:confirm:)` — body는 `MigrateLocalBody`가 스냅샷 필드를 최상위로 평탄화 + `confirm`. 409(`ALREADY_SETUP`)→`.alreadySetup`.
+  - `SessionStore.migrateGuestDataIfNeeded()` — signIn/signInGoogle 성공 후 자동 호출. 403(owner 아님) 조용히 스킵, 409면 `pendingMigration`→RootView 확인 알럿→`confirmMigration()`(confirm:true). 성공 시 `GuestStore.reset()/deactivate()` + 매장 재로드.
+  - 이관 실패는 로그인을 막지 않음(로컬 데이터 보존). 평탄화 인코딩은 `MigrateLocalBodyTests`로 검증.
+  - 로그인이 실제로 켜지기 전까지 이 경로는 트리거되지 않아 **기존 동작 무회귀**.
 
 ## P2 — 로그인 전용 연동 🔒
 
