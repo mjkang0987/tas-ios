@@ -31,19 +31,15 @@ struct ReservationPaymentView: View {
 
     private var enteredTotal: Int { entries.map(\.amount).reduce(0, +) }
     /// 적립금 사용 결제분 제외 금액(적립 기준액).
-    private var nonPointTotal: Int { entries.filter { $0.method != .points }.map(\.amount).reduce(0, +) }
-    private var defaultAward: Int { pointRate > 0 ? (nonPointTotal * pointRate) / 100 : 0 }
+    private var nonPointTotal: Int { PointMath.nonPointTotal(in: entries) }
+    private var defaultAward: Int { PointMath.earnedAmount(base: nonPointTotal, rate: pointRate) }
 
     /// 이번 결제에서 적립금(포인트)으로 결제한 금액.
-    private var pointsUsedNow: Int { Self.pointsUsed(in: entries) }
+    private var pointsUsedNow: Int { PointMath.pointsUsed(in: entries) }
     /// 저장 전 이 예약이 이미 사용한 적립금(수정 시 차액만 반영하기 위함).
-    private var previouslyUsed: Int { Self.pointsUsed(in: reservation.paymentEntries ?? []) }
+    private var previouslyUsed: Int { PointMath.pointsUsed(in: reservation.paymentEntries ?? []) }
     /// 이 예약에 사용 가능한 적립금 = 고객 보유분 + 기존에 이 예약이 사용한 분(재편집 허용).
     private var availablePoints: Int { (customer?.points ?? 0) + previouslyUsed }
-
-    private static func pointsUsed(in entries: [PaymentEntry]) -> Int {
-        entries.filter { $0.method == .points }.map(\.amount).reduce(0, +)
-    }
 
     var body: some View {
         NavigationStack {

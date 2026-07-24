@@ -101,7 +101,7 @@
 
 ## P7 — 품질
 
-- 🟡 자동 테스트: ✅ 유닛 테스트 타깃(TASTests) + `ios-test.yml` CI 신설, 겹침(ReservationOverlap)·Store 디코딩·고객/예약 헬퍼·매출 집계/추세 커버. ⬜ 게스트 CRUD·병합·적립 계산(GuestStore 싱글턴/영속성 분리 필요)은 후속.
+- ✅ 자동 테스트: 유닛 테스트 타깃(TASTests) + `ios-test.yml` CI. 커버: 겹침(ReservationOverlap)·Store 디코딩·고객/예약 헬퍼·매출 집계/추세·**게스트 CRUD/병합**(GuestStore)·**적립 계산**(PointMath)·이관 인코딩(MigrateLocalBody). (추가 회귀 케이스는 필요 시 확장.)
 - ⬜ 접근성/다크모드/다이내믹 타입 재점검(컴팩트 폰트 후 큰 글자 레이아웃)
 - ⬜ 푸시 알림(없음) — APNs 키·등록·백엔드 발송(로그인 기반)
 - ⬜ 로그인 후 다기기 동기화/충돌 처리(웹 `conflict-resolution` 미반영)
