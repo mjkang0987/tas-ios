@@ -165,24 +165,13 @@ struct ReservationPaymentView: View {
             _ = try await service.updateReservation(prev: reservation, updated: updated)
 
             // 고객 적립금 반영: 사용(차감)·적립을 기존분 대비 차액만큼만 조정(PointLedger).
-            if var c = customer {
-                let (balance, changes) = PointLedger.changes(
-                    currentBalance: c.points ?? 0,
-                    previousEarned: previousEarned, newEarned: newEarned,
-                    previousUsed: previouslyUsed, newUsed: newUsed)
-                if !changes.isEmpty {
-                    let now = ISO8601DateFormatter().string(from: Date())
-                    var histories = c.pointHistories ?? []
-                    for change in changes {
-                        histories.insert(PointHistoryEntry(
-                            id: UUID().uuidString, type: change.type, delta: change.delta,
-                            balance: change.balanceAfter, description: change.description,
-                            createdAt: now, relatedReservationId: reservation.id), at: 0)
-                    }
-                    c.points = balance
-                    c.pointHistories = histories
-                    _ = try await service.upsertCustomer(c)
-                }
+            if let c = customer,
+               let updated = PointLedger.apply(
+                to: c, previousEarned: previousEarned, newEarned: newEarned,
+                previousUsed: previouslyUsed, newUsed: newUsed,
+                reservationId: reservation.id,
+                now: ISO8601DateFormatter().string(from: Date()), makeId: { UUID().uuidString }) {
+                _ = try await service.upsertCustomer(updated)
             }
             await onCompleted()
             dismiss()

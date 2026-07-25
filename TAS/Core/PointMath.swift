@@ -54,4 +54,26 @@ enum PointLedger {
 
         return (balance, out)
     }
+
+    /// 계산된 변화를 고객에 적용해 갱신된 `Customer`를 돌려준다(변화 없으면 nil).
+    /// 이력 항목의 id/시각은 순수성 유지를 위해 호출부가 주입한다.
+    static func apply(to customer: Customer,
+                      previousEarned: Int, newEarned: Int,
+                      previousUsed: Int, newUsed: Int,
+                      reservationId: Int, now: String, makeId: () -> String) -> Customer? {
+        let result = changes(currentBalance: customer.points ?? 0,
+                             previousEarned: previousEarned, newEarned: newEarned,
+                             previousUsed: previousUsed, newUsed: newUsed)
+        guard !result.changes.isEmpty else { return nil }
+        var updated = customer
+        var histories = updated.pointHistories ?? []
+        for change in result.changes {
+            histories.insert(PointHistoryEntry(
+                id: makeId(), type: change.type, delta: change.delta, balance: change.balanceAfter,
+                description: change.description, createdAt: now, relatedReservationId: reservationId), at: 0)
+        }
+        updated.points = result.balance
+        updated.pointHistories = histories
+        return updated
+    }
 }

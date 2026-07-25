@@ -55,4 +55,38 @@ final class PointLedgerTests: XCTestCase {
             currentBalance: 100, previousEarned: 0, newEarned: 0, previousUsed: 0, newUsed: 5000)
         XCTAssertEqual(balance, 0)
     }
+
+    // MARK: - apply(to:)
+
+    func testApplyEarnUpdatesCustomer() {
+        let c = Customer(id: 1, name: "가", tel: "010", points: 8000, pointHistories: [])
+        let updated = PointLedger.apply(
+            to: c, previousEarned: 0, newEarned: 1500, previousUsed: 0, newUsed: 0,
+            reservationId: 42, now: "2026-07-24T00:00:00Z", makeId: { "id-1" })
+        XCTAssertEqual(updated?.points, 9500)
+        XCTAssertEqual(updated?.pointHistories?.count, 1)
+        let entry = updated?.pointHistories?.first
+        XCTAssertEqual(entry?.type, .paymentEarn)
+        XCTAssertEqual(entry?.delta, 1500)
+        XCTAssertEqual(entry?.balance, 9500)
+        XCTAssertEqual(entry?.relatedReservationId, 42)
+    }
+
+    func testApplyNoChangeReturnsNil() {
+        let c = Customer(id: 1, name: "가", tel: "010", points: 8000, pointHistories: [])
+        let updated = PointLedger.apply(
+            to: c, previousEarned: 0, newEarned: 0, previousUsed: 0, newUsed: 0,
+            reservationId: 1, now: "t", makeId: { "id" })
+        XCTAssertNil(updated)
+    }
+
+    func testApplyPrependsNewestFirst() {
+        let c = Customer(id: 1, name: "가", tel: "010", points: 8000, pointHistories: [])
+        // 사용 5000 + 적립 1500 → 이력 2건, 최신(적립)이 맨 앞.
+        let updated = PointLedger.apply(
+            to: c, previousEarned: 0, newEarned: 1500, previousUsed: 0, newUsed: 5000,
+            reservationId: 7, now: "t", makeId: { "id" })
+        XCTAssertEqual(updated?.points, 4500)
+        XCTAssertEqual(updated?.pointHistories?.map(\.type), [.paymentEarn, .paymentUse])
+    }
 }
