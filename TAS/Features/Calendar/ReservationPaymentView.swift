@@ -164,32 +164,25 @@ struct ReservationPaymentView: View {
         do {
             _ = try await service.updateReservation(prev: reservation, updated: updated)
 
-            // 고객 적립금 반영: 사용(차감)과 적립을 기존분 대비 차액만큼만 조정.
-            let earnDelta = newEarned - previousEarned
-            let useDelta = newUsed - previouslyUsed
-            if (earnDelta != 0 || useDelta != 0), var c = customer {
-                var balance = c.points ?? 0
-                var histories = c.pointHistories ?? []
-                let now = ISO8601DateFormatter().string(from: Date())
-                // 사용(차감) 먼저 — useDelta>0이면 추가 사용, <0이면 사용 취소(환원).
-                if useDelta != 0 {
-                    balance = max(0, balance - useDelta)
-                    histories.insert(PointHistoryEntry(
-                        id: UUID().uuidString, type: .paymentUse, delta: -useDelta, balance: balance,
-                        description: useDelta > 0 ? "예약 결제 사용" : "예약 결제 사용 취소",
-                        createdAt: now, relatedReservationId: reservation.id), at: 0)
+            // 고객 적립금 반영: 사용(차감)·적립을 기존분 대비 차액만큼만 조정(PointLedger).
+            if var c = customer {
+                let (balance, changes) = PointLedger.changes(
+                    currentBalance: c.points ?? 0,
+                    previousEarned: previousEarned, newEarned: newEarned,
+                    previousUsed: previouslyUsed, newUsed: newUsed)
+                if !changes.isEmpty {
+                    let now = ISO8601DateFormatter().string(from: Date())
+                    var histories = c.pointHistories ?? []
+                    for change in changes {
+                        histories.insert(PointHistoryEntry(
+                            id: UUID().uuidString, type: change.type, delta: change.delta,
+                            balance: change.balanceAfter, description: change.description,
+                            createdAt: now, relatedReservationId: reservation.id), at: 0)
+                    }
+                    c.points = balance
+                    c.pointHistories = histories
+                    _ = try await service.upsertCustomer(c)
                 }
-                // 적립.
-                if earnDelta != 0 {
-                    balance = max(0, balance + earnDelta)
-                    histories.insert(PointHistoryEntry(
-                        id: UUID().uuidString, type: .paymentEarn, delta: earnDelta, balance: balance,
-                        description: earnDelta > 0 ? "예약 결제 적립" : "예약 결제 적립 조정",
-                        createdAt: now, relatedReservationId: reservation.id), at: 0)
-                }
-                c.points = balance
-                c.pointHistories = histories
-                _ = try await service.upsertCustomer(c)
             }
             await onCompleted()
             dismiss()
