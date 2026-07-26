@@ -85,8 +85,9 @@
 
 > tas 원본 스펙 확인 결과(2026-07): **회원권은 발급/차감 API가 실재**(`/api/membership-issue`·`/api/membership-use`, staff, **로그인 전용** — 게스트 local-db 미지원). **쿠폰은 미구현**(Phase 2 발급·Phase 3 결제차감 예정, `CustomerCoupon` 타입·GET만 존재). 결제수단 자동 차감(`PaymentMethod.membership/coupon`)은 양쪽 다 Phase 3 미구현.
 
-- 🟡 **회원권 발급/차감(로그인 전용)** — iOS 데이터/서비스 계층 이식 완료:
-  `CustomerMembership` 모델 + `MembershipsResponse.memberships` + `TASService.issueMembership/cancelMembership/useMembership`(게스트는 "로그인 후 이용" 차단). ⬜ 발급/차감 UI(회원권 화면, 로그인 시 노출) 후속. E2E는 로그인 활성화 후.
+- 🟡 **회원권 발급/차감(로그인 전용)** — iOS 이식 완료(데이터+서비스+UI), E2E만 로그인 후:
+  `CustomerMembership` 모델 + `MembershipsResponse.memberships` + `TASService.issueMembership/cancelMembership/useMembership`(게스트는 "로그인 후 이용" 차단).
+  회원권 화면에 **상품/발급 탭** — 발급 탭(로그인 시): 고객+상품 선택 발급 시트, 발급 내역에 차감/복원/취소. 게스트는 잠금 안내.
 - ⬜ **쿠폰 발급/차감** — tas에도 미구현. 백엔드 Phase 2/3 선행 필요.
 - ⬜ **결제 연동 차감**(예약 결제수단으로 회원권/쿠폰 차감) — 백엔드 Phase 3(`PaymentMethod` enum 확장) 선행 필요.
 
