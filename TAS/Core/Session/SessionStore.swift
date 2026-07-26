@@ -169,8 +169,13 @@ final class SessionStore {
         pendingMigration = false
         guard GuestStore.shared.snapshot.hasData else { return }
         do {
-            _ = try await service.migrateLocal(GuestStore.shared.snapshot, confirm: true)
-            await finishMigration(announce: true)
+            switch try await service.migrateLocal(GuestStore.shared.snapshot, confirm: true) {
+            case .migrated:
+                await finishMigration(announce: true)
+            case .alreadySetup:
+                // confirm:true인데도 서버가 진행하지 않음 → 로컬 데이터는 절대 삭제하지 않는다.
+                migrationMessage = "게스트 데이터를 이관하지 못했습니다. 로컬 데이터는 보존됩니다."
+            }
         } catch {
             migrationMessage = "게스트 데이터 이관에 실패했습니다. 로컬 데이터는 보존됩니다."
         }
