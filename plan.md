@@ -81,9 +81,14 @@
 - ⬜ **다국어 이름(i18n)** — `nameI18n`/`storeNameI18n`/`titleI18n` 편집(공개 예약 페이지용, 우선순위 낮음)
 - ✅ **매출 확장** — 기간 필터(월/년) + 추세 막대 차트(Swift Charts, 일별/월별). 합계·담당자별은 선택 기간 기준으로 집계.
 
-## P4 — 쿠폰·회원권 발급/차감 (웹도 "추후 지원")
+## P4 — 쿠폰·회원권 발급/차감
 
-- ⬜ 현재 상품(템플릿) 등록까지만. 풀 기능 = 고객 **발급**(CustomerCoupon/Membership) + 결제 시 **할인/차감**. 백엔드 발급·사용 엔드포인트 신설 필요.
+> tas 원본 스펙 확인 결과(2026-07): **회원권은 발급/차감 API가 실재**(`/api/membership-issue`·`/api/membership-use`, staff, **로그인 전용** — 게스트 local-db 미지원). **쿠폰은 미구현**(Phase 2 발급·Phase 3 결제차감 예정, `CustomerCoupon` 타입·GET만 존재). 결제수단 자동 차감(`PaymentMethod.membership/coupon`)은 양쪽 다 Phase 3 미구현.
+
+- 🟡 **회원권 발급/차감(로그인 전용)** — iOS 데이터/서비스 계층 이식 완료:
+  `CustomerMembership` 모델 + `MembershipsResponse.memberships` + `TASService.issueMembership/cancelMembership/useMembership`(게스트는 "로그인 후 이용" 차단). ⬜ 발급/차감 UI(회원권 화면, 로그인 시 노출) 후속. E2E는 로그인 활성화 후.
+- ⬜ **쿠폰 발급/차감** — tas에도 미구현. 백엔드 Phase 2/3 선행 필요.
+- ⬜ **결제 연동 차감**(예약 결제수단으로 회원권/쿠폰 차감) — 백엔드 Phase 3(`PaymentMethod` enum 확장) 선행 필요.
 
 ## P5 — 캘린더·디자인 마감
 

@@ -246,6 +246,37 @@ struct TASService {
         let _: Resp = try await client.delete("api/memberships", body: Body(id: id))
     }
 
+    // MARK: - 회원권 발급/차감 — /api/membership-issue · /api/membership-use (로그인 전용)
+    /// 발급·차감은 웹도 로그인 전용(게스트 local-db 미지원). 게스트면 안내 후 차단.
+    private static let membershipLoginOnly = APIError.server(status: 403, message: "회원권은 로그인 후 이용할 수 있습니다.")
+
+    /// 고객에게 회원권 발급 — POST /api/membership-issue (staff). 응답 `{id}`.
+    @discardableResult
+    func issueMembership(customerId: Int, productId: String) async throws -> String {
+        if guest.isActive { throw Self.membershipLoginOnly }
+        struct Body: Encodable { let customerId: Int; let productId: String }
+        struct Resp: Decodable { let id: String }
+        let resp: Resp = try await client.post("api/membership-issue", body: Body(customerId: customerId, productId: productId))
+        return resp.id
+    }
+
+    /// 발급 회원권 취소 — DELETE /api/membership-issue (body=`{id}`, status→cancelled).
+    func cancelMembership(id: String) async throws {
+        if guest.isActive { throw Self.membershipLoginOnly }
+        struct Body: Encodable { let id: String }
+        let _: OkResponse = try await client.delete("api/membership-issue", body: Body(id: id))
+    }
+
+    /// 회원권 횟수 수동 차감/복원 — POST /api/membership-use. 응답 `{remainingCount}`.
+    @discardableResult
+    func useMembership(id: String, action: MembershipUseAction) async throws -> Int? {
+        if guest.isActive { throw Self.membershipLoginOnly }
+        struct Body: Encodable { let membershipId: String; let action: String }
+        struct Resp: Decodable { let remainingCount: Int? }
+        let resp: Resp = try await client.post("api/membership-use", body: Body(membershipId: id, action: action.rawValue))
+        return resp.remainingCount
+    }
+
     // MARK: - Store — /api/store
     func fetchStore() async throws -> Store {
         if guest.isActive { return guest.syntheticStore }
