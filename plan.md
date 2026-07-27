@@ -88,7 +88,7 @@
 - 🟡 **회원권 발급/차감(로그인 전용)** — iOS 이식 완료(데이터+서비스+UI), E2E만 로그인 후:
   `CustomerMembership` 모델 + `MembershipsResponse.memberships` + `TASService.issueMembership/cancelMembership/useMembership`(게스트는 "로그인 후 이용" 차단).
   회원권 화면에 **상품/발급 탭** — 발급 탭(로그인 시): 고객+상품 선택 발급 시트, 발급 내역에 차감/복원/취소. 게스트는 잠금 안내.
-- ⬜ **쿠폰 발급/차감** — tas에도 미구현. 백엔드 Phase 2/3 선행 필요.
+- 🟡 **쿠폰 발급(직접, Phase 2)** — iOS 이식 완료(모델·서비스·상품/발급 탭 UI, 로그인 게이트, 회원권 패턴 미러). tas 백엔드 `coupon-issue.ts`는 작성했으나 **push 권한 거부로 미반영** → 코드·적용절차는 `docs/COUPON_ISSUE_BACKEND.md`(CustomerCoupon 테이블 기존재라 마이그레이션 불필요). ⬜ 코드형 발급·결제 차감(Phase 3)은 후속.
 - ⬜ **결제 연동 차감**(예약 결제수단으로 회원권/쿠폰 차감) — 백엔드 Phase 3(`PaymentMethod` enum 확장) 선행 필요.
 
 ## P5 — 캘린더·디자인 마감

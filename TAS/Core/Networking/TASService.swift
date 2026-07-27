@@ -211,6 +211,27 @@ struct TASService {
         let _: Resp = try await client.delete("api/coupons", body: Body(id: id))
     }
 
+    // MARK: - 쿠폰 발급 — /api/coupon-issue (로그인 전용, 백엔드 Phase 2)
+    /// 쿠폰 발급/취소도 로그인 전용(게스트 미지원). 결제 자동 차감은 Phase 3 미구현.
+    private static let couponLoginOnly = APIError.server(status: 403, message: "쿠폰은 로그인 후 이용할 수 있습니다.")
+
+    /// 고객에게 쿠폰 직접 발급 — POST /api/coupon-issue (staff). 응답 `{id}`.
+    @discardableResult
+    func issueCoupon(customerId: Int, productId: String) async throws -> String {
+        if guest.isActive { throw Self.couponLoginOnly }
+        struct Body: Encodable { let customerId: Int; let productId: String }
+        struct Resp: Decodable { let id: String }
+        let resp: Resp = try await client.post("api/coupon-issue", body: Body(customerId: customerId, productId: productId))
+        return resp.id
+    }
+
+    /// 발급 쿠폰 취소 — DELETE /api/coupon-issue (body=`{id}`, status→cancelled).
+    func cancelCoupon(id: String) async throws {
+        if guest.isActive { throw Self.couponLoginOnly }
+        struct Body: Encodable { let id: String }
+        let _: OkResponse = try await client.delete("api/coupon-issue", body: Body(id: id))
+    }
+
     // MARK: - Memberships — /api/memberships (상품 등록만; 발급·차감은 웹도 후속)
     func fetchMemberships() async throws -> MembershipsResponse {
         if guest.isActive { return guest.membershipsResponse }
