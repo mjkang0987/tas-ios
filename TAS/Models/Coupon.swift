@@ -16,7 +16,27 @@ struct CouponProduct: Codable, Identifiable, Hashable {
     var minOrderAmount: Int?        // 최소 주문금액
     var validDays: Int?             // 발급일+유효일수 (nil = 무기한)
     var code: String?               // 코드형이면 코드 (nil = 직접발급 전용)
+    /// true면 고객당 1장 — 미사용(active) 보유분이 있으면 재발급 불가.
+    var oncePerCustomer: Bool = false
     var status: String              // "active" | "archived"
+}
+
+extension CouponProduct {
+    /// 커스텀 디코더 — `oncePerCustomer`를 아직 주지 않는 서버 응답도 허용(false 취급).
+    /// (extension에 두어 memberwise init은 그대로 유지 — Store.swift와 동일 패턴)
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        discountType = try c.decode(CouponDiscountType.self, forKey: .discountType)
+        discountValue = try c.decode(Int.self, forKey: .discountValue)
+        maxDiscount = try c.decodeIfPresent(Int.self, forKey: .maxDiscount)
+        minOrderAmount = try c.decodeIfPresent(Int.self, forKey: .minOrderAmount)
+        validDays = try c.decodeIfPresent(Int.self, forKey: .validDays)
+        code = try c.decodeIfPresent(String.self, forKey: .code)
+        oncePerCustomer = try c.decodeIfPresent(Bool.self, forKey: .oncePerCustomer) ?? false
+        status = try c.decode(String.self, forKey: .status)
+    }
 }
 
 /// 발급된 쿠폰 상태 — coupons/model.ts `CustomerCoupon.status`.

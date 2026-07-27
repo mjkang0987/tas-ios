@@ -34,6 +34,36 @@ final class CouponDecodingTests: XCTestCase {
         XCTAssertEqual(CustomerCouponStatus.cancelled.rawValue, "cancelled")
     }
 
+    // MARK: - oncePerCustomer (고객당 1장)
+
+    func testOncePerCustomerDecodes() throws {
+        let json = Data(#"""
+        {"products":[{"id":"cp1","name":"생일쿠폰","discountType":"amount","discountValue":5000,
+          "maxDiscount":null,"minOrderAmount":null,"validDays":null,"code":null,
+          "oncePerCustomer":true,"status":"active"}]}
+        """#.utf8)
+        let resp = try JSONDecoder().decode(CouponsResponse.self, from: json)
+        XCTAssertEqual(resp.products.first?.oncePerCustomer, true)
+    }
+
+    /// 서버가 아직 필드를 안 주는 경우(머지 전)에도 디코딩되고 false로 취급.
+    func testOncePerCustomerDefaultsFalseWhenMissing() throws {
+        let json = Data(#"""
+        {"products":[{"id":"cp1","name":"쿠폰","discountType":"rate","discountValue":10,
+          "maxDiscount":null,"minOrderAmount":null,"validDays":null,"code":null,"status":"active"}]}
+        """#.utf8)
+        let resp = try JSONDecoder().decode(CouponsResponse.self, from: json)
+        XCTAssertEqual(resp.products.first?.oncePerCustomer, false)
+    }
+
+    func testOncePerCustomerEncodes() throws {
+        let p = CouponProduct(id: "cp1", name: "생일쿠폰", discountType: .amount, discountValue: 5000,
+                              maxDiscount: nil, minOrderAmount: nil, validDays: nil, code: nil,
+                              oncePerCustomer: true, status: "active")
+        let obj = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(p)) as? [String: Any])
+        XCTAssertEqual(obj["oncePerCustomer"] as? Bool, true)
+    }
+
     func testDiscountFormatting() {
         XCTAssertTrue(CouponFormatting.discountText(.amount, 10000, nil).contains("할인"))
         XCTAssertTrue(CouponFormatting.discountText(.rate, 10, nil).hasPrefix("10% 할인"))

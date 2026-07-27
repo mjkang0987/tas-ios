@@ -182,11 +182,13 @@ struct TASService {
         struct Body: Encodable {
             let name: String; let discountType: CouponDiscountType; let discountValue: Int
             let maxDiscount: Int?; let minOrderAmount: Int?; let validDays: Int?; let code: String?
+            let oncePerCustomer: Bool
         }
         struct Resp: Decodable { let product: CouponProduct? }
         let resp: Resp = try await client.post("api/coupons", body: Body(
             name: p.name, discountType: p.discountType, discountValue: p.discountValue,
-            maxDiscount: p.maxDiscount, minOrderAmount: p.minOrderAmount, validDays: p.validDays, code: p.code))
+            maxDiscount: p.maxDiscount, minOrderAmount: p.minOrderAmount, validDays: p.validDays, code: p.code,
+            oncePerCustomer: p.oncePerCustomer))
         return resp.product ?? p
     }
 
@@ -196,11 +198,13 @@ struct TASService {
         struct Body: Encodable {
             let id: String; let name: String; let discountType: CouponDiscountType; let discountValue: Int
             let maxDiscount: Int?; let minOrderAmount: Int?; let validDays: Int?; let code: String?; let status: String
+            let oncePerCustomer: Bool
         }
         struct Resp: Decodable { let ok: Bool? }
         let _: Resp = try await client.put("api/coupons", body: Body(
             id: p.id, name: p.name, discountType: p.discountType, discountValue: p.discountValue,
-            maxDiscount: p.maxDiscount, minOrderAmount: p.minOrderAmount, validDays: p.validDays, code: p.code, status: p.status))
+            maxDiscount: p.maxDiscount, minOrderAmount: p.minOrderAmount, validDays: p.validDays, code: p.code, status: p.status,
+            oncePerCustomer: p.oncePerCustomer))
         return p
     }
 

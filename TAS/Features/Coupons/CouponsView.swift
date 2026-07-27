@@ -168,6 +168,7 @@ struct CouponsView: View {
                 CouponIssueSheet(
                     customers: viewModel.customers,
                     products: viewModel.activeProducts,
+                    issued: viewModel.issued,
                     onIssue: { await viewModel.issue(customerId: $0, productId: $1) }
                 )
             }
@@ -259,6 +260,9 @@ private struct CouponRow: View {
                 if let m = product.minOrderAmount, m > 0 {
                     Text("최소 \(formatWon(m))").font(.caption2).foregroundStyle(.secondary)
                 }
+                if product.oncePerCustomer {
+                    Text("고객당 1장").font(.caption2).foregroundStyle(.secondary)
+                }
             }
         }
         .padding(.vertical, 2)
@@ -304,6 +308,8 @@ private struct IssuedCouponRow: View {
 private struct CouponIssueSheet: View {
     let customers: [Customer]
     let products: [CouponProduct]
+    /// 발급분 — '고객당 1장' 상품의 중복 보유를 미리 걸러 서버 400을 피한다.
+    let issued: [CustomerCoupon]
     let onIssue: (Int, String) async -> Bool
 
     @Environment(\.dismiss) private var dismiss
@@ -321,6 +327,17 @@ private struct CouponIssueSheet: View {
 
     private var selectedCustomerName: String? {
         selectedCustomerId.flatMap { id in customers.first { $0.id == id }?.name }
+    }
+
+    /// '고객당 1장' 상품인데 해당 고객이 미사용 보유 중이면 사유 반환(발급 차단).
+    private var blockedReason: String? {
+        guard let customerId = selectedCustomerId, let productId = selectedProductId,
+              let product = products.first(where: { $0.id == productId }),
+              product.oncePerCustomer else { return nil }
+        let holds = issued.contains {
+            $0.customerId == customerId && $0.productId == productId && $0.status == .active
+        }
+        return holds ? "이 고객은 해당 쿠폰을 이미 보유 중입니다. (고객당 1장)" : nil
     }
 
     var body: some View {
@@ -360,6 +377,9 @@ private struct CouponIssueSheet: View {
                     }
                 }
 
+                if let blockedReason {
+                    Section { Text(blockedReason).font(.footnote).foregroundStyle(.orange) }
+                }
                 if let errorMessage {
                     Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
                 }
@@ -372,7 +392,7 @@ private struct CouponIssueSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("발급") { Task { await issue() } }
-                        .disabled(isSaving || selectedCustomerId == nil || selectedProductId == nil)
+                        .disabled(isSaving || selectedCustomerId == nil || selectedProductId == nil || blockedReason != nil)
                 }
             }
         }
