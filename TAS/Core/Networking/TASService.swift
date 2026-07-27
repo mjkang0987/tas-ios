@@ -182,11 +182,13 @@ struct TASService {
         struct Body: Encodable {
             let name: String; let discountType: CouponDiscountType; let discountValue: Int
             let maxDiscount: Int?; let minOrderAmount: Int?; let validDays: Int?; let code: String?
+            let oncePerCustomer: Bool
         }
         struct Resp: Decodable { let product: CouponProduct? }
         let resp: Resp = try await client.post("api/coupons", body: Body(
             name: p.name, discountType: p.discountType, discountValue: p.discountValue,
-            maxDiscount: p.maxDiscount, minOrderAmount: p.minOrderAmount, validDays: p.validDays, code: p.code))
+            maxDiscount: p.maxDiscount, minOrderAmount: p.minOrderAmount, validDays: p.validDays, code: p.code,
+            oncePerCustomer: p.oncePerCustomer))
         return resp.product ?? p
     }
 
@@ -196,11 +198,13 @@ struct TASService {
         struct Body: Encodable {
             let id: String; let name: String; let discountType: CouponDiscountType; let discountValue: Int
             let maxDiscount: Int?; let minOrderAmount: Int?; let validDays: Int?; let code: String?; let status: String
+            let oncePerCustomer: Bool
         }
         struct Resp: Decodable { let ok: Bool? }
         let _: Resp = try await client.put("api/coupons", body: Body(
             id: p.id, name: p.name, discountType: p.discountType, discountValue: p.discountValue,
-            maxDiscount: p.maxDiscount, minOrderAmount: p.minOrderAmount, validDays: p.validDays, code: p.code, status: p.status))
+            maxDiscount: p.maxDiscount, minOrderAmount: p.minOrderAmount, validDays: p.validDays, code: p.code, status: p.status,
+            oncePerCustomer: p.oncePerCustomer))
         return p
     }
 
@@ -209,6 +213,27 @@ struct TASService {
         struct Body: Encodable { let id: String }
         struct Resp: Decodable { let deleted: Bool?; let archived: Bool? }
         let _: Resp = try await client.delete("api/coupons", body: Body(id: id))
+    }
+
+    // MARK: - 쿠폰 발급 — /api/coupon-issue (로그인 전용, 백엔드 Phase 2)
+    /// 쿠폰 발급/취소도 로그인 전용(게스트 미지원). 결제 자동 차감은 Phase 3 미구현.
+    private static let couponLoginOnly = APIError.server(status: 403, message: "쿠폰은 로그인 후 이용할 수 있습니다.")
+
+    /// 고객에게 쿠폰 직접 발급 — POST /api/coupon-issue (staff). 응답 `{id}`.
+    @discardableResult
+    func issueCoupon(customerId: Int, productId: String) async throws -> String {
+        if guest.isActive { throw Self.couponLoginOnly }
+        struct Body: Encodable { let customerId: Int; let productId: String }
+        struct Resp: Decodable { let id: String }
+        let resp: Resp = try await client.post("api/coupon-issue", body: Body(customerId: customerId, productId: productId))
+        return resp.id
+    }
+
+    /// 발급 쿠폰 취소 — DELETE /api/coupon-issue (body=`{id}`, status→cancelled).
+    func cancelCoupon(id: String) async throws {
+        if guest.isActive { throw Self.couponLoginOnly }
+        struct Body: Encodable { let id: String }
+        let _: OkResponse = try await client.delete("api/coupon-issue", body: Body(id: id))
     }
 
     // MARK: - Memberships — /api/memberships (상품 등록만; 발급·차감은 웹도 후속)
@@ -244,6 +269,37 @@ struct TASService {
         struct Body: Encodable { let id: String }
         struct Resp: Decodable { let deleted: Bool?; let archived: Bool? }
         let _: Resp = try await client.delete("api/memberships", body: Body(id: id))
+    }
+
+    // MARK: - 회원권 발급/차감 — /api/membership-issue · /api/membership-use (로그인 전용)
+    /// 발급·차감은 웹도 로그인 전용(게스트 local-db 미지원). 게스트면 안내 후 차단.
+    private static let membershipLoginOnly = APIError.server(status: 403, message: "회원권은 로그인 후 이용할 수 있습니다.")
+
+    /// 고객에게 회원권 발급 — POST /api/membership-issue (staff). 응답 `{id}`.
+    @discardableResult
+    func issueMembership(customerId: Int, productId: String) async throws -> String {
+        if guest.isActive { throw Self.membershipLoginOnly }
+        struct Body: Encodable { let customerId: Int; let productId: String }
+        struct Resp: Decodable { let id: String }
+        let resp: Resp = try await client.post("api/membership-issue", body: Body(customerId: customerId, productId: productId))
+        return resp.id
+    }
+
+    /// 발급 회원권 취소 — DELETE /api/membership-issue (body=`{id}`, status→cancelled).
+    func cancelMembership(id: String) async throws {
+        if guest.isActive { throw Self.membershipLoginOnly }
+        struct Body: Encodable { let id: String }
+        let _: OkResponse = try await client.delete("api/membership-issue", body: Body(id: id))
+    }
+
+    /// 회원권 횟수 수동 차감/복원 — POST /api/membership-use. 응답 `{remainingCount}`.
+    @discardableResult
+    func useMembership(id: String, action: MembershipUseAction) async throws -> Int? {
+        if guest.isActive { throw Self.membershipLoginOnly }
+        struct Body: Encodable { let membershipId: String; let action: String }
+        struct Resp: Decodable { let remainingCount: Int? }
+        let resp: Resp = try await client.post("api/membership-use", body: Body(membershipId: id, action: action.rawValue))
+        return resp.remainingCount
     }
 
     // MARK: - Store — /api/store
@@ -325,6 +381,57 @@ struct TASService {
         struct Response: Decodable { let accessToken: String; let expiresAt: Int }
         let response: Response = try await client.post("api/mobile-auth/exchange", body: Body(code: code, nonce: nonce))
         return response.accessToken
+    }
+
+    /// 네이티브 Google id_token을 access 토큰으로 교환한다(웹 위임 없이 iOS SDK 로그인).
+    ///
+    /// 백엔드 신규 엔드포인트 `POST /api/mobile-auth/google` 필요(계약: `docs/GOOGLE_SIGNIN.md`):
+    ///   - 요청: `{ idToken, serverAuthCode?, invite? }`
+    ///   - 서버: id_token 서명·audience(iOS/서버 클라이언트 ID) 검증 → 사용자 조회/생성(초대코드 반영)
+    ///   - 응답: `{ accessToken, expiresAt }`  (기존 `/exchange`와 동일 형태)
+    func exchangeGoogleIDToken(idToken: String, serverAuthCode: String? = nil, invite: String? = nil) async throws -> String {
+        struct Body: Encodable { let idToken: String; let serverAuthCode: String?; let invite: String? }
+        struct Response: Decodable { let accessToken: String; let expiresAt: Int }
+        let response: Response = try await client.post(
+            "api/mobile-auth/google",
+            body: Body(idToken: idToken, serverAuthCode: serverAuthCode, invite: invite))
+        return response.accessToken
+    }
+
+    // MARK: - Guest→login migration — /api/migrate-local
+    /// 게스트 로컬 스냅샷을 로그인 계정으로 이관한다(웹 POST /api/migrate-local, Bearer+owner).
+    ///
+    /// body = 스냅샷 필드(flat) + `confirm`. 이미 설정된 매장이 있으면 409(ALREADY_SETUP)를
+    /// 반환하며, `confirm: true`로 재요청하면 진행한다. owner가 아니면 403.
+    func migrateLocal(_ snapshot: GuestSnapshot, confirm: Bool) async throws -> MigrateOutcome {
+        do {
+            let _: EmptyResponse = try await client.post(
+                "api/migrate-local", body: MigrateLocalBody(snapshot: snapshot, confirm: confirm))
+            return .migrated
+        } catch APIError.server(let status, let message) where status == 409 || message == "ALREADY_SETUP" {
+            return .alreadySetup
+        }
+    }
+}
+
+/// `/api/migrate-local` 결과.
+enum MigrateOutcome: Equatable {
+    case migrated
+    case alreadySetup   // 409 ALREADY_SETUP — 사용자 확인(confirm) 필요
+}
+
+/// migrate-local 요청 body — 스냅샷 필드를 최상위로 평탄화하고 `confirm` 플래그를 더한다.
+/// (GuestSnapshot은 웹 payload와 필드명을 맞춰 두었으므로 그대로 평탄화해 보낸다.)
+struct MigrateLocalBody: Encodable {
+    let snapshot: GuestSnapshot
+    let confirm: Bool
+
+    private enum ExtraKey: String, CodingKey { case confirm }
+
+    func encode(to encoder: Encoder) throws {
+        try snapshot.encode(to: encoder)                 // 스냅샷 필드를 최상위로
+        var container = encoder.container(keyedBy: ExtraKey.self)
+        try container.encode(confirm, forKey: .confirm)
     }
 }
 

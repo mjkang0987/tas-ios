@@ -6,12 +6,17 @@ import SwiftUI
 /// 고객(기존 검색 or 신규 이름+연락처) → 서비스(다중선택, 소요시간·가격 자동) →
 /// 담당자 → 날짜 → 시작/종료 시간(종료는 소요시간으로 자동) → 가격(자동, 수정 가능) → 메모.
 /// 저장 시 신규 고객이면 먼저 upsert 후 예약 생성(게스트=로컬/로그인=API 자동 분기).
-/// (결제수단·포인트·담당자 가용성/중복 체크는 다음 단계.)
+/// 담당자 가용성(중복 예약)은 `ReservationOverlap`로 겹침을 감지해 경고·확인한다.
+/// 신규 예약은 선택적으로 "결제완료로 등록"(단일 결제수단 + 적립률 자동 적립)할 수 있다.
 struct ReservationCreateView: View {
     let service: TASService
     let customers: [Customer]
     let assignees: [Assignee]            // 재직 중
     let catalog: [ServiceItem]
+    /// 담당자 겹침(중복 예약) 체크용 — 전체 예약(날짜·담당자로 내부 필터).
+    let existingReservations: [Reservation]
+    /// 매장 적립률(%). 결제완료로 등록 시 자동 적립에 사용. 0이면 적립 없음.
+    var pointRate: Int = 0
     let initialDate: Date
     let nextReservationId: Int
     let nextCustomerId: Int
@@ -39,12 +44,22 @@ struct ReservationCreateView: View {
     // 프로그램적 변경이 onChange를 통해 "수동 편집"으로 오인되는 것 방지(값이 실제로 바뀔 때만 억제).
     @State private var suppressPriceChange = false
     @State private var suppressEndChange = false
+    // 결제(신규 예약 한정)
+    @State private var markPaid = false
+    @State private var payMethod: PaymentMethod = .card
     // 상태
     @State private var errorMessage: String?
     @State private var isSaving = false
+    @State private var showConflictConfirm = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case name, tel, price, memo }
+
+    /// 결제완료 등록 시 선택 가능한 결제수단(적립금 사용은 상세 결제 화면에서).
+    private static let paymentMethods: [PaymentMethod] = [
+        .cash, .cashReceipt, .card, .naverPay, .localCurrency,
+        .localCurrencyReceipt, .giftCard, .discount, .naverDeposit
+    ]
 
     private static let seoul = TimeZone(identifier: "Asia/Seoul")!
     private var catalogMap: [String: ServiceItem] {
@@ -67,6 +82,8 @@ struct ReservationCreateView: View {
                 priceSection
                 assigneeSection
                 dateTimeSection
+                conflictSection
+                paymentSection
                 memoSection
                 if let errorMessage {
                     Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
@@ -79,12 +96,62 @@ struct ReservationCreateView: View {
                     Button("취소") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("저장") { Task { await save() } }
+                    Button("저장") { attemptSave() }
                         .disabled(isSaving)
                 }
             }
             .onAppear(perform: setupInitial)
+            .alert("담당자 겹침", isPresented: $showConflictConfirm) {
+                Button("취소", role: .cancel) {}
+                Button("그래도 저장", role: .destructive) { Task { await save() } }
+            } message: {
+                Text("선택한 담당자에게 시간이 겹치는 예약이 \(currentConflicts.count)건 있습니다. 그래도 저장하시겠어요?")
+            }
         }
+    }
+
+    // MARK: - 담당자 겹침(중복 예약) 경고
+
+    /// 현재 폼 선택(담당자·날짜·시간)과 겹치는 기존 예약. 서비스 미선택 시(시간 무의미) 빈 배열.
+    private var currentConflicts: [Reservation] {
+        guard !selectedServices.isEmpty else { return [] }
+        return ReservationOverlap.conflicts(
+            date: KST.dayKey.string(from: date),
+            startTime: timeString(startTime),
+            endTime: timeString(endTime),
+            assigneeId: assigneeId == 0 ? nil : assigneeId,
+            among: existingReservations,
+            excludingId: editing?.id
+        )
+    }
+
+    @ViewBuilder private var conflictSection: some View {
+        let conflicts = currentConflicts
+        if !conflicts.isEmpty {
+            Section {
+                ForEach(conflicts) { r in
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("\(r.startTime)–\(r.endTime) · \(customerLabel(r.customerId))")
+                                .font(.subheadline.weight(.medium))
+                            if !r.service.isEmpty {
+                                Text(r.service).font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            } header: {
+                Text("담당자 겹침 경고")
+            } footer: {
+                Text("선택한 담당자에게 시간이 겹치는 예약이 \(conflicts.count)건 있습니다. 확인 후 저장하세요.")
+            }
+        }
+    }
+
+    private func customerLabel(_ id: Int) -> String {
+        customers.first(where: { $0.id == id })?.name ?? "고객 #\(id)"
     }
 
     // MARK: - 고객
@@ -281,6 +348,31 @@ struct ReservationCreateView: View {
         }
     }
 
+    // MARK: - 결제 (신규 예약 한정 — 편집은 상세의 결제 화면 사용)
+
+    @ViewBuilder private var paymentSection: some View {
+        if editing == nil {
+            Section {
+                Toggle("결제완료로 등록", isOn: $markPaid)
+                if markPaid {
+                    Picker("결제수단", selection: $payMethod) {
+                        ForEach(Self.paymentMethods, id: \.self) { Text($0.rawValue).tag($0) }
+                    }
+                }
+            } header: {
+                Text("결제")
+            } footer: {
+                if markPaid {
+                    if pointRate > 0 {
+                        Text("결제 \(formatWon(price)) · 적립률 \(pointRate)% → \(PointMath.earnedAmount(base: price, rate: pointRate).formatted())P 적립")
+                    } else {
+                        Text("결제 \(formatWon(price))로 결제완료 처리됩니다.")
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - 메모
 
     private var memoSection: some View {
@@ -371,12 +463,23 @@ struct ReservationCreateView: View {
         return nil
     }
 
+    /// 저장 시도 — 유효성 통과 후, 담당자 겹침이 있으면 확인 알럿을, 없으면 바로 저장.
+    private func attemptSave() {
+        if let err = validate() { errorMessage = err; return }
+        if currentConflicts.isEmpty {
+            Task { await save() }
+        } else {
+            showConflictConfirm = true
+        }
+    }
+
     private func save() async {
         if let err = validate() { errorMessage = err; return }
         isSaving = true
         defer { isSaving = false }
         do {
             var resolvedCustomerId = customerId
+            var resolvedCustomer: Customer? = customers.first { $0.id == customerId }
             if customerId == 0 {
                 let newCustomer = Customer(
                     id: nextCustomerId,
@@ -387,6 +490,7 @@ struct ReservationCreateView: View {
                 )
                 _ = try await service.upsertCustomer(newCustomer)
                 resolvedCustomerId = newCustomer.id
+                resolvedCustomer = newCustomer
             }
             let trimmedMemo = memo.trimmingCharacters(in: .whitespaces)
             let resolvedMemo = trimmedMemo.isEmpty ? nil : trimmedMemo
@@ -403,7 +507,7 @@ struct ReservationCreateView: View {
                 updated.memo = resolvedMemo
                 _ = try await service.updateReservation(prev: editing, updated: updated)
             } else {
-                let reservation = Reservation(
+                var reservation = Reservation(
                     id: nextReservationId,
                     date: KST.dayKey.string(from: date),
                     startTime: timeString(startTime),
@@ -416,7 +520,24 @@ struct ReservationCreateView: View {
                     memo: resolvedMemo,
                     channel: .phone
                 )
+                // 결제완료로 등록: 단일 결제수단 + 적립률 자동 적립.
+                var earned = 0
+                if markPaid {
+                    earned = PointMath.earnedAmount(base: price, rate: pointRate)
+                    reservation.paymentEntries = [PaymentEntry(method: payMethod, amount: price)]
+                    reservation.paymentCompleted = true
+                    reservation.paymentMethod = payMethod
+                    reservation.pointEarned = earned
+                }
                 _ = try await service.createReservation(reservation)
+                // 자동 적립을 고객 잔액에 반영.
+                if markPaid, earned > 0, let c = resolvedCustomer,
+                   let updated = PointLedger.apply(
+                    to: c, previousEarned: 0, newEarned: earned, previousUsed: 0, newUsed: 0,
+                    reservationId: reservation.id,
+                    now: ISO8601DateFormatter().string(from: Date()), makeId: { UUID().uuidString }) {
+                    _ = try await service.upsertCustomer(updated)
+                }
             }
             onSaved()
             dismiss()

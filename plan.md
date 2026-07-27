@@ -53,12 +53,17 @@
 **🤖 Claude 작업**
 - ⬜ 웹 `/login` 모바일 콜백(`nonce`/`provider`→`tasios://…?code`) 지원 확인·보완(`/api/mobile-auth/*` 브리지 존재)
 - ⬜ 구글 로그인 E2E 검증(로그인→매장 로드→게스트 종료)
-- ⬜ (선택) 완전 네이티브 SDK: iOS OAuth 클라이언트ID + `GoogleSignIn` SPM + Info.plist URL 스킴 + **백엔드 신규 엔드포인트**(네이티브 id_token→Bearer). 웹 위임보다 작업량 큼 → 나중에.
+- 🟡 **네이티브 Google SDK — iOS 구현 완료**(`GoogleSignIn` SPM + `GoogleSignInManager` + `signInGoogle` 폴백 + Info.plist 키/스킴). 셋업·계약: `docs/GOOGLE_SIGNIN.md`.
+  - 🔒 남은 준비: (사용자) Google Cloud **iOS 클라이언트 ID** 발급 → `GIDClientID`·리버스 스킴 교체 / (백엔드) `POST /api/mobile-auth/google`(id_token→Bearer) 신설.
+  - 키 미설정 동안엔 Google 버튼이 자동으로 **웹 위임 로그인**으로 폴백(무회귀).
 
 ## P1 — 게스트→로그인 데이터 이관 🔒(로그인 의존)
 
-- ⬜ 로그인 직후 게스트 데이터 있으면 이관: `POST /api/migrate-local`(Bearer+**owner**), body=`GuestSnapshot` 매핑. 409 `ALREADY_SETUP`→`confirm:true` 재전송. 성공 시 `GuestStore.reset()/deactivate()`.
-- 키 없이 **로직 미리 구현 가능**(검증만 로그인 후).
+- 🟡 **로직 구현 완료**(E2E 검증만 로그인 후): 로그인 직후 게스트 데이터가 있으면 `POST /api/migrate-local`로 이관.
+  - `TASService.migrateLocal(snapshot:confirm:)` — body는 `MigrateLocalBody`가 스냅샷 필드를 최상위로 평탄화 + `confirm`. 409(`ALREADY_SETUP`)→`.alreadySetup`.
+  - `SessionStore.migrateGuestDataIfNeeded()` — signIn/signInGoogle 성공 후 자동 호출. 403(owner 아님) 조용히 스킵, 409면 `pendingMigration`→RootView 확인 알럿→`confirmMigration()`(confirm:true). 성공 시 `GuestStore.reset()/deactivate()` + 매장 재로드.
+  - 이관 실패는 로그인을 막지 않음(로컬 데이터 보존). 평탄화 인코딩은 `MigrateLocalBodyTests`로 검증.
+  - 로그인이 실제로 켜지기 전까지 이 경로는 트리거되지 않아 **기존 동작 무회귀**.
 
 ## P2 — 로그인 전용 연동 🔒
 
@@ -70,15 +75,23 @@
 
 ## P3 — 기능 완성도 갭 (일부 게스트에서도 가능)
 
-- ⬜ **예약 생성 폼 고도화**: 담당자 **가용성/중복 예약 체크**(겹침 경고), 예약 시점 결제수단·포인트 입력
-- ⬜ **적립금(포인트) 사용 결제** — 포인트로 결제하는 UI(현재 적립만, 사용 없음)
-- ⬜ **온라인 예약 신청(requested) 처리** — 예약확정/거절(현재 상세에서 숨김) 🔒 온라인예약 연계
+- ✅ **예약 생성 폼 고도화**: 담당자 **가용성/중복 예약 체크**(겹침 경고 + 저장 전 확인, `ReservationOverlap`) + **예약 시점 결제완료 등록**(단일 결제수단 + 적립률 자동 적립, `PointLedger.apply` 재사용). (적립금 *사용* 결제는 상세의 결제 화면에서.)
+- ✅ **적립금(포인트) 사용 결제** — 결제수단 `적립금` 사용분을 고객 잔액에서 차감(`paymentUse` 이력) + 보유 잔액 표시·초과 검증. 수정 시 차액만 반영.
+- 🟡 **온라인 예약 신청(requested) 처리** — ✅ 상세에서 예약확정(→active)/거절(→cancelled)/삭제 UI(기존 setReservationStatus 재사용). ⬜ 온라인 예약 유입 경로 자체는 🔒 온라인예약 연계 대기.
 - ⬜ **다국어 이름(i18n)** — `nameI18n`/`storeNameI18n`/`titleI18n` 편집(공개 예약 페이지용, 우선순위 낮음)
-- ⬜ **매출 확장** — 차트·기간 필터(현재 월/담당자별 요약)
+- ✅ **매출 확장** — 기간 필터(월/년) + 추세 막대 차트(Swift Charts, 일별/월별). 합계·담당자별은 선택 기간 기준으로 집계.
 
-## P4 — 쿠폰·회원권 발급/차감 (웹도 "추후 지원")
+## P4 — 쿠폰·회원권 발급/차감
 
-- ⬜ 현재 상품(템플릿) 등록까지만. 풀 기능 = 고객 **발급**(CustomerCoupon/Membership) + 결제 시 **할인/차감**. 백엔드 발급·사용 엔드포인트 신설 필요.
+> tas 원본 스펙 확인 결과(2026-07): **회원권은 발급/차감 API가 실재**(`/api/membership-issue`·`/api/membership-use`, staff, **로그인 전용** — 게스트 local-db 미지원). **쿠폰은 미구현**(Phase 2 발급·Phase 3 결제차감 예정, `CustomerCoupon` 타입·GET만 존재). 결제수단 자동 차감(`PaymentMethod.membership/coupon`)은 양쪽 다 Phase 3 미구현.
+
+- 🟡 **회원권 발급/차감(로그인 전용)** — iOS 이식 완료(데이터+서비스+UI), E2E만 로그인 후:
+  `CustomerMembership` 모델 + `MembershipsResponse.memberships` + `TASService.issueMembership/cancelMembership/useMembership`(게스트는 "로그인 후 이용" 차단).
+  회원권 화면에 **상품/발급 탭** — 발급 탭(로그인 시): 고객+상품 선택 발급 시트, 발급 내역에 차감/복원/취소. 게스트는 잠금 안내.
+- 🟡 **쿠폰 발급(직접, Phase 2)** — iOS 이식 완료(모델·서비스·상품/발급 탭 UI, 로그인 게이트, 회원권 패턴 미러).
+  백엔드는 **tas PR #156**(`coupon-issue.ts` + 가드: 보관·코드형 차단, CI 그린, Draft) — 머지 후 동작. 계약·리뷰 포인트는 `docs/COUPON_ISSUE_BACKEND.md`(CustomerCoupon 테이블 기존재라 마이그레이션 불필요). **tas PR #159**: 쿠폰 상품별 '고객당 1장'(`oncePerCustomer`) 설정 — 중복 발급 허용 여부를 상품마다 지정(기본 false=기존 동작, 마이그레이션 포함). iOS도 폼 토글·발급 시 중복 안내 반영. ⬜ 코드형 발급·결제 차감(Phase 3)은 후속.
+- 🟡 **발급 가드 일치** — **tas PR #157**: 회원권 발급도 보관 상품 차단(쿠폰과 동일 규칙). ⚠️ 운영 중 엔드포인트라 라이브 동작 변경 → 사람 리뷰 필요. iOS는 양쪽 모두 발급 목록에서 보관(쿠폰은 코드형도) 제외로 이미 일치.
+- ⬜ **결제 연동 차감**(예약 결제수단으로 회원권/쿠폰 차감) — 백엔드 Phase 3(`PaymentMethod` enum 확장) 선행 필요.
 
 ## P5 — 캘린더·디자인 마감
 
@@ -96,7 +109,7 @@
 
 ## P7 — 품질
 
-- ⬜ 자동 테스트(없음): 게스트 CRUD·병합·적립 계산·타임라인 겹침·Store 디코딩
+- ✅ 자동 테스트: 유닛 테스트 타깃(TASTests) + `ios-test.yml` CI. 커버: 겹침(ReservationOverlap)·Store 디코딩·고객/예약 헬퍼·매출 집계/추세·**게스트 CRUD/병합**(GuestStore)·**적립 계산·잔액 원장**(PointMath·PointLedger)·이관 인코딩(MigrateLocalBody). (추가 회귀 케이스는 필요 시 확장.)
 - ⬜ 접근성/다크모드/다이내믹 타입 재점검(컴팩트 폰트 후 큰 글자 레이아웃)
 - ⬜ 푸시 알림(없음) — APNs 키·등록·백엔드 발송(로그인 기반)
 - ⬜ 로그인 후 다기기 동기화/충돌 처리(웹 `conflict-resolution` 미반영)

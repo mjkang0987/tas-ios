@@ -22,10 +22,15 @@ final class SessionStore {
     var currentStore: Store?
     /// 마지막 로그인 실패 메시지(유저 취소는 제외). LoginView가 표시.
     var lastError: String?
+    /// 게스트 데이터 이관 확인 대기(이미 매장이 있어 사용자 확인 필요). RootView가 알럿 표시.
+    var pendingMigration = false
+    /// 이관 관련 안내/오류 메시지(비차단). RootView가 알럿 표시.
+    var migrationMessage: String?
 
     private let service: TASService
     private let keychain = KeychainTokenStore.shared
     private let webAuth = WebAuthSession()
+    private let googleSignIn = GoogleSignInManager()
 
     init(service: TASService = TASService()) {
         self.service = service
@@ -102,6 +107,7 @@ final class SessionStore {
                 let token = try await service.exchangeMobileCode(code: code, nonce: nonce)
                 keychain.save(token)
                 await loadSession()
+                await migrateGuestDataIfNeeded()
             case let .error(reason):
                 lastError = Self.message(for: reason)
             case nil:
@@ -112,6 +118,80 @@ final class SessionStore {
                 lastError = error.localizedDescription
             }
         }
+    }
+
+    /// Google 로그인. 네이티브 SDK가 설정돼 있으면(Info.plist `GIDClientID`) 네이티브 로그인으로
+    /// id_token을 받아 Bearer로 교환하고, 미설정이면 기존 웹 위임(`signIn`)으로 폴백한다.
+    ///
+    /// - Parameter invite: 신규 등록용 초대코드(선택). 네이티브 경로에선 교환 요청 body로 전달된다.
+    func signInGoogle(invite: String? = nil) async {
+        guard AppConfig.googleClientID != nil else {
+            await signIn(provider: "google", invite: invite)
+            return
+        }
+        lastError = nil
+        do {
+            let cred = try await googleSignIn.signIn()
+            let token = try await service.exchangeGoogleIDToken(
+                idToken: cred.idToken, serverAuthCode: cred.serverAuthCode, invite: invite)
+            keychain.save(token)
+            await loadSession()
+            await migrateGuestDataIfNeeded()
+        } catch {
+            if !GoogleSignInManager.isUserCancellation(error) {
+                lastError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - 게스트→로그인 데이터 이관 (P1)
+
+    /// 로그인 직후: 게스트 로컬 데이터가 있으면 계정으로 이관 시도(웹 migrate-local).
+    /// - owner가 아니면(403) 조용히 스킵(로컬 데이터 보존).
+    /// - 이미 매장이 있으면(409) `pendingMigration`을 세워 사용자 확인을 받는다.
+    /// - 이관 실패는 로그인 자체를 막지 않는다(로컬 데이터 보존, 재시도 가능).
+    private func migrateGuestDataIfNeeded() async {
+        guard isSignedIn, GuestStore.shared.snapshot.hasData else { return }
+        do {
+            switch try await service.migrateLocal(GuestStore.shared.snapshot, confirm: false) {
+            case .migrated: await finishMigration(announce: false)
+            case .alreadySetup: pendingMigration = true
+            }
+        } catch APIError.forbidden {
+            // owner 아님 → 이관 스킵.
+        } catch {
+            migrationMessage = "게스트 데이터 이관에 실패했습니다. 로컬 데이터는 보존됩니다."
+        }
+    }
+
+    /// 이미 매장이 있을 때 사용자가 이관을 확정 → `confirm: true`로 재전송.
+    func confirmMigration() async {
+        pendingMigration = false
+        guard GuestStore.shared.snapshot.hasData else { return }
+        do {
+            switch try await service.migrateLocal(GuestStore.shared.snapshot, confirm: true) {
+            case .migrated:
+                await finishMigration(announce: true)
+            case .alreadySetup:
+                // confirm:true인데도 서버가 진행하지 않음 → 로컬 데이터는 절대 삭제하지 않는다.
+                migrationMessage = "게스트 데이터를 이관하지 못했습니다. 로컬 데이터는 보존됩니다."
+            }
+        } catch {
+            migrationMessage = "게스트 데이터 이관에 실패했습니다. 로컬 데이터는 보존됩니다."
+        }
+    }
+
+    /// 이관 취소 — 로컬 게스트 데이터는 그대로 두고 계정은 기존 상태 유지.
+    func cancelMigration() {
+        pendingMigration = false
+    }
+
+    /// 이관 성공 후: 로컬 게스트 데이터 제거 + 매장 재로드로 이관 결과 반영.
+    private func finishMigration(announce: Bool) async {
+        GuestStore.shared.reset()
+        GuestStore.shared.deactivate()
+        if announce { migrationMessage = "게스트 데이터를 계정으로 이관했습니다." }
+        await loadSession()
     }
 
     func signOut() {

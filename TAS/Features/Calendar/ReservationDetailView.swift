@@ -30,7 +30,7 @@ struct ReservationDetailView: View {
 
     /// 확인이 필요한 상태 전환 액션.
     private enum Confirm: Identifiable {
-        case cancel, noshow, restore, delete, complete
+        case cancel, noshow, restore, delete, complete, approve, reject
         var id: Int { hashValue }
     }
 
@@ -152,8 +152,16 @@ struct ReservationDetailView: View {
     // MARK: - 액션
 
     @ViewBuilder private var actionSection: some View {
-        // 온라인 예약 신청(requested)은 확정/거절 등 별도 흐름 — 앱에선 아직 미지원.
-        if !isRequested {
+        if isRequested {
+            // 온라인 예약 신청(requested): 확정(→예약) / 거절(→취소) / 삭제.
+            Section {
+                Button("예약 확정") { confirming = .approve }
+                Button("거절", role: .destructive) { confirming = .reject }
+                Button("삭제", role: .destructive) { confirming = .delete }
+            } footer: {
+                Text("온라인으로 접수된 예약 신청입니다. 확정하면 예약으로 전환됩니다.")
+            }
+        } else {
             Section {
                 if isInactive {
                     Button("예약전환") { confirming = .restore }
@@ -193,6 +201,8 @@ struct ReservationDetailView: View {
         case .restore: return "예약으로 되돌릴까요?"
         case .delete: return "이 예약을 삭제할까요? 되돌릴 수 없습니다."
         case .complete: return "예약을 완료 처리할까요?"
+        case .approve: return "이 예약 신청을 확정할까요?"
+        case .reject: return "이 예약 신청을 거절할까요?"
         case nil: return ""
         }
     }
@@ -204,13 +214,15 @@ struct ReservationDetailView: View {
         case .restore: return "예약전환"
         case .delete: return "삭제"
         case .complete: return "예약완료"
+        case .approve: return "예약 확정"
+        case .reject: return "거절"
         }
     }
 
     private func confirmRole(_ c: Confirm) -> ButtonRole? {
         switch c {
-        case .cancel, .delete: return .destructive
-        case .noshow, .restore, .complete: return nil
+        case .cancel, .delete, .reject: return .destructive
+        case .noshow, .restore, .complete, .approve: return nil
         }
     }
 
@@ -223,6 +235,8 @@ struct ReservationDetailView: View {
             case .noshow: try await service.setReservationStatus(id: reservation.id, status: .noshow)
             case .restore: try await service.setReservationStatus(id: reservation.id, status: .active)
             case .complete: try await service.setReservationStatus(id: reservation.id, status: .completed)
+            case .approve: try await service.setReservationStatus(id: reservation.id, status: .active)
+            case .reject: try await service.setReservationStatus(id: reservation.id, status: .cancelled)
             case .delete: try await service.deleteReservation(id: reservation.id)
             }
             await onChanged()

@@ -63,6 +63,9 @@ final class CalendarViewModel {
     /// 서비스 카탈로그(선택용).
     var serviceCatalog: [ServiceItem] { state.value?.services ?? [] }
 
+    /// 전체 예약(예약폼의 담당자 겹침 체크용 — 날짜·담당자 필터는 폼 내부에서).
+    var allReservations: [Reservation] { state.value?.reservations ?? [] }
+
     /// 다음 예약/고객 정수 id(max+1) — 웹 getNextNumericId.
     var nextReservationId: Int { ((state.value?.reservations.map(\.id).max()) ?? 0) + 1 }
     var nextCustomerId: Int { ((state.value?.customersById.keys.max()) ?? 0) + 1 }

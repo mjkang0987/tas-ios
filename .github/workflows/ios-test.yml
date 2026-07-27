@@ -1,0 +1,42 @@
+# iOS 유닛 테스트 — 시뮬레이터에서 xcodebuild test 실행.
+# 빌드 검증(ios-build.yml)과 분리해, 테스트 셋업 이슈가 빌드 상태를 가리지 않게 한다.
+name: iOS Test
+
+on:
+  push:
+    paths-ignore:
+      - "**/*.md"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Pick an available iPhone simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin); c=[x['udid'] for rt,ds in d['devices'].items() if 'iOS' in rt for x in ds if x.get('isAvailable') and x['name'].startswith('iPhone')]; print(c[-1] if c else '')")
+          if [ -z "$UDID" ]; then
+            echo "::error::사용 가능한 iPhone 시뮬레이터를 찾지 못했습니다."
+            exit 1
+          fi
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          echo "Using simulator $UDID"
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project TAS.xcodeproj \
+            -scheme TAS \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            CODE_SIGNING_ALLOWED=NO | tail -150

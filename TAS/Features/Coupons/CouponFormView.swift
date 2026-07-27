@@ -15,6 +15,7 @@ struct CouponFormView: View {
     @State private var minOrderAmount = 0     // 0 = 없음
     @State private var validDays = 0          // 0 = 무기한
     @State private var code = ""              // 빈값 = 직접발급
+    @State private var oncePerCustomer = false
     @State private var errorMessage: String?
     @State private var isSaving = false
 
@@ -45,8 +46,13 @@ struct CouponFormView: View {
                     TextField("코드 (비우면 직접발급 전용)", text: $code)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.characters)
+                    Toggle("고객당 1장", isOn: $oncePerCustomer)
                 } header: {
                     Text("조건")
+                } footer: {
+                    if oncePerCustomer {
+                        Text("미사용 쿠폰을 보유한 고객에게는 재발급되지 않습니다. (사용·만료 후에는 다시 발급 가능)")
+                    }
                 }
 
                 if let errorMessage {
@@ -87,6 +93,7 @@ struct CouponFormView: View {
         minOrderAmount = e.minOrderAmount ?? 0
         validDays = e.validDays ?? 0
         code = e.code ?? ""
+        oncePerCustomer = e.oncePerCustomer
     }
 
     private func save() async {
@@ -108,6 +115,7 @@ struct CouponFormView: View {
             minOrderAmount: minOrderAmount > 0 ? minOrderAmount : nil,
             validDays: validDays > 0 ? validDays : nil,
             code: trimmedCode.isEmpty ? nil : trimmedCode,
+            oncePerCustomer: oncePerCustomer,
             status: editing?.status ?? "active"
         )
         if await onSave(product) {

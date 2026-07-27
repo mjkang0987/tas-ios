@@ -94,17 +94,11 @@ struct DayTimelineView: View {
         let colCount: Int
     }
 
-    /// "HH:mm" → 분. 실패 시 nil.
-    private func minutes(_ hhmm: String) -> Int? {
-        let p = hhmm.split(separator: ":").compactMap { Int($0) }
-        guard p.count == 2 else { return nil }
-        return p[0] * 60 + p[1]
-    }
-
     /// 예약을 겹침 클러스터로 묶어 컬럼 배치.
     private var positioned: [Positioned] {
         let events = reservations.compactMap { r -> (r: Reservation, s: Int, e: Int)? in
-            guard let s = minutes(r.startTime), let e = minutes(r.endTime), e > s else { return nil }
+            guard let s = ReservationOverlap.minutes(r.startTime),
+                  let e = ReservationOverlap.minutes(r.endTime), e > s else { return nil }
             return (r, s, e)
         }.sorted { $0.s < $1.s }
 
