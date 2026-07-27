@@ -14,6 +14,12 @@
 `POST /api/coupon-issue` (staff) — `{ customerId: number, productId: string }` → `{ id }`
 `DELETE /api/coupon-issue` (staff) — `{ id }` → `{ ok: true }` (status→cancelled)
 
+### 발급 가드 (쿠폰 특화 — 회원권엔 없는 규칙)
+- **보관(archived) 상품 발급 차단** → 400
+- **코드형(`code` 있음) 직접발급 차단** → 400 (코드 사용 흐름 전용, "직접발급 전용 = code 없음" 설계와 일치)
+- iOS도 동일 규칙: 발급 대상 목록에서 보관·코드형 제외.
+- (미적용) `Store.useCouponSystem` 토글 체크·중복 발급 제한은 회원권과 동일하게 두었음 — 필요 시 추가.
+
 ## 추가할 파일 1 — `server/api/coupon-issue.ts`
 ```ts
 import type {NextApiRequest, NextApiResponse} from 'next';
@@ -46,6 +52,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             where: {id: productId, storeId: session.storeId},
         });
         if (!product) return res.status(404).json({error: 'Product not found'});
+
+        // 가드: 보관(archived) 상품은 발급 불가.
+        if (product.status !== 'active') {
+            return res.status(400).json({error: '보관된 쿠폰은 발급할 수 없습니다.'});
+        }
+        // 가드: 코드형(code 있음)은 코드 사용 흐름 전용 — 직접 발급 대상 아님.
+        if (product.code) {
+            return res.status(400).json({error: '코드형 쿠폰은 직접 발급 대상이 아닙니다.'});
+        }
 
         const expiresAt = product.validDays != null
             ? new Date(Date.now() + product.validDays * 24 * 60 * 60 * 1000)

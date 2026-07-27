@@ -29,9 +29,11 @@ final class CouponsViewModel {
         }
     }
 
-    /// 발급 대상으로 고를 수 있는 활성 상품.
+    /// 직접 발급 대상 상품 — 활성 + 코드형 제외(코드형은 코드 사용 흐름 전용, 서버 가드와 일치).
     var activeProducts: [CouponProduct] {
-        (state.value?.products ?? []).filter { $0.status == "active" }.sorted { $0.name < $1.name }
+        (state.value?.products ?? [])
+            .filter { $0.status == "active" && ($0.code ?? "").isEmpty }
+            .sorted { $0.name < $1.name }
     }
 
     /// 발급분 — 사용가능 먼저, 그다음 발급일 최신순.
@@ -204,7 +206,8 @@ struct CouponsView: View {
                     Button { activeSheet = .issue } label: { Label("쿠폰 발급", systemImage: "plus.circle") }
                         .disabled(viewModel.activeProducts.isEmpty)
                     if viewModel.activeProducts.isEmpty {
-                        Text("발급할 활성 쿠폰 상품이 없습니다.").font(.caption).foregroundStyle(.secondary)
+                        Text("직접 발급할 수 있는 쿠폰이 없습니다. (보관·코드형 제외)")
+                            .font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 if let err = viewModel.actionError {
