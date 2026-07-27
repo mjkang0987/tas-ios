@@ -1,9 +1,12 @@
 # 쿠폰 발급 백엔드 (tas Phase 2) — 적용 대기 코드
 
 > iOS 쿠폰 발급(`TASService.issueCoupon/cancelCoupon`)이 호출할 tas 백엔드 엔드포인트.
-> **이 세션에서 tas push 권한이 거부**되어 tas 저장소에 직접 반영하지 못했다. 아래 코드는
-> `membership-issue.ts` 패턴을 그대로 미러한 것으로, 리뷰 후 tas에 추가하면 된다.
-> (로컬 클론 `/workspace/tas`의 브랜치 `claude/coupon-issue-phase2`에도 커밋해 둠 — 세션 한정.)
+>
+> **상태: tas에 PR로 올라가 있음(리뷰 대기).** 아래 코드는 그 PR의 내용이며, `membership-issue.ts`
+> 패턴을 미러한 것이다. 이 문서는 계약·리뷰 포인트 참고용으로 남긴다.
+> - tas PR **#156** — 쿠폰 발급/취소 엔드포인트 + 가드 (브랜치 `claude/coupon-issue-phase2`)
+> - tas PR **#157** — 회원권 발급 가드(보관 상품 차단) — 쿠폰과 규칙 일치 (브랜치 `claude/membership-issue-guard`)
+> - 둘 다 **Draft**. tas는 머지 시 자동 배포되므로 **자동 머지 제외 + 사람 리뷰 후 머지**.
 
 ## 전제 (확인됨)
 - DB 모델 `CustomerCoupon`은 **이미 tas prisma 스키마에 존재** → **마이그레이션 불필요**.
@@ -18,7 +21,9 @@
 - **보관(archived) 상품 발급 차단** → 400
 - **코드형(`code` 있음) 직접발급 차단** → 400 (코드 사용 흐름 전용, "직접발급 전용 = code 없음" 설계와 일치)
 - iOS도 동일 규칙: 발급 대상 목록에서 보관·코드형 제외.
-- (미적용) `Store.useCouponSystem` 토글 체크·중복 발급 제한은 회원권과 동일하게 두었음 — 필요 시 추가.
+- **회원권도 동일 규칙 적용**(PR #157): 보관 상품 발급 차단. 회원권엔 코드형 개념이 없어 `code` 가드는 해당 없음.
+  ⚠️ `membership-issue`는 운영 중 엔드포인트라 이 가드는 **라이브 동작 변경**(현재는 보관 상품도 발급 가능).
+- (미적용) `Store.useCouponSystem`/`useMembershipSystem` 토글 체크·중복 발급 제한 — 넣으려면 쿠폰·회원권 양쪽 동시에 적용 권장.
 
 ## 추가할 파일 1 — `server/api/coupon-issue.ts`
 ```ts
