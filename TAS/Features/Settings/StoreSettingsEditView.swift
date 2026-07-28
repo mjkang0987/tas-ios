@@ -25,7 +25,7 @@ struct StoreSettingsEditView: View {
                     TextField("매장 이름", text: $name)
                     Picker("업종", selection: $shopType) {
                         Text("선택 안 함").tag("")
-                        ForEach(ShopCatalog.industryGroups, id: \.category) { group in
+                        ForEach(ShopCatalog.industryGroups(including: shopType), id: \.category) { group in
                             Section(group.category) {
                                 ForEach(group.items) { ind in
                                     Text("\(ind.emoji) \(ind.label)").tag(ind.value)

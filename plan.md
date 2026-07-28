@@ -4,7 +4,8 @@
 > 백엔드는 [`mjkang0987/tas`](https://github.com/mjkang0987/tas)(로컬 `/workspace/tas`). 구조는 `README.md`, 버전 규약은 `CLAUDE.md`.
 >
 > _상태_ ⬜ 예정 · 🟡 진행 · ✅ 완료 · 🔒 외부 준비 필요(키/설정)
-> _작업 브랜치이자 default: `claude/tas-service-ios-stlzh4`_
+> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/tas-repo-changes-review-ddrxdk`).
+> 머지된 PR 브랜치엔 이어붙이지 말고 머지된 default에서 새로 딴다._
 
 ---
 
@@ -81,16 +82,51 @@
 - ⬜ **다국어 이름(i18n)** — `nameI18n`/`storeNameI18n`/`titleI18n` 편집(공개 예약 페이지용, 우선순위 낮음)
 - ✅ **매출 확장** — 기간 필터(월/년) + 추세 막대 차트(Swift Charts, 일별/월별). 합계·담당자별은 선택 기간 기준으로 집계.
 
+## P3.5 — tas 백엔드/웹 변경 동기화 (2026-07-28 확인)
+
+> tas main 기준으로 이 저장소가 뒤처졌던 항목. **아래 ✅는 이번 세션에서 iOS에 반영 완료.**
+
+- ✅ **고객 메모 3종 제거**(tas #168, 마이그레이션 `0018`) — `Customer.allergyNote/claimNote/preferenceNote`
+  컬럼이 운영에서 드롭됐다(참조 0건 확인). 입력 UI 없이 표시만 하던 임포트 레거시라 iOS도
+  모델·상세 "노트" 섹션 배선을 제거. 서버가 안 주는 필드라 남겨두면 항상 빈 섹션.
+- ✅ **사람 진료 업종 제외**(tas #168/#167) — 병원·의원/치과/한의원을 업종 선택 목록에서 제외.
+  진료 내용은 건강정보(민감정보)라 개인정보보호법 §23의 별도 동의·안전조치가 필요한데
+  예약 메모 등 자유 입력 경로가 열려 있어 현 구조로 감당하지 않는다. **동물병원은 유지.**
+  - 웹은 `sanitizeShopType`이 목록 밖 값을 `null`로 만들지만, iOS는 **게스트 로컬 스냅샷이
+    사용자 데이터**라 조용히 지우지 않는다 → `ShopCatalog.retiredIndustries`(표시 전용)로
+    라벨은 계속 해석하고, 편집 화면 Picker엔 현재 값일 때만 끼워 넣는다(`industryGroups(including:)`).
+    검증: `ShopCatalogTests`.
+- ✅ **고객 병합 대상 선택에 판단 근거**(tas 병합 미리보기 이식) — 후보 행에 **예약 건수 · 적립금**.
+  이름·연락처만으로는 동명이인·마스킹 이름(네이버 유입 `*`)을 구분할 수 없고, 잘못 고르면
+  기준 고객의 잘못된 연락처가 남는다. 이미 받아둔 `reservationsByCustomer`·`points`로 충족(API 무변경).
+- ✅ **예약 저장 연속 클릭 중복 고객 생성**(tas 운영 사고 수정) — iOS는 이미 `isSaving` 가드 +
+  저장 버튼 disabled이고 신규 고객 id가 시트 생성 시점 `nextCustomerId` 고정값이라 재시도해도
+  upsert된다. 회귀 방지용으로 근거를 주석화(무동작 변경).
+- ⬜ **매장 연락처(`bookingSettings.contactTel`)**(tas #169, 마이그레이션 `0019`) — 온라인 예약 사용 시
+  **필수**(미입력 시 `PUT /api/store` 400 `contactTel required`). iOS엔 온라인 예약 상세 설정 화면이
+  아직 없어(P2) 지금은 해당 없음. **P2에서 예약 설정을 붙일 때 이 필드를 반드시 포함할 것.**
+  숫자만 정규화하지 말고 **입력 원문 그대로** 저장(02·1588 등 자릿수 제각각).
+- ⬜ **공개 예약 페이지 도메인 이전**(tas #160) — `takeaseat.co.kr/book/[slug]` → `book.takeaseat.co.kr/[slug]`
+  (구 경로는 307). iOS는 현재 예약 링크를 노출하지 않아 영향 없음. 공유/딥링크를 붙이면 새 호스트 사용.
+- 확인만: 공지(`pinned`/카테고리)·쿠폰 `oncePerCustomer`·회원권 모델은 웹과 **이미 일치**. 그 밖의
+  tas 변경(모바일 하단탭·설정 UI 공통화·매출 기간선택 iOS Safari 겹침 등)은 웹 전용이라 이식 대상 아님.
+
 ## P4 — 쿠폰·회원권 발급/차감
 
-> tas 원본 스펙 확인 결과(2026-07): **회원권은 발급/차감 API가 실재**(`/api/membership-issue`·`/api/membership-use`, staff, **로그인 전용** — 게스트 local-db 미지원). **쿠폰은 미구현**(Phase 2 발급·Phase 3 결제차감 예정, `CustomerCoupon` 타입·GET만 존재). 결제수단 자동 차감(`PaymentMethod.membership/coupon`)은 양쪽 다 Phase 3 미구현.
+> tas 원본 스펙 확인 결과(2026-07-28 갱신): **회원권·쿠폰 모두 발급/취소 API가 실재**
+> (`/api/membership-issue`·`/api/membership-use`·`/api/coupon-issue`, staff, **로그인 전용** — 게스트 local-db 미지원).
+> 결제수단 자동 차감(`PaymentMethod.membership/coupon`)은 양쪽 다 Phase 3 미구현.
 
 - 🟡 **회원권 발급/차감(로그인 전용)** — iOS 이식 완료(데이터+서비스+UI), E2E만 로그인 후:
   `CustomerMembership` 모델 + `MembershipsResponse.memberships` + `TASService.issueMembership/cancelMembership/useMembership`(게스트는 "로그인 후 이용" 차단).
   회원권 화면에 **상품/발급 탭** — 발급 탭(로그인 시): 고객+상품 선택 발급 시트, 발급 내역에 차감/복원/취소. 게스트는 잠금 안내.
-- 🟡 **쿠폰 발급(직접, Phase 2)** — iOS 이식 완료(모델·서비스·상품/발급 탭 UI, 로그인 게이트, 회원권 패턴 미러).
-  백엔드는 **tas PR #156**(`coupon-issue.ts` + 가드: 보관·코드형 차단, CI 그린, Draft) — 머지 후 동작. 계약·리뷰 포인트는 `docs/COUPON_ISSUE_BACKEND.md`(CustomerCoupon 테이블 기존재라 마이그레이션 불필요). **tas PR #159**: 쿠폰 상품별 '고객당 1장'(`oncePerCustomer`) 설정 — 중복 발급 허용 여부를 상품마다 지정(기본 false=기존 동작, 마이그레이션 포함). iOS도 폼 토글·발급 시 중복 안내 반영. ⬜ 코드형 발급·결제 차감(Phase 3)은 후속.
-- 🟡 **발급 가드 일치** — **tas PR #157**: 회원권 발급도 보관 상품 차단(쿠폰과 동일 규칙). ⚠️ 운영 중 엔드포인트라 라이브 동작 변경 → 사람 리뷰 필요. iOS는 양쪽 모두 발급 목록에서 보관(쿠폰은 코드형도) 제외로 이미 일치.
+- 🟡 **쿠폰 발급(직접, Phase 2)** — iOS 이식 완료 + **백엔드 머지·배포 완료**(로그인 E2E만 남음).
+  **tas #156**(`coupon-issue.ts`, 보관·코드형 차단) → 머지 `0862f73`. **tas #159**(상품별 '고객당 1장'
+  `oncePerCustomer` + 미사용 보유 시 재발급 400, 마이그레이션 `0017`) → 머지 `3bd3034`.
+  머지본 계약이 iOS 구현과 일치함을 2026-07-28 재대조 확인. 계약 문서: `docs/COUPON_ISSUE_BACKEND.md`.
+  ⬜ 코드형 발급·결제 차감(Phase 3)은 후속.
+- ✅ **발급 가드 일치** — **tas #157** 머지(`89c87d0`): 회원권 발급도 보관 상품 차단(쿠폰과 동일 규칙).
+  iOS는 양쪽 모두 발급 목록에서 보관(쿠폰은 코드형도) 제외로 이미 일치.
 - ⬜ **결제 연동 차감**(예약 결제수단으로 회원권/쿠폰 차감) — 백엔드 Phase 3(`PaymentMethod` enum 확장) 선행 필요.
 
 ## P5 — 캘린더·디자인 마감
@@ -118,7 +154,7 @@
 
 ## 작업 규약
 
-- **단일 작업 브랜치** `claude/tas-service-ios-stlzh4`(default)에 커밋·푸시. 머지된 PR엔 이어붙이지 말 것.
+- **세션 지정 `claude/*` 브랜치**에 커밋·푸시. 머지된 PR 브랜치엔 이어붙이지 말고 머지된 default에서 새로 딴다.
 - **로컬 빌드 불가 → 푸시 후 CI green으로 검증.** 푸시 전 수동 점검:
   - 심볼 참조(다른 타입 static/메서드 오참조 주의 — 예: `ShopIndustry.defaultSchedule`(실제 `ShopCatalog`))
   - 괄호/중괄호/대괄호 균형, 색 삼항은 `Color.x : Color.y`(ShapeStyle 혼용 금지)
@@ -135,7 +171,18 @@
 - 설정/관리 `TAS/Features/{Settings,Services,Assignees,Notices,Coupons,Memberships,Revenue}/*` · 모델 `TAS/Models/*`
 
 ## 다음 세션 첫 스텝
-1. (사용자) P0 구글 OAuth + `AUTH_GOOGLE_ID/SECRET` + tas 웹 재배포
-2. (Claude) P0 구글 로그인 E2E → P1 이관 로직
-3. (Claude) P3 예약 폼 고도화(담당자 중복 체크) — 로그인 없이 가치
-4. (사용자/Claude) P6 App Store Connect 등록·스크린샷
+1. (사용자) P0 구글 OAuth + `AUTH_GOOGLE_ID/SECRET` + tas 웹 재배포 — **여전히 최대 병목**.
+   로그인이 켜져야 P0 E2E·P1 이관·P4 쿠폰/회원권 발급(백엔드는 이미 배포됨)이 한꺼번에 검증된다.
+2. (Claude) 로그인 후 E2E 3종 한 번에: 구글 로그인 → 게스트 데이터 이관 → 쿠폰·회원권 발급/차감.
+3. (Claude) P2 온라인 예약 설정 화면 — 붙일 때 `bookingSettings.contactTel` 필수 포함(P3.5 참고).
+4. (사용자/Claude) P6 App Store Connect 등록·스크린샷·개인정보 처리방침 URL.
+5. (Claude) P7 접근성/다크모드/다이내믹 타입 점검 — 로그인 없이 진행 가능한 잔여 작업.
+
+## tas 저장소 동기화 방법
+
+`plan.md`가 참조하는 백엔드는 [`mjkang0987/tas`](https://github.com/mjkang0987/tas)다. 세션에서
+`add_repo` 후 `/workspace/tas`로 클론해 `git log`로 마지막 동기화 이후 변경을 훑는다. 판단 기준:
+
+- **모델·엔드포인트·정책 변경** → 반드시 이식(예: 고객 메모 제거, 업종 목록 축소, 발급 가드).
+- **판단 근거·라벨·산식** → 이식(예: 병합 미리보기 예약 건수·적립금).
+- **웹 전용 레이아웃/스타일**(styled-components, 미디어쿼리, 하단 탭바 등) → 이식 대상 아님.

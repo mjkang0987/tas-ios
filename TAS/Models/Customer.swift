@@ -47,9 +47,8 @@ struct Customer: Codable, Identifiable, Hashable {
     var firstVisitDate: String? = nil
     var pointHistories: [PointHistoryEntry]? = nil
     var memoTags: [CustomerMemoTag]? = nil
-    var allergyNote: String? = nil
-    var claimNote: String? = nil
-    var preferenceNote: String? = nil
+    // allergyNote·claimNote·preferenceNote는 웹에서 제거됐다(tas #168, 마이그레이션 0018로
+    // 컬럼 드롭). 입력 UI 없이 표시만 하던 임포트 시절 레거시라 앱에서도 배선을 지운다.
 
     /// isNewCustomerVisit(firstVisitDate, date) — customers/model.ts
     /// 예약 날짜가 이 고객의 첫 방문일과 같으면 신규 방문.

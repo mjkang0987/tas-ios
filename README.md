@@ -111,6 +111,7 @@ TASTests/              유닛 테스트 (XCTest, @testable import TAS)
 | 담당자 | `/api/assignees`, `/api/assignees/merge` | GET · PUT · POST · DELETE |
 | 서비스 | `/api/services` | GET · PUT |
 | 공지·쿠폰·회원권 | `/api/{notices,coupons,memberships}` | GET · POST · PUT · DELETE |
+| 쿠폰·회원권 발급 | `/api/{coupon-issue,membership-issue}`, `/api/membership-use` | POST · DELETE (로그인 전용) |
 | 매장   | `/api/store`, `/api/user/stores` | GET · PATCH · PUT |
 | 인증   | `/api/mobile-auth/{exchange,google}`, `/api/migrate-local` | POST |
 
@@ -118,7 +119,8 @@ TASTests/              유닛 테스트 (XCTest, @testable import TAS)
 
 유닛 테스트는 `TASTests`(호스티드, `@testable import TAS`)에 있고, 순수 로직 위주로 커버한다:
 겹침 판정(`ReservationOverlap`) · Store 디코딩 · 고객/예약 헬퍼 · 매출 집계·추세 ·
-게스트 스냅샷 CRUD/병합(`GuestStore`) · 적립 산식(`PointMath`) · 이관 인코딩(`MigrateLocalBody`).
+게스트 스냅샷 CRUD/병합(`GuestStore`) · 적립 산식(`PointMath`) · 이관 인코딩(`MigrateLocalBody`) ·
+업종 카탈로그(`ShopCatalog` — 목록에서 내린 업종의 라벨 해석·Picker 노출).
 
 ```bash
 xcodebuild test -project TAS.xcodeproj -scheme TAS \

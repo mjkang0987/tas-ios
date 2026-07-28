@@ -41,6 +41,11 @@ final class CustomersViewModel {
     /// 전체 고객(병합 후보 등).
     var allCustomers: [Customer] { state.value?.customers ?? [] }
 
+    /// 고객 id → 예약 건수(병합 대상 판단 근거 등).
+    var reservationCounts: [Int: Int] {
+        (state.value?.reservationsByCustomer ?? [:]).mapValues(\.count)
+    }
+
     /// 고객의 예약(최근 순).
     func reservations(for id: Int) -> [Reservation] {
         (state.value?.reservationsByCustomer[id] ?? []).sorted {

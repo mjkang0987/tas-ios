@@ -14,6 +14,8 @@ struct CustomerDetailView: View {
     var onChanged: () async -> Void = {}
     /// 병합 대상 후보(이 고객 제외). 비어있지 않으면 "합치기" 노출.
     var mergeCandidates: [Customer] = []
+    /// 고객 id → 예약 건수. 병합 대상 선택 시 판단 근거로 쓴다.
+    var reservationCounts: [Int: Int] = [:]
 
     @Environment(\.dismiss) private var dismiss
     @State private var showPointAdjust = false
@@ -57,20 +59,6 @@ struct CustomerDetailView: View {
                     }
                 }
 
-                if hasNotes {
-                    Section("노트") {
-                        if let note = customer.allergyNote, !note.isEmpty {
-                            noteRow("알레르기", note)
-                        }
-                        if let note = customer.preferenceNote, !note.isEmpty {
-                            noteRow("선호", note)
-                        }
-                        if let note = customer.claimNote, !note.isEmpty {
-                            noteRow("클레임", note)
-                        }
-                    }
-                }
-
                 if let histories = customer.pointHistories, !histories.isEmpty {
                     Section("적립금 이력") {
                         ForEach(histories) { PointHistoryRow(entry: $0) }
@@ -107,22 +95,11 @@ struct CustomerDetailView: View {
                 CustomerMergePicker(
                     source: customer,
                     candidates: mergeCandidates,
+                    reservationCounts: reservationCounts,
                     service: service,
                     onCompleted: { await onChanged(); dismiss() }
                 )
             }
-        }
-    }
-
-    private var hasNotes: Bool {
-        [customer.allergyNote, customer.preferenceNote, customer.claimNote]
-            .contains { ($0?.isEmpty == false) }
-    }
-
-    private func noteRow(_ title: String, _ body: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
-            Text(body)
         }
     }
 
