@@ -22,6 +22,22 @@ enum AppConfig {
     /// Cookie name carrying the invite code during social login — GUIDE.md §1-1.
     static let inviteCookieName = "tas-invite-code"
 
+    // MARK: - 공개(고객) 예약 페이지
+
+    /// 고객 예약 페이지가 서비스되는 호스트 — 웹 `features/booking/routing.ts` `BOOKING_HOST`.
+    /// 2026-07 서브도메인 이전(tas #160): `takeaseat.co.kr/book/{slug}` → `book.takeaseat.co.kr/{slug}`.
+    static let bookingHost = "book.takeaseat.co.kr"
+
+    /// 슬러그의 공개 예약 URL. 운영 도메인이 아니면(dev·local) 구 경로 `/book/{slug}`를 쓴다
+    /// — 예약 서브도메인은 운영에만 있고, 그 외 호스트에서는 내부 라우트가 그대로 동작한다.
+    static func bookingPublicURL(slug: String) -> String {
+        let host = apiBaseURL.host ?? ""
+        if host == "takeaseat.co.kr" || host == "www.takeaseat.co.kr" {
+            return "https://\(bookingHost)/\(slug)"
+        }
+        return apiBaseURL.appendingPathComponent("book").appendingPathComponent(slug).absoluteString
+    }
+
     // MARK: - Native Google Sign-In (선택)
 
     /// 네이티브 Google 로그인용 iOS OAuth 클라이언트 ID (Info.plist `GIDClientID`).

@@ -9,6 +9,8 @@ struct CustomerDetailView: View {
     var onEdit: ((Customer) -> Void)? = nil
     /// 매장이 적립금 기능을 쓰면 "적립금 조정" 노출.
     var pointsEnabled: Bool = false
+    /// 매장 적립금 설정 — 선불 충전이 켜져 있으면 "적립금 충전"도 노출(충전 규칙 사용).
+    var pointSettings: PointSettings? = nil
     var service: TASService = TASService()
     /// 적립금 조정 저장 후 상위 리로드 + 상세 닫기.
     var onChanged: () async -> Void = {}
@@ -19,6 +21,7 @@ struct CustomerDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var showPointAdjust = false
+    @State private var showPointRecharge = false
     @State private var showMerge = false
 
     var body: some View {
@@ -35,6 +38,9 @@ struct CustomerDetailView: View {
                     }
                     if pointsEnabled {
                         Button("적립금 조정") { showPointAdjust = true }
+                    }
+                    if pointsEnabled, pointSettings?.enableRecharge == true {
+                        Button("적립금 충전") { showPointRecharge = true }
                     }
                     if !mergeCandidates.isEmpty {
                         Button("다른 고객과 합치기") { showMerge = true }
@@ -87,6 +93,14 @@ struct CustomerDetailView: View {
             .sheet(isPresented: $showPointAdjust) {
                 PointAdjustView(
                     customer: customer,
+                    service: service,
+                    onCompleted: { await onChanged(); dismiss() }
+                )
+            }
+            .sheet(isPresented: $showPointRecharge) {
+                PointRechargeView(
+                    customer: customer,
+                    rules: pointSettings?.rechargeRules ?? [],
                     service: service,
                     onCompleted: { await onChanged(); dismiss() }
                 )

@@ -10,7 +10,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.0.1"   # 표시 버전 — 머지 시 semver 범프
+    MARKETING_VERSION: "0.1.0"   # 표시 버전 — 머지 시 semver 범프
     CURRENT_PROJECT_VERSION: "1" # 빌드 번호 — TestFlight 업로드마다 +1
 packages:
   # 네이티브 Google 로그인(GoogleSignInManager). iOS 클라이언트 ID(Info.plist GIDClientID)가

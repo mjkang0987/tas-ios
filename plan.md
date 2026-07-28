@@ -71,13 +71,24 @@
 - ⬜ SNS 계정 연동 `/api/account/link` (소셜 provider 키)
 - ⬜ 멤버 관리·초대코드 `/api/members`·`/api/invites` (로그인 owner)
 - ⬜ 네이버 예약 동기화 — **Gmail OAuth**(`AUTH_GOOGLE_ID/SECRET`+Gmail 범위) + `/api/gmail/*`·`/api/naver-booking-sync`
-- ⬜ 온라인 예약 설정 `PUT /api/store`(공개 예약 페이지 `book/[slug]`는 웹 전용 유지)
+- 🟡 **온라인 예약 설정 — iOS 이식 완료(E2E만 로그인 후).** `BookingSettingsEditView`가 웹
+  `BookingManageSection`과 같은 범위를 편집: 영문 매장명(슬러그, 형식검증 + `?checkSlug=` 중복 확인) ·
+  **매장 연락처(필수)** · 예약 간격(10/15/20/30/60) · 최소 사전 예약 시간 · 최대 예약 가능 일수 ·
+  담당자 선택 허용 · 안내문구 4종(기본 문구 채움) · 노출 서비스 화이트리스트(전체 선택=전체 노출).
+  저장은 `PATCH /api/store`(`bookingSlug`+`bookingSettings`), 모델은 `BookingSettings`.
+  공개 예약 페이지 자체는 웹 전용 유지 → **게스트는 로그인 게이트**. 다국어(i18n) 입력은 제외(우선순위 낮음).
 - ⬜ 마이페이지/계정 — 닉네임 `/api/user/nickname`, 탈퇴 `/api/account/delete`, 문의 `/api/inquiry`
 
 ## P3 — 기능 완성도 갭 (일부 게스트에서도 가능)
 
 - ✅ **예약 생성 폼 고도화**: 담당자 **가용성/중복 예약 체크**(겹침 경고 + 저장 전 확인, `ReservationOverlap`) + **예약 시점 결제완료 등록**(단일 결제수단 + 적립률 자동 적립, `PointLedger.apply` 재사용). (적립금 *사용* 결제는 상세의 결제 화면에서.)
 - ✅ **적립금(포인트) 사용 결제** — 결제수단 `적립금` 사용분을 고객 잔액에서 차감(`paymentUse` 이력) + 보유 잔액 표시·초과 검증. 수정 시 차액만 반영.
+- ✅ **적립금 충전(선불) 실행** — 설정의 충전 규칙을 실제로 쓰는 화면이 없어 규칙이 사장돼 있었다.
+  고객 상세 > **적립금 충전**(`PointRechargeView`, 웹 `AddressCustomerRecharge` 이식): 규칙(기준금액+보너스)
+  선택 또는 직접 입력 → `recharge` 이력. 매장 설정에서 선불 충전이 켜진 경우에만 노출.
+- ✅ **기능 토글 ↔ 설정 진입 일치** — 매장 정보 편집에 **쿠폰 토글 추가**(그동안 앱에선 쿠폰 기능을 켤 수
+  없어 웹에서만 가능했다). 설정 화면의 읽기 전용 토글 섹션은 제거하고, 켠 기능마다 **그 기능의 설정
+  화면으로 바로 들어가는** 항목을 노출(적립금 설정 · 쿠폰 관리 · 회원권 관리 · 온라인예약 설정).
 - 🟡 **온라인 예약 신청(requested) 처리** — ✅ 상세에서 예약확정(→active)/거절(→cancelled)/삭제 UI(기존 setReservationStatus 재사용). ⬜ 온라인 예약 유입 경로 자체는 🔒 온라인예약 연계 대기.
 - ⬜ **다국어 이름(i18n)** — `nameI18n`/`storeNameI18n`/`titleI18n` 편집(공개 예약 페이지용, 우선순위 낮음)
 - ✅ **매출 확장** — 기간 필터(월/년) + 추세 막대 차트(Swift Charts, 일별/월별). 합계·담당자별은 선택 기간 기준으로 집계.
@@ -102,12 +113,14 @@
 - ✅ **예약 저장 연속 클릭 중복 고객 생성**(tas 운영 사고 수정) — iOS는 이미 `isSaving` 가드 +
   저장 버튼 disabled이고 신규 고객 id가 시트 생성 시점 `nextCustomerId` 고정값이라 재시도해도
   upsert된다. 회귀 방지용으로 근거를 주석화(무동작 변경).
-- ⬜ **매장 연락처(`bookingSettings.contactTel`)**(tas #169, 마이그레이션 `0019`) — 온라인 예약 사용 시
-  **필수**(미입력 시 `PUT /api/store` 400 `contactTel required`). iOS엔 온라인 예약 상세 설정 화면이
-  아직 없어(P2) 지금은 해당 없음. **P2에서 예약 설정을 붙일 때 이 필드를 반드시 포함할 것.**
-  숫자만 정규화하지 말고 **입력 원문 그대로** 저장(02·1588 등 자릿수 제각각).
-- ⬜ **공개 예약 페이지 도메인 이전**(tas #160) — `takeaseat.co.kr/book/[slug]` → `book.takeaseat.co.kr/[slug]`
-  (구 경로는 307). iOS는 현재 예약 링크를 노출하지 않아 영향 없음. 공유/딥링크를 붙이면 새 호스트 사용.
+- ✅ **매장 연락처(`bookingSettings.contactTel`)**(tas #169, 마이그레이션 `0019`) — 온라인 예약 사용 시
+  **필수**(미입력 시 `PATCH /api/store` 400 `contactTel required`). P2 예약 설정 화면에 포함.
+  숫자만 정규화하지 않고 **입력 원문 그대로** 저장(02·1588 등 자릿수 제각각) — 서버 규칙과 동일.
+  - ⚠️ 서버 가드는 요청에 `bookingSettings`가 있을 때만 돈다. 기능 토글만 바꾸면(앱·웹 모두)
+    연락처 없이 온라인예약이 켜진 상태가 만들어진다 → 설정 목록에 **"설정 필요"** 배지로 노출.
+- ✅ **공개 예약 페이지 도메인 이전**(tas #160) — `takeaseat.co.kr/book/[slug]` → `book.takeaseat.co.kr/[slug]`
+  (구 경로는 307). 예약 설정 화면의 공개 주소 미리보기가 `AppConfig.bookingPublicURL`로 새 호스트를 쓴다
+  (운영 도메인이 아니면 dev·local엔 예약 서브도메인이 없어 구 경로 `/book/{slug}` 폴백).
 - 확인만: 공지(`pinned`/카테고리)·쿠폰 `oncePerCustomer`·회원권 모델은 웹과 **이미 일치**. 그 밖의
   tas 변경(모바일 하단탭·설정 UI 공통화·매출 기간선택 iOS Safari 겹침 등)은 웹 전용이라 이식 대상 아님.
 
@@ -174,7 +187,7 @@
 1. (사용자) P0 구글 OAuth + `AUTH_GOOGLE_ID/SECRET` + tas 웹 재배포 — **여전히 최대 병목**.
    로그인이 켜져야 P0 E2E·P1 이관·P4 쿠폰/회원권 발급(백엔드는 이미 배포됨)이 한꺼번에 검증된다.
 2. (Claude) 로그인 후 E2E 3종 한 번에: 구글 로그인 → 게스트 데이터 이관 → 쿠폰·회원권 발급/차감.
-3. (Claude) P2 온라인 예약 설정 화면 — 붙일 때 `bookingSettings.contactTel` 필수 포함(P3.5 참고).
+3. (Claude) 로그인 후 온라인 예약 설정 E2E — 슬러그 중복 확인·저장, 연락처 400 가드, 공개 페이지 반영.
 4. (사용자/Claude) P6 App Store Connect 등록·스크린샷·개인정보 처리방침 URL.
 5. (Claude) P7 접근성/다크모드/다이내믹 타입 점검 — 로그인 없이 진행 가능한 잔여 작업.
 

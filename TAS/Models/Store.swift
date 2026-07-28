@@ -18,6 +18,8 @@ struct Store: Codable, Identifiable, Hashable {
     var closedDates: [String]? = nil          // "YYYY-MM-DD" 특정 휴무일
     var closedWeekdays: [Int]? = nil          // 0=월…6=일 정기 휴무 요일
     var pointSettings: PointSettings? = nil
+    /// 공개 예약 규칙 — 응답 최상위(storeSettings와 분리). 온라인예약 설정 화면에서 편집.
+    var bookingSettings: BookingSettings? = nil
 
     // GET /api/store는 `name` 대신 `storeName`을 주고 `id`는 주지 않는다(웹 스키마).
     // 실제 매장 id는 JWT claims에서 가져오므로, 디코딩 시 id는 없어도 되게 한다.
@@ -27,7 +29,7 @@ struct Store: Codable, Identifiable, Hashable {
         case shopType, onboarded
         case usePointSystem, useMembershipSystem, useCouponSystem, useOnlineBooking
         case bookingSlug, categoryBaseColors
-        case businessHours, closedDates, closedWeekdays, pointSettings
+        case businessHours, closedDates, closedWeekdays, pointSettings, bookingSettings
     }
 }
 
@@ -50,6 +52,7 @@ extension Store {
         closedDates = try c.decodeIfPresent([String].self, forKey: .closedDates)
         closedWeekdays = try c.decodeIfPresent([Int].self, forKey: .closedWeekdays)
         pointSettings = try c.decodeIfPresent(PointSettings.self, forKey: .pointSettings)
+        bookingSettings = try c.decodeIfPresent(BookingSettings.self, forKey: .bookingSettings)
     }
 }
 

@@ -6,6 +6,23 @@ struct SettingsView: View {
     @State private var showStoreEdit = false
     @State private var showHoursEdit = false
     @State private var showPointSettings = false
+    @State private var showBookingSettings = false
+
+    /// 온라인예약을 켰지만 공개 주소(슬러그)나 매장 연락처가 비어 있는 상태.
+    /// 게스트는 설정 자체가 로그인 전용이라 판정에서 제외한다.
+    private var bookingNeedsSetup: Bool {
+        guard !session.isGuest, let store = session.currentStore, store.useOnlineBooking == true else { return false }
+        let slug = store.bookingSlug ?? ""
+        let contact = store.bookingSettings?.contactTel ?? ""
+        return slug.isEmpty || contact.isEmpty
+    }
+
+    /// 켜진 기능이 하나라도 있으면 "기능 설정" 섹션을 노출.
+    private var hasFeatureSettings: Bool {
+        guard let store = session.currentStore else { return false }
+        return store.usePointSystem == true || store.useCouponSystem == true
+            || store.useMembershipSystem == true || store.useOnlineBooking == true
+    }
 
     var body: some View {
         NavigationStack {
@@ -15,22 +32,58 @@ struct SettingsView: View {
                     if let label = ShopCatalog.shopTypeLabel(session.currentStore?.shopType) {
                         LabeledContent("업종", value: label)
                     }
-                    if let slug = session.currentStore?.bookingSlug {
-                        LabeledContent("예약 슬러그", value: slug)
+                    // 공개 예약 주소는 온라인예약을 쓸 때만 의미가 있다(편집은 온라인예약 설정에서).
+                    if session.currentStore?.useOnlineBooking == true,
+                       let slug = session.currentStore?.bookingSlug, !slug.isEmpty {
+                        LabeledContent("예약 주소", value: slug)
                     }
                     Button("매장 정보 편집") { showStoreEdit = true }
                         .disabled(session.currentStore == nil)
                     Button("영업시간·휴무 설정") { showHoursEdit = true }
                         .disabled(session.currentStore == nil)
-                    if session.currentStore?.usePointSystem == true {
-                        Button("적립금 설정") { showPointSettings = true }
-                    }
                 }
 
-                Section("기능") {
-                    Toggle("적립금", isOn: .constant(session.currentStore?.usePointSystem ?? false)).disabled(true)
-                    Toggle("회원권", isOn: .constant(session.currentStore?.useMembershipSystem ?? false)).disabled(true)
-                    Toggle("온라인예약", isOn: .constant(session.currentStore?.useOnlineBooking ?? false)).disabled(true)
+                // 매장 정보에서 켠 기능은 여기서 **바로 그 기능의 설정 화면으로** 들어간다.
+                // (읽기 전용 토글을 다시 보여주지 않는다 — 켜고 끄는 곳은 매장 정보 편집 한 곳.)
+                if hasFeatureSettings {
+                    Section {
+                        if session.currentStore?.usePointSystem == true {
+                            Button { showPointSettings = true } label: {
+                                Label("적립금 설정", systemImage: "wonsign.circle")
+                            }
+                        }
+                        if session.currentStore?.useCouponSystem == true {
+                            NavigationLink {
+                                CouponsView()
+                            } label: {
+                                Label("쿠폰 관리", systemImage: "ticket")
+                            }
+                        }
+                        if session.currentStore?.useMembershipSystem == true {
+                            NavigationLink {
+                                MembershipsView()
+                            } label: {
+                                Label("회원권 관리", systemImage: "creditcard")
+                            }
+                        }
+                        if session.currentStore?.useOnlineBooking == true {
+                            Button { showBookingSettings = true } label: {
+                                HStack {
+                                    Label("온라인예약 설정", systemImage: "calendar.badge.clock")
+                                    // 토글만 켜고 주소·연락처를 비워두면 공개 예약 페이지가 열리지 않는다.
+                                    // (서버는 예약 설정을 저장할 때만 필수를 강제해서, 켜두기만 한 상태가 생긴다.)
+                                    if bookingNeedsSetup {
+                                        Spacer()
+                                        Text("설정 필요").font(.caption).foregroundStyle(.orange)
+                                    }
+                                }
+                            }
+                        }
+                    } header: {
+                        Text("기능 설정")
+                    } footer: {
+                        Text("사용할 기능은 매장 정보 편집에서 켜고 끕니다.")
+                    }
                 }
 
                 Section("관리") {
@@ -48,20 +101,6 @@ struct SettingsView: View {
                         NoticesView()
                     } label: {
                         Label("공지", systemImage: "megaphone")
-                    }
-                    if session.currentStore?.useCouponSystem == true {
-                        NavigationLink {
-                            CouponsView()
-                        } label: {
-                            Label("쿠폰", systemImage: "ticket")
-                        }
-                    }
-                    if session.currentStore?.useMembershipSystem == true {
-                        NavigationLink {
-                            MembershipsView()
-                        } label: {
-                            Label("회원권", systemImage: "creditcard")
-                        }
                     }
                     NavigationLink {
                         RevenueView()
@@ -105,6 +144,9 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showPointSettings) {
                 PointSettingsEditView().environment(session)
+            }
+            .sheet(isPresented: $showBookingSettings) {
+                BookingSettingsEditView().environment(session)
             }
         }
     }
