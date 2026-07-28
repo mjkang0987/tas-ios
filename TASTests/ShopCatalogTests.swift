@@ -41,8 +41,10 @@ final class ShopCatalogTests: XCTestCase {
         XCTAssertEqual(medicalWithLive.map(\.value), ["vet"])
     }
 
-    func testRetiredIndustriesHaveNoDefaultServiceSeeds() {
-        // 내려간 업종은 온보딩에서 고를 수 없으므로 시드도 없어야 한다(빈 배열).
-        XCTAssertTrue(ShopCatalog.defaultServices(for: retiredValues).isEmpty)
+    func testRetiredIndustriesHaveNoServicePreset() {
+        // 내려간 업종엔 전용 프리셋이 없다. 다만 카탈로그가 비면 예약에서 서비스를 못 고르는
+        // 막다른 길이 되므로 defaultServices는 공용 "기본 서비스" 1개로 폴백한다.
+        XCTAssertEqual(ShopCatalog.defaultServices(for: retiredValues).map(\.name), ["기본 서비스"])
+        XCTAssertTrue(ShopCatalog.categoryColors(for: retiredValues).isEmpty)
     }
 }
