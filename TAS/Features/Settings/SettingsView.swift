@@ -8,13 +8,9 @@ struct SettingsView: View {
     @State private var showPointSettings = false
     @State private var showBookingSettings = false
 
-    /// 쿠폰·회원권·온라인예약은 서버 기능이라 게스트에선 잠긴다 — 들어가기 전에 알려준다.
-    @ViewBuilder private var loginRequiredHint: some View {
-        if session.isGuest {
-            Spacer()
-            Text("로그인 필요").font(.caption).foregroundStyle(.secondary)
-        }
-    }
+    /// 쿠폰·회원권·온라인예약은 서버(발급/차감 API·공개 예약 페이지)가 있어야 동작한다.
+    /// 게스트에겐 매장 정보 편집에서 토글도 감추므로 설정 목록에서도 함께 감춘다.
+    private var serverFeaturesAvailable: Bool { !session.isGuest }
 
     /// 온라인예약을 켰지만 공개 주소(슬러그)나 매장 연락처가 비어 있는 상태.
     /// 게스트는 설정 자체가 로그인 전용이라 판정에서 제외한다.
@@ -25,10 +21,12 @@ struct SettingsView: View {
         return slug.isEmpty || contact.isEmpty
     }
 
-    /// 켜진 기능이 하나라도 있으면 "기능 설정" 섹션을 노출.
+    /// 켜진(그리고 이 모드에서 쓸 수 있는) 기능이 하나라도 있으면 "기능 설정" 섹션을 노출.
     private var hasFeatureSettings: Bool {
         guard let store = session.currentStore else { return false }
-        return store.usePointSystem == true || store.useCouponSystem == true
+        if store.usePointSystem == true { return true }
+        guard serverFeaturesAvailable else { return false }
+        return store.useCouponSystem == true
             || store.useMembershipSystem == true || store.useOnlineBooking == true
     }
 
@@ -41,7 +39,7 @@ struct SettingsView: View {
                         LabeledContent("업종", value: label)
                     }
                     // 공개 예약 주소는 온라인예약을 쓸 때만 의미가 있다(편집은 온라인예약 설정에서).
-                    if session.currentStore?.useOnlineBooking == true,
+                    if serverFeaturesAvailable, session.currentStore?.useOnlineBooking == true,
                        let slug = session.currentStore?.bookingSlug, !slug.isEmpty {
                         LabeledContent("예약 주소", value: slug)
                     }
@@ -60,31 +58,24 @@ struct SettingsView: View {
                                 Label("적립금 설정", systemImage: "wonsign.circle")
                             }
                         }
-                        if session.currentStore?.useCouponSystem == true {
+                        if serverFeaturesAvailable, session.currentStore?.useCouponSystem == true {
                             NavigationLink {
                                 CouponsView()
                             } label: {
-                                HStack {
-                                    Label("쿠폰 관리", systemImage: "ticket")
-                                    loginRequiredHint
-                                }
+                                Label("쿠폰 관리", systemImage: "ticket")
                             }
                         }
-                        if session.currentStore?.useMembershipSystem == true {
+                        if serverFeaturesAvailable, session.currentStore?.useMembershipSystem == true {
                             NavigationLink {
                                 MembershipsView()
                             } label: {
-                                HStack {
-                                    Label("회원권 관리", systemImage: "creditcard")
-                                    loginRequiredHint
-                                }
+                                Label("회원권 관리", systemImage: "creditcard")
                             }
                         }
-                        if session.currentStore?.useOnlineBooking == true {
+                        if serverFeaturesAvailable, session.currentStore?.useOnlineBooking == true {
                             Button { showBookingSettings = true } label: {
                                 HStack {
                                     Label("온라인예약 설정", systemImage: "calendar.badge.clock")
-                                    loginRequiredHint
                                     // 토글만 켜고 주소·연락처를 비워두면 공개 예약 페이지가 열리지 않는다.
                                     // (서버는 예약 설정을 저장할 때만 필수를 강제해서, 켜두기만 한 상태가 생긴다.)
                                     if bookingNeedsSetup {
