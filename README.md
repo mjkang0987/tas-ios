@@ -8,7 +8,9 @@ its models and networking mirror that backend's `/api/*` surface
 
 The app runs in two modes behind one UI:
 
-- **게스트(오프라인) 모드** — 로그인 없이 로컬 스냅샷(`GuestStore`)에 데이터를 저장하며 전 기능 사용.
+- **게스트(오프라인) 모드** — 로그인 없이 로컬 스냅샷(`GuestStore`)에 데이터를 저장하며 사용.
+  예약·고객·담당자·서비스·매출·적립금은 전부 동작하고, 서버가 있어야 하는 **쿠폰·회원권·온라인예약
+  설정만 로그인 전용**(웹 `shouldUseLocalDb()` 게이트와 동일).
 - **로그인 모드** — 소셜 로그인으로 받은 Bearer 토큰으로 백엔드 `/api/*`를 사용.
 
 `TASService`가 이 둘을 자동 분기하므로 화면 코드는 모드를 몰라도 된다.

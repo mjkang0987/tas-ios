@@ -117,7 +117,10 @@ final class MembershipsViewModel {
 }
 
 /// 회원권 관리 — 웹 설정 > `MembershipManageSection` 이식(상품 CRUD + 발급/차감).
-/// 발급·차감은 로그인 전용(웹과 동일). 게스트는 안내만 노출.
+///
+/// **화면 전체가 로그인 전용**(웹 `isLocal` 게이트와 동일). 상품만 게스트에서 만들 수 있게 두면
+/// 발급도 못 하고, `POST /api/migrate-local`이 받는 건 서비스·담당자·고객·예약뿐이라
+/// 로그인해도 계정으로 넘어가지 않는 막다른 데이터가 된다.
 struct MembershipsView: View {
     @Environment(SessionStore.self) private var session
     @State private var viewModel = MembershipsViewModel()
@@ -140,25 +143,18 @@ struct MembershipsView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            Picker("", selection: $tab) {
-                ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 6)
-
-            LoadableView(state: viewModel.state, loadingText: "회원권 불러오는 중…") { _ in
-                switch tab {
-                case .products: productList
-                case .issue: issueTab
-                }
+        Group {
+            if session.isSignedIn {
+                content
+            } else {
+                ContentUnavailableView("로그인 필요", systemImage: "lock",
+                                       description: Text("회원권은 로그인 후 이용할 수 있습니다."))
             }
         }
         .navigationTitle("회원권")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if tab == .products {
+            if session.isSignedIn, tab == .products {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { activeSheet = .create } label: { Image(systemName: "plus") }
                         .disabled(viewModel.state.value == nil)
@@ -179,7 +175,28 @@ struct MembershipsView: View {
                 )
             }
         }
-        .task { await viewModel.load() }
+        .task {
+            // 게스트는 잠금 안내만 — 로컬 스냅샷을 읽을 필요가 없다.
+            if session.isSignedIn { await viewModel.load() }
+        }
+    }
+
+    private var content: some View {
+        VStack(spacing: 0) {
+            Picker("", selection: $tab) {
+                ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+
+            LoadableView(state: viewModel.state, loadingText: "회원권 불러오는 중…") { _ in
+                switch tab {
+                case .products: productList
+                case .issue: issueTab
+                }
+            }
+        }
     }
 
     // MARK: - 상품 탭
@@ -201,41 +218,36 @@ struct MembershipsView: View {
         }
     }
 
-    // MARK: - 발급 탭 (로그인 전용)
+    // MARK: - 발급 탭 (화면 전체가 로그인 전용이라 별도 게이트 없음)
 
-    @ViewBuilder private var issueTab: some View {
-        if !session.isSignedIn {
-            ContentUnavailableView("로그인 필요", systemImage: "lock",
-                                   description: Text("회원권 발급·차감은 로그인 후 이용할 수 있습니다."))
-        } else {
-            List {
-                Section {
-                    Button {
-                        activeSheet = .issue
-                    } label: {
-                        Label("회원권 발급", systemImage: "plus.circle")
-                    }
-                    .disabled(viewModel.activeProducts.isEmpty)
-                    if viewModel.activeProducts.isEmpty {
-                        Text("발급할 활성 회원권 상품이 없습니다.").font(.caption).foregroundStyle(.secondary)
-                    }
+    private var issueTab: some View {
+        List {
+            Section {
+                Button {
+                    activeSheet = .issue
+                } label: {
+                    Label("회원권 발급", systemImage: "plus.circle")
                 }
-                if let err = viewModel.actionError {
-                    Section { Text(err).font(.footnote).foregroundStyle(.red) }
+                .disabled(viewModel.activeProducts.isEmpty)
+                if viewModel.activeProducts.isEmpty {
+                    Text("발급할 활성 회원권 상품이 없습니다.").font(.caption).foregroundStyle(.secondary)
                 }
-                if viewModel.issued.isEmpty {
-                    Section { Text("발급된 회원권이 없습니다.").font(.footnote).foregroundStyle(.secondary) }
-                } else {
-                    Section("발급 내역") {
-                        ForEach(viewModel.issued) { m in
-                            IssuedMembershipRow(
-                                membership: m,
-                                customerName: viewModel.customerName(m.customerId),
-                                onUse: { await viewModel.use(m.id, action: .use) },
-                                onRestore: { await viewModel.use(m.id, action: .restore) },
-                                onCancel: { await viewModel.cancel(m.id) }
-                            )
-                        }
+            }
+            if let err = viewModel.actionError {
+                Section { Text(err).font(.footnote).foregroundStyle(.red) }
+            }
+            if viewModel.issued.isEmpty {
+                Section { Text("발급된 회원권이 없습니다.").font(.footnote).foregroundStyle(.secondary) }
+            } else {
+                Section("발급 내역") {
+                    ForEach(viewModel.issued) { m in
+                        IssuedMembershipRow(
+                            membership: m,
+                            customerName: viewModel.customerName(m.customerId),
+                            onUse: { await viewModel.use(m.id, action: .use) },
+                            onRestore: { await viewModel.use(m.id, action: .restore) },
+                            onCancel: { await viewModel.cancel(m.id) }
+                        )
                     }
                 }
             }
