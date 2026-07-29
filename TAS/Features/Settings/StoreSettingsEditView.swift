@@ -38,13 +38,21 @@ struct StoreSettingsEditView: View {
 
                 Section {
                     Toggle("적립금", isOn: $usePointSystem)
-                    Toggle("쿠폰", isOn: $useCouponSystem)
-                    Toggle("회원권", isOn: $useMembershipSystem)
-                    Toggle("온라인예약", isOn: $useOnlineBooking)
+                    // 쿠폰·회원권·온라인예약은 서버가 있어야 동작한다(발급/차감 API, 공개 예약 페이지).
+                    // 게스트에게 토글만 주면 켜도 쓸 수 없으니 아예 노출하지 않는다.
+                    if !session.isGuest {
+                        Toggle("쿠폰", isOn: $useCouponSystem)
+                        Toggle("회원권", isOn: $useMembershipSystem)
+                        Toggle("온라인예약", isOn: $useOnlineBooking)
+                    }
                 } header: {
                     Text("기능")
                 } footer: {
-                    Text("기능을 켜면 설정 화면에 세부 설정 항목이 나타납니다.")
+                    if session.isGuest {
+                        Text("게스트 모드에선 적립금만 사용할 수 있어요. 쿠폰·회원권·온라인예약은 로그인 후 켤 수 있습니다.")
+                    } else {
+                        Text("기능을 켜면 설정 화면에 세부 설정 항목이 나타납니다.")
+                    }
                 }
 
                 if let errorMessage {
