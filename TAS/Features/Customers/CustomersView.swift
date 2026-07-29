@@ -46,9 +46,11 @@ struct CustomersView: View {
                         reservations: viewModel.reservations(for: customer.id),
                         onEdit: { activeSheet = .edit($0) },
                         pointsEnabled: session.currentStore?.usePointSystem ?? false,
+                        pointSettings: session.currentStore?.pointSettings,
                         service: TASService(),
                         onChanged: { await viewModel.load() },
-                        mergeCandidates: viewModel.allCustomers.filter { $0.id != customer.id }
+                        mergeCandidates: viewModel.allCustomers.filter { $0.id != customer.id },
+                        reservationCounts: viewModel.reservationCounts
                     )
                 case .create:
                     CustomerFormView(

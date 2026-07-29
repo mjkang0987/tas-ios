@@ -311,30 +311,69 @@ struct TASService {
     /// 매장 기본 정보 저장(이름·기능 토글) — PATCH /api/store.
     /// 응답은 부분 echo라 Store로 못 받으므로, 성공 시 입력을 현재 매장에 반영해 돌려준다.
     @discardableResult
-    func updateStore(current: Store, name: String, shopType: String?, usePointSystem: Bool, useMembershipSystem: Bool, useOnlineBooking: Bool) async throws -> Store {
+    func updateStore(current: Store, name: String, shopType: String?, usePointSystem: Bool,
+                     useMembershipSystem: Bool, useCouponSystem: Bool, useOnlineBooking: Bool) async throws -> Store {
         if guest.isActive {
             return guest.updateStoreSettings(name: name, shopType: shopType, usePointSystem: usePointSystem,
-                                             useMembershipSystem: useMembershipSystem, useOnlineBooking: useOnlineBooking)
+                                             useMembershipSystem: useMembershipSystem,
+                                             useCouponSystem: useCouponSystem, useOnlineBooking: useOnlineBooking)
         }
         struct Body: Encodable {
             let storeName: String
             let shopType: String?
             let usePointSystem: Bool
             let useMembershipSystem: Bool
+            let useCouponSystem: Bool
             let useOnlineBooking: Bool
         }
         // 응답은 부분 echo(id/name 없음) → error 여부만 확인.
         struct PatchResponse: Decodable { let error: String? }
         let resp: PatchResponse = try await client.patch("api/store", body: Body(
             storeName: name, shopType: shopType, usePointSystem: usePointSystem,
-            useMembershipSystem: useMembershipSystem, useOnlineBooking: useOnlineBooking))
+            useMembershipSystem: useMembershipSystem, useCouponSystem: useCouponSystem,
+            useOnlineBooking: useOnlineBooking))
         if let error = resp.error { throw APIError.server(status: 400, message: error) }
         var updated = current
         updated.name = name
         updated.shopType = shopType
         updated.usePointSystem = usePointSystem
         updated.useMembershipSystem = useMembershipSystem
+        updated.useCouponSystem = useCouponSystem
         updated.useOnlineBooking = useOnlineBooking
+        return updated
+    }
+
+    // MARK: - 온라인 예약 설정 — PATCH /api/store (bookingSlug + bookingSettings)
+
+    /// 공개 예약 페이지는 서버가 호스팅하므로 게스트(로컬)에선 설정할 것이 없다.
+    private static let bookingLoginOnly = APIError.server(
+        status: 403, message: "온라인 예약 설정은 로그인 후 이용할 수 있습니다.")
+
+    /// 영문 매장명(슬러그) 중복 확인 — GET /api/store?checkSlug=…
+    /// 서버는 형식 불량이면 `{available:false, reason:"format"}`, 확인 불가면 `reason:"unverified"`.
+    func checkBookingSlug(_ slug: String) async throws -> Bool {
+        if guest.isActive { throw Self.bookingLoginOnly }
+        struct Resp: Decodable { let available: Bool; let reason: String? }
+        let resp: Resp = try await client.get("api/store", query: ["checkSlug": slug])
+        return resp.available
+    }
+
+    /// 예약 슬러그 + 공개 예약 규칙 저장 — PATCH /api/store.
+    /// 서버는 온라인예약이 켜진 상태에서 `contactTel`이 비면 400(`contactTel required`),
+    /// 슬러그가 이미 쓰이면 409를 준다.
+    @discardableResult
+    func updateBookingSettings(current: Store, slug: String, settings: BookingSettings) async throws -> Store {
+        if guest.isActive { throw Self.bookingLoginOnly }
+        struct Body: Encodable {
+            let bookingSlug: String
+            let bookingSettings: BookingSettings
+        }
+        struct PatchResponse: Decodable { let error: String? }
+        let resp: PatchResponse = try await client.patch("api/store", body: Body(bookingSlug: slug, bookingSettings: settings))
+        if let error = resp.error { throw APIError.server(status: 400, message: error) }
+        var updated = current
+        updated.bookingSlug = slug
+        updated.bookingSettings = settings
         return updated
     }
 

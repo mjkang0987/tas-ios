@@ -9,14 +9,19 @@ struct CustomerDetailView: View {
     var onEdit: ((Customer) -> Void)? = nil
     /// 매장이 적립금 기능을 쓰면 "적립금 조정" 노출.
     var pointsEnabled: Bool = false
+    /// 매장 적립금 설정 — 선불 충전이 켜져 있으면 "적립금 충전"도 노출(충전 규칙 사용).
+    var pointSettings: PointSettings? = nil
     var service: TASService = TASService()
     /// 적립금 조정 저장 후 상위 리로드 + 상세 닫기.
     var onChanged: () async -> Void = {}
     /// 병합 대상 후보(이 고객 제외). 비어있지 않으면 "합치기" 노출.
     var mergeCandidates: [Customer] = []
+    /// 고객 id → 예약 건수. 병합 대상 선택 시 판단 근거로 쓴다.
+    var reservationCounts: [Int: Int] = [:]
 
     @Environment(\.dismiss) private var dismiss
     @State private var showPointAdjust = false
+    @State private var showPointRecharge = false
     @State private var showMerge = false
 
     var body: some View {
@@ -33,6 +38,9 @@ struct CustomerDetailView: View {
                     }
                     if pointsEnabled {
                         Button("적립금 조정") { showPointAdjust = true }
+                    }
+                    if pointsEnabled, pointSettings?.enableRecharge == true {
+                        Button("적립금 충전") { showPointRecharge = true }
                     }
                     if !mergeCandidates.isEmpty {
                         Button("다른 고객과 합치기") { showMerge = true }
@@ -54,20 +62,6 @@ struct CustomerDetailView: View {
                 if let tags = customer.memoTags, !tags.isEmpty {
                     Section("메모 태그") {
                         FlowTags(tags: tags)
-                    }
-                }
-
-                if hasNotes {
-                    Section("노트") {
-                        if let note = customer.allergyNote, !note.isEmpty {
-                            noteRow("알레르기", note)
-                        }
-                        if let note = customer.preferenceNote, !note.isEmpty {
-                            noteRow("선호", note)
-                        }
-                        if let note = customer.claimNote, !note.isEmpty {
-                            noteRow("클레임", note)
-                        }
                     }
                 }
 
@@ -103,26 +97,23 @@ struct CustomerDetailView: View {
                     onCompleted: { await onChanged(); dismiss() }
                 )
             }
-            .sheet(isPresented: $showMerge) {
-                CustomerMergePicker(
-                    source: customer,
-                    candidates: mergeCandidates,
+            .sheet(isPresented: $showPointRecharge) {
+                PointRechargeView(
+                    customer: customer,
+                    rules: pointSettings?.rechargeRules ?? [],
                     service: service,
                     onCompleted: { await onChanged(); dismiss() }
                 )
             }
-        }
-    }
-
-    private var hasNotes: Bool {
-        [customer.allergyNote, customer.preferenceNote, customer.claimNote]
-            .contains { ($0?.isEmpty == false) }
-    }
-
-    private func noteRow(_ title: String, _ body: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
-            Text(body)
+            .sheet(isPresented: $showMerge) {
+                CustomerMergePicker(
+                    source: customer,
+                    candidates: mergeCandidates,
+                    reservationCounts: reservationCounts,
+                    service: service,
+                    onCompleted: { await onChanged(); dismiss() }
+                )
+            }
         }
     }
 

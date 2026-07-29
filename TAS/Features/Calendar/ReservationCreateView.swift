@@ -49,6 +49,9 @@ struct ReservationCreateView: View {
     @State private var payMethod: PaymentMethod = .card
     // 상태
     @State private var errorMessage: String?
+    /// 저장 진행 중 재진입 차단(저장 버튼 disabled). 웹은 이 가드가 없어 연속 클릭 시
+    /// 신규 고객이 두 벌 만들어졌다(tas 2026-07 수정). 앱은 @MainActor에서 await 전에
+    /// 세우고, 신규 고객 id도 시트 생성 시점의 nextCustomerId 고정값이라 재시도해도 upsert된다.
     @State private var isSaving = false
     @State private var showConflictConfirm = false
     @FocusState private var focusedField: Field?

@@ -231,12 +231,14 @@ final class GuestStore {
 
     /// 매장 기본 정보 저장(이름·기능 토글) — 웹 PATCH /api/store에 대응하는 로컬 버전.
     @discardableResult
-    func updateStoreSettings(name: String, shopType: String?, usePointSystem: Bool, useMembershipSystem: Bool, useOnlineBooking: Bool) -> Store {
+    func updateStoreSettings(name: String, shopType: String?, usePointSystem: Bool,
+                             useMembershipSystem: Bool, useCouponSystem: Bool, useOnlineBooking: Bool) -> Store {
         mutate { s in
             s.storeName = name
             s.shopType = shopType
             s.usePointSystem = usePointSystem
             s.useMembershipSystem = useMembershipSystem
+            s.useCouponSystem = useCouponSystem
             s.useOnlineBooking = useOnlineBooking
         }
         return syntheticStore

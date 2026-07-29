@@ -14,6 +14,7 @@ struct StoreSettingsEditView: View {
     @State private var shopType = ""
     @State private var usePointSystem = false
     @State private var useMembershipSystem = false
+    @State private var useCouponSystem = false
     @State private var useOnlineBooking = false
     @State private var errorMessage: String?
     @State private var isSaving = false
@@ -25,7 +26,7 @@ struct StoreSettingsEditView: View {
                     TextField("매장 이름", text: $name)
                     Picker("업종", selection: $shopType) {
                         Text("선택 안 함").tag("")
-                        ForEach(ShopCatalog.industryGroups, id: \.category) { group in
+                        ForEach(ShopCatalog.industryGroups(including: shopType), id: \.category) { group in
                             Section(group.category) {
                                 ForEach(group.items) { ind in
                                     Text("\(ind.emoji) \(ind.label)").tag(ind.value)
@@ -37,12 +38,13 @@ struct StoreSettingsEditView: View {
 
                 Section {
                     Toggle("적립금", isOn: $usePointSystem)
+                    Toggle("쿠폰", isOn: $useCouponSystem)
                     Toggle("회원권", isOn: $useMembershipSystem)
                     Toggle("온라인예약", isOn: $useOnlineBooking)
                 } header: {
                     Text("기능")
                 } footer: {
-                    Text("기능을 켜면 해당 메뉴가 노출됩니다. 세부 설정은 각 화면에서 이어집니다.")
+                    Text("기능을 켜면 설정 화면에 세부 설정 항목이 나타납니다.")
                 }
 
                 if let errorMessage {
@@ -71,6 +73,7 @@ struct StoreSettingsEditView: View {
         shopType = ShopCatalog.primaryIndustry(shopType: store.shopType)?.value ?? ""
         usePointSystem = store.usePointSystem ?? false
         useMembershipSystem = store.useMembershipSystem ?? false
+        useCouponSystem = store.useCouponSystem ?? false
         useOnlineBooking = store.useOnlineBooking ?? false
     }
 
@@ -87,6 +90,7 @@ struct StoreSettingsEditView: View {
                 shopType: shopType.isEmpty ? nil : shopType,
                 usePointSystem: usePointSystem,
                 useMembershipSystem: useMembershipSystem,
+                useCouponSystem: useCouponSystem,
                 useOnlineBooking: useOnlineBooking
             )
             session.currentStore = updated

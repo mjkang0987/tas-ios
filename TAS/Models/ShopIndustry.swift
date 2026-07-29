@@ -41,9 +41,10 @@ enum ShopCatalog {
         .init(value: "restaurant", label: "음식점", emoji: "🍽️", desc: "식당·레스토랑", category: "food"),
         .init(value: "cafe", label: "카페", emoji: "☕", desc: "카페·디저트", category: "food"),
         .init(value: "bar", label: "주점·바", emoji: "🍺", desc: "바·펍·주점", category: "food"),
-        .init(value: "clinic", label: "병원·의원", emoji: "🏥", desc: "진료·검진", category: "medical"),
-        .init(value: "dental", label: "치과", emoji: "🦷", desc: "치과 진료", category: "medical"),
-        .init(value: "oriental", label: "한의원", emoji: "🌿", desc: "한방 진료", category: "medical"),
+        // 의료 — 사람 진료(병원·의원/치과/한의원)는 목록에서 제외한다(웹 tas #168/#167).
+        // 진료 내용은 건강정보(민감정보)라 개인정보보호법 §23의 별도 동의·안전조치가 필요한데
+        // 예약 메모 등 자유 입력 경로가 열려 있어 현재 구조로는 감당하지 않는다.
+        // 동물병원은 반려동물 정보라 사람 민감정보가 아니어서 유지. (레거시 값은 retiredIndustries)
         .init(value: "vet", label: "동물병원", emoji: "🐾", desc: "반려동물 진료", category: "medical"),
         .init(value: "gym", label: "헬스·PT", emoji: "💪", desc: "헬스·퍼스널 트레이닝", category: "fitness"),
         .init(value: "yoga", label: "요가·필라테스", emoji: "🧘", desc: "요가·필라테스", category: "fitness"),
@@ -157,10 +158,21 @@ enum ShopCatalog {
                   status: .active, phone: "", note: "", color: "#6526D9")]
     }
 
+    /// 목록에서 내린 업종 — **표시 전용**. 새로 고를 수는 없지만, 이 값으로 저장된
+    /// 기존 매장(게스트 로컬 스냅샷 포함)의 업종이 라벨 없이 빈칸으로 보이거나
+    /// 저장 시 조용히 지워지지 않도록 라벨은 계속 해석한다.
+    static let retiredIndustries: [ShopIndustry] = [
+        .init(value: "clinic", label: "병원·의원", emoji: "🏥", desc: "진료·검진", category: "medical"),
+        .init(value: "dental", label: "치과", emoji: "🦷", desc: "치과 진료", category: "medical"),
+        .init(value: "oriental", label: "한의원", emoji: "🌿", desc: "한방 진료", category: "medical"),
+    ]
+
     // MARK: - 업종 조회 (웹 getPrimaryIndustry / shopType 라벨)
 
+    /// 라벨 해석용 — 선택 가능한 업종 + 내려간 업종(레거시 데이터).
     private static let byValue: [String: ShopIndustry] =
-        Dictionary(industries.map { ($0.value, $0) }, uniquingKeysWith: { first, _ in first })
+        Dictionary((industries + retiredIndustries).map { ($0.value, $0) },
+                   uniquingKeysWith: { first, _ in first })
 
     /// value 토큰 → 업종.
     static func industry(value: String) -> ShopIndustry? { byValue[value] }
@@ -184,9 +196,15 @@ enum ShopCatalog {
     }
 
     /// 업종 선택 드롭다운용 — 카테고리 순서대로 (분류명, 업종들) 그룹.
-    static var industryGroups: [(category: String, items: [ShopIndustry])] {
-        categories.compactMap { cat in
-            let items = industries.filter { $0.category == cat.key }
+    /// `current`가 내려간 업종이면 해당 분류에 끼워 넣는다. 그래야 그 업종으로 저장된
+    /// 매장이 편집 화면을 열었을 때 선택값이 비어 보이지 않고, 저장 시 업종이 지워지지 않는다.
+    static func industryGroups(including current: String? = nil) -> [(category: String, items: [ShopIndustry])] {
+        let retired = current.flatMap { value in
+            retiredIndustries.first { $0.value == value }
+        }
+        return categories.compactMap { cat in
+            var items = industries.filter { $0.category == cat.key }
+            if let retired, retired.category == cat.key { items.append(retired) }
             return items.isEmpty ? nil : (cat.name, items)
         }
     }
