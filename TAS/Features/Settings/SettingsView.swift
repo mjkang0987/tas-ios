@@ -8,6 +8,14 @@ struct SettingsView: View {
     @State private var showPointSettings = false
     @State private var showBookingSettings = false
 
+    /// 쿠폰·회원권·온라인예약은 서버 기능이라 게스트에선 잠긴다 — 들어가기 전에 알려준다.
+    @ViewBuilder private var loginRequiredHint: some View {
+        if session.isGuest {
+            Spacer()
+            Text("로그인 필요").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
     /// 온라인예약을 켰지만 공개 주소(슬러그)나 매장 연락처가 비어 있는 상태.
     /// 게스트는 설정 자체가 로그인 전용이라 판정에서 제외한다.
     private var bookingNeedsSetup: Bool {
@@ -56,20 +64,27 @@ struct SettingsView: View {
                             NavigationLink {
                                 CouponsView()
                             } label: {
-                                Label("쿠폰 관리", systemImage: "ticket")
+                                HStack {
+                                    Label("쿠폰 관리", systemImage: "ticket")
+                                    loginRequiredHint
+                                }
                             }
                         }
                         if session.currentStore?.useMembershipSystem == true {
                             NavigationLink {
                                 MembershipsView()
                             } label: {
-                                Label("회원권 관리", systemImage: "creditcard")
+                                HStack {
+                                    Label("회원권 관리", systemImage: "creditcard")
+                                    loginRequiredHint
+                                }
                             }
                         }
                         if session.currentStore?.useOnlineBooking == true {
                             Button { showBookingSettings = true } label: {
                                 HStack {
                                     Label("온라인예약 설정", systemImage: "calendar.badge.clock")
+                                    loginRequiredHint
                                     // 토글만 켜고 주소·연락처를 비워두면 공개 예약 페이지가 열리지 않는다.
                                     // (서버는 예약 설정을 저장할 때만 필수를 강제해서, 켜두기만 한 상태가 생긴다.)
                                     if bookingNeedsSetup {
