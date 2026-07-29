@@ -157,7 +157,13 @@
 
 ## P6 — 출시 준비 (App Store / TestFlight)
 
-- ✅ 버전 규약(`MARKETING_VERSION` 0.0.0/`CURRENT_PROJECT_VERSION` CI run_number), 아이콘(보라 의자), `ITSAppUsesNonExemptEncryption=false`
+- ✅ 버전 규약(`MARKETING_VERSION` 0.1.0/`CURRENT_PROJECT_VERSION` CI run_number), 아이콘(보라 의자), `ITSAppUsesNonExemptEncryption=false`
+- ✅ **업로드 차단 해소** — Google 로그인 작업(PR #10) 때 들어간 플레이스홀더 URL 스킴
+  (`com.googleusercontent.apps.REPLACE_WITH_REVERSED_CLIENT_ID`)이 App Store 업로드를 거부시켰다
+  (altool **90158**, 언더스코어 불가). 실제 리버스 클라이언트 ID를 받을 때까지 주석 처리.
+  키를 받으면 주석을 풀 것 — `docs/GOOGLE_SIGNIN.md`.
+  ⚠️ TestFlight는 **기본 브랜치 push + 커밋 메시지 `[tf]`** 둘 다 만족해야 돈다. `[tf]` 없이 머지하면
+  워크플로가 `skipped`로 넘어가 기기 빌드가 조용히 낡는다(7/24~7/29 실제로 그랬음).
 - ⬜ App Store Connect 앱 등록(`kr.co.takeaseat.app`)·SKU·카테고리
 - ⬜ 스크린샷·앱 설명·키워드
 - ⬜ 개인정보 처리방침 URL(웹 `/privacy`·`/terms` 연결) · App Privacy 라벨

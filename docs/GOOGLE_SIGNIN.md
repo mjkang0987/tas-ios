@@ -43,7 +43,14 @@
 | 위치 | 키 | 넣을 값 |
 |------|----|--------|
 | `GIDClientID` | iOS 클라이언트 ID | `123456-abc.apps.googleusercontent.com` |
-| `CFBundleURLTypes`(google dict)의 `CFBundleURLSchemes` | 리버스 클라이언트 ID | `com.googleusercontent.apps.123456-abc` |
+| `CFBundleURLTypes`의 google dict (**주석 상태**) | 리버스 클라이언트 ID | `com.googleusercontent.apps.123456-abc` |
+
+> ⚠️ google URL 스킴 dict는 **주석 처리된 채로 커밋돼 있다.** 플레이스홀더(`REPLACE_…`)가 들어간
+> 채로 두면 App Store 업로드가 거부되기 때문이다 — `altool` 오류 **90158**
+> (`URL schemes need to begin with an alphabetic character, and be comprised of alphanumeric
+> characters, the period, the hyphen or the plus sign only`; 언더스코어 불가).
+> 실제 리버스 클라이언트 ID를 받은 뒤 **주석을 풀고** 값을 채울 것. 그전까지는 스킴이 없어도
+> 네이티브 로그인이 웹 위임으로 폴백하므로 동작에 영향이 없다.
 
 - (선택) 백엔드 검증에 서버 클라이언트 ID가 필요하면 주석 처리된 `GIDServerClientID` 키를 활성화.
 - `AppConfig`는 값이 비었거나 `REPLACE…`를 포함하면 미설정으로 간주 → 웹 위임으로 폴백한다.
