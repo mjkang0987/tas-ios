@@ -3,6 +3,41 @@
 takeaseat(TAS) 서비스의 iOS 클라이언트. 백엔드는 [`mjkang0987/tas`](https://github.com/mjkang0987/tas)이며,
 모델·네트워킹은 그 저장소의 `/api/*` 도메인(`client/features/*/model.ts`)을 미러링한다.
 
+## Core Principles
+- 확실하지 않은 내용은 임의로 추측하지 말고 모른다고 명시할 것.
+- 사용자의 접근 방식에 문제가 있다면 즉시, 직접적으로 지적할 것.
+- 코드나 테스트가 실패할 경우 무작정 재시도하지 말고 반드시 근본 원인(root cause)을 먼저 조사할 것.
+
+## Session Startup Rules
+- 새 세션 시작 시 가장 먼저 `README.md`와 `plan.md`를 읽을 것. (이 저장소에는 `index.md`가 없다 —
+  구조·현재 상태의 SSOT는 `README.md`, 작업의 SSOT는 `plan.md`.)
+- 두 문서를 검토하기 전까지 코드 구현을 시작하지 말 것.
+- 문서와 실제 구현이 다르면 임의로 진행하지 말고 불일치를 보고한 뒤 확인을 요청할 것.
+
+## Development Workflow
+- **작업 계획 수립:** 모든 작업을 시작하기 전 `plan.md`를 작성할 것. 요구사항, 구현 방식, 영향받는 파일,
+  예상 결과를 기록하고 검토가 끝난 후 코드를 수정할 것. (개발 중 범위가 변경되면 `plan.md` 즉시 업데이트)
+- **작업 분할 및 브랜치 생성:** 작업 요청 시 가장 작은 단위의 이슈로 나누고, `develop` 브랜치 파생으로
+  개별 `feature` 브랜치를 생성하여 시작할 것. (세션마다 지정 브랜치가 있으면 그것을 따른다.)
+- **Feature 검증 사이클:** `작업` > `코드리뷰` > `개선` > `검증` > `수정작업` > `코드리뷰` > `개선` > `검증`
+  — 이 프로세스를 브랜치 내에서 완벽히 완료할 것. 리뷰를 건너뛰고 푸시하지 않는다.
+- **Dev 병합 및 2차 검증:** 단일 `feature` 검증이 끝나면 `develop` 에 머지 + 푸시하고, `develop` 에서도
+  동일한 사이클을 거쳐 통합 부작용을 해결할 것.
+- **Main 배포:** `develop` 진행이 완료되면 PR을 생성하고 `main` 머지를 **요청**할 것.
+  지시자의 명시적 승인 없이 `main`에 머지하지 않는다.
+- **검증 수단:** 로컬 빌드가 불가한 환경(리눅스 컨테이너 등)에서는 푸시 후 CI 그린까지를 검증으로 본다.
+  Xcode가 있으면 `xcodegen generate` → `xcodebuild build`(로직 변경 시 `xcodebuild test`).
+- **버전 펌핑:** PR 머지 시 변경 규모(Patch / Minor / Major)를 판단해 아래 `Versioning` 규약대로 올릴 것.
+
+## On Commit
+- 커밋은 최소 작업 단위로 잘게 분할할 것.
+- 커밋 메시지는 한국어로 작성할 것.
+- Conventional Commits 접두사(`feat:`, `fix:`, `refactor:`, `style:`, `chore:`, `perf:`, `docs:`)를 반드시 쓸 것.
+- 커밋 후에는 항상 푸시할 것.
+
+## Documentation Maintenance
+- 단일 작업이나 이슈를 완료한 후에는 변경 사항을 반영해 `README.md`와 `plan.md`를 즉시 갱신할 것.
+
 ## Versioning (버전 규약)
 
 iOS는 버전 숫자가 둘이다. 웹의 `package.json` 대신 Xcode 빌드 세팅으로 관리한다.
