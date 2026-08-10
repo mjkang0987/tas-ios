@@ -377,6 +377,33 @@ struct TASService {
         return updated
     }
 
+    // MARK: - 온라인 예약 요청함 — /api/book-requests (staff, 로그인 전용)
+
+    /// 공개 예약 페이지가 서버에만 있으므로 게스트에겐 대기 항목이 생길 수 없다(UI에서도 감춘다).
+    private static let bookingRequestsLoginOnly = APIError.server(
+        status: 403, message: "온라인 예약 요청은 로그인 후 이용할 수 있습니다.")
+
+    /// 오너 확정 대기 목록 — 신규 예약 신청(`status='requested'`) + 변경/취소 요청(`pendingAction`).
+    func fetchBookingRequests() async throws -> [BookingRequest] {
+        if guest.isActive { throw Self.bookingRequestsLoginOnly }
+        let resp: BookingRequestsResponse = try await client.get("api/book-requests")
+        return resp.requests
+    }
+
+    /// 요청 수락/거절 — POST /api/book-requests (body=`{id, decision, reason?}`).
+    ///
+    /// 응답 `applied`는 실제로 적용된 결과(`confirmed`·`rejected`·`cancelled`·`changed`).
+    /// 이미 처리된 항목이면 서버가 409(`no_pending`)를 준다.
+    @discardableResult
+    func decideBookingRequest(id: String, decision: BookingDecision, reason: String? = nil) async throws -> String? {
+        if guest.isActive { throw Self.bookingRequestsLoginOnly }
+        struct Body: Encodable { let id: String; let decision: BookingDecision; let reason: String? }
+        struct Resp: Decodable { let ok: Bool?; let applied: String? }
+        let resp: Resp = try await client.post(
+            "api/book-requests", body: Body(id: id, decision: decision, reason: reason))
+        return resp.applied
+    }
+
     /// 영업시간·휴무 저장 — PUT /api/store (body=`{businessHours, closedDates, closedWeekdays}`).
     @discardableResult
     func updateSchedule(current: Store, businessHours: BusinessHours, closedDates: [String], closedWeekdays: [Int]) async throws -> Store {

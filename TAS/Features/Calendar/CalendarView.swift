@@ -35,6 +35,12 @@ struct CalendarView: View {
 
     private var dateKey: String { KST.dayKey.string(from: selectedDate) }
 
+    /// 요청함은 공개 예약 페이지에서만 생기므로 온라인예약을 켠 **로그인** 매장에서만 노출한다
+    /// (웹 `BookingRequestNotification`의 `useOnlineBooking` 게이트 + 게스트 서버기능 차단 규칙).
+    private var showsBookingRequests: Bool {
+        !session.isGuest && session.currentStore?.useOnlineBooking == true
+    }
+
     var body: some View {
         NavigationStack {
             LoadableView(state: viewModel.state, loadingText: "예약 불러오는 중…") { _ in
@@ -54,6 +60,12 @@ struct CalendarView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     DatePicker("", selection: $selectedDate, displayedComponents: .date)
                         .labelsHidden()
+                }
+                // 고객이 보낸 예약 신청·변경·취소 요청함(웹 헤더 벨과 같은 자리).
+                if showsBookingRequests {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        BookingRequestsButton(onApplied: { await viewModel.reload() })
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
