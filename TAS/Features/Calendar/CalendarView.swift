@@ -152,7 +152,6 @@ struct CalendarView: View {
 
     // MARK: - 월(Month) 뷰
 
-    private static let weekdaySymbols = ["월", "화", "수", "목", "금", "토", "일"]
     private var gridColumns: [GridItem] { Array(repeating: GridItem(.flexible(), spacing: 4), count: 7) }
 
     @ViewBuilder private var monthView: some View {
@@ -175,7 +174,7 @@ struct CalendarView: View {
             )
 
             LazyVGrid(columns: gridColumns, spacing: 4) {
-                ForEach(Array(Self.weekdaySymbols.enumerated()), id: \.offset) { i, s in
+                ForEach(Array(KST.weekdayLabels.enumerated()), id: \.offset) { i, s in
                     Text(s)
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(i >= 5 ? Color.secondary : Color.primary)
@@ -480,7 +479,6 @@ struct CalendarView: View {
         }
     }
 
-    private static let weekdayLabels = ["월", "화", "수", "목", "금", "토", "일"]
 
     private var weekList: some View {
         List {
@@ -512,7 +510,7 @@ struct CalendarView: View {
     /// "MM.dd 요일" 헤더.
     private func weekdayHeader(_ key: String, index: Int) -> String {
         let parts = key.split(separator: "-")
-        let label = index < Self.weekdayLabels.count ? Self.weekdayLabels[index] : ""
+        let label = index < KST.weekdayLabels.count ? KST.weekdayLabels[index] : ""
         guard parts.count == 3 else { return label }
         return "\(parts[1]).\(parts[2]) \(label)"
     }

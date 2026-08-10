@@ -4,6 +4,10 @@ import Foundation
 enum KST {
     static let timeZone = TimeZone(identifier: "Asia/Seoul")!
 
+    /// 요일 라벨(월 시작) — 웹 `WEEKDAY_LABELS`. 담당자 스케줄·영업시간 배열의 인덱스 순서와 같다.
+    /// 화면마다 복붙하지 말고 여기서 가져다 쓴다.
+    static let weekdayLabels = ["월", "화", "수", "목", "금", "토", "일"]
+
     /// 월요일 시작(웹 WEEKDAY_LABELS) KST 캘린더.
     static var calendar: Calendar {
         var c = Calendar(identifier: .gregorian)

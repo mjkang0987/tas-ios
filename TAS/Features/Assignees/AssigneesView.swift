@@ -207,8 +207,6 @@ private struct AssigneeMergeSheet: View {
 private struct AssigneeRow: View {
     let assignee: Assignee
 
-    private static let weekdayLabels = ["월", "화", "수", "목", "금", "토", "일"]
-
     var body: some View {
         HStack(spacing: 10) {
             ColorDot(color: Color(hex: assignee.color) ?? .gray, size: 9)
@@ -227,15 +225,12 @@ private struct AssigneeRow: View {
         .padding(.vertical, 1)
     }
 
+    /// 웹 `summarizeSchedule` 이식 — 같은 근무시간끼리 구간으로 묶는다.
+    /// (예전엔 근무 요일을 전부 잇고 **첫 요일의 시간만** 붙여, 요일마다 시간이 다르면 틀리게 나왔다.)
     private var scheduleSummary: String {
-        let enabled = zip(Self.weekdayLabels, assignee.schedule)
-            .filter { $0.1.enabled }
-        guard !enabled.isEmpty else { return "휴무" }
-        let days = enabled.map(\.0).joined(separator: "·")
-        if let first = enabled.first?.1 {
-            return "\(days) \(first.start)–\(first.end)"
-        }
-        return days
+        assignee.scheduleSummary
+            .map { "\($0.days) \($0.hours)" }
+            .joined(separator: " · ")
     }
 }
 
