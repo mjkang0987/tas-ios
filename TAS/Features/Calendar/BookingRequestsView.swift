@@ -124,6 +124,10 @@ struct BookingRequestsView: View {
             } message: {
                 Text(viewModel.actionError ?? "")
             }
+            // 시트도 스스로 읽는다. 배지용 로드는 툴바 버튼에 달려 있는데, 그 `.task`가
+            // 안 돌면(툴바는 UIKit 바 버튼으로 호스팅된다) 시트가 .idle에서 멈춘 채 안 풀린다.
+            // 이미 읽어둔 목록이 있으면 로딩 표시 없이 갱신만 한다.
+            .task { await viewModel.load() }
         }
     }
 
