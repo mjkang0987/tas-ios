@@ -15,13 +15,17 @@ final class AssigneesViewModel {
     /// 저장/삭제 중 실패 메시지(폼·목록에서 표시).
     var actionError: String?
 
-    /// 재직 우선 → 이름 순.
+    /// 재직 우선 → 이름 순(웹 `compareAssigneeName`: 영문 → 한글 → 기타, 그룹 안에서 가나다순).
     var sorted: [Assignee] {
         (state.value ?? []).sorted { lhs, rhs in
             let l = lhs.status == .retired ? 1 : 0
             let r = rhs.status == .retired ? 1 : 0
             if l != r { return l < r }
-            return lhs.name < rhs.name
+            switch NameSort.assigneeName(lhs.name, rhs.name) {
+            case .orderedAscending: return true
+            case .orderedDescending: return false
+            case .orderedSame: return lhs.id < rhs.id
+            }
         }
     }
 
