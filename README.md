@@ -144,7 +144,7 @@ xcodebuild test -project TAS.xcodeproj -scheme TAS \
 진행 상황·다음 작업의 소스오브트루스는 [`plan.md`](plan.md). 요약:
 
 - 🔒 로그인 활성화: iOS OAuth 클라이언트 ID + 백엔드 `/api/mobile-auth/*` 배포
-- 🔒 로그인 전용: SNS 연동 · 멤버/초대 · 네이버 예약 동기화
+- 🔒 로그인 전용: SNS 연동 · 멤버/초대 · 네이버 예약 동기화(**허용 매장 한정** — `/api/store`의 `naverBookingEnabled` 참조)
 - 🔒 백엔드 신설: 쿠폰·회원권 발급/차감, 온라인 예약 유입
 - 출시 준비(App Store Connect), 접근성/다크모드 재점검
 
