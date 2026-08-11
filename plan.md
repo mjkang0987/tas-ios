@@ -215,6 +215,11 @@
 - ⬜ 접근성/다크모드/다이내믹 타입 재점검(컴팩트 폰트 후 큰 글자 레이아웃)
 - ⬜ 푸시 알림(없음) — APNs 키·등록·백엔드 발송(로그인 기반)
 - ⬜ 로그인 후 다기기 동기화/충돌 처리(웹 `conflict-resolution` 미반영)
+- ⬜ **웹 톤 색상값 중복 정리**(PR #17 리뷰 지적, 출시 전까지 보류) — `A88417`(warning)·`6526D9`(purple)·
+  `EA4335`(danger)가 `Core/UI/Badges.swift`(`StatusBadge`)와 `Calendar/BookingRequestsView.swift`
+  (`BookingRequestKindBadge`)에 **각각** 하드코딩돼 있다. 한쪽만 고치면 같은 톤이 화면마다 어긋난다.
+  정리안: `Core/UI/Color+Hex.swift`에 토큰 3개(`.tasWarning`/`.tasPurple`/`.tasDanger`)를 두고 양쪽이 참조
+  (값 동일 → 화면 변화 0). 배지가 더 늘기 전에 하는 게 싸다. 같이 정리: `CalendarView.swift`의 빈 줄 잔재.
 
 ---
 
