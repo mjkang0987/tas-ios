@@ -71,10 +71,15 @@ struct ReservationCreateView: View {
     private var totalDuration: Int { selectedServices.compactMap { catalogMap[$0]?.durationMinutes }.reduce(0, +) }
     private var totalPrice: Int { selectedServices.compactMap { catalogMap[$0]?.price }.reduce(0, +) }
 
+    /// 고객명 추천 목록 — 이름 가나다순(웹 `sortCustomersByName`, tas #175).
+    /// 등록 순(id)으로 6개를 자르면 흔한 이름일수록 엉뚱한 후보가 먼저 잘려 나간다.
     private var filteredCustomers: [Customer] {
         let q = customerName.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty else { return [] }
-        return customers.filter { $0.name.contains(q) || $0.tel.contains(q) }.prefix(6).map { $0 }
+        return customers.filter { $0.name.contains(q) || $0.tel.contains(q) }
+            .sortedByName()
+            .prefix(6)
+            .map { $0 }
     }
 
     var body: some View {

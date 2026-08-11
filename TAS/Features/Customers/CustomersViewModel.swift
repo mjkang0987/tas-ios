@@ -25,7 +25,7 @@ final class CustomersViewModel {
     }
 
     var filtered: [Customer] {
-        let all = (state.value?.customers ?? []).sorted { $0.name < $1.name }
+        let all = (state.value?.customers ?? []).sortedByName()
         let query = searchText.trimmingCharacters(in: .whitespaces)
         guard !query.isEmpty else { return all }
         let digits = query.filter(\.isNumber)

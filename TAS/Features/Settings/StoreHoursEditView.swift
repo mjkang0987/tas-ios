@@ -18,7 +18,6 @@ struct StoreHoursEditView: View {
     @State private var errorMessage: String?
     @State private var isSaving = false
 
-    private static let weekdayLabels = ["월", "화", "수", "목", "금", "토", "일"]
     private static let seoul = TimeZone(identifier: "Asia/Seoul")!
 
     var body: some View {
@@ -33,7 +32,7 @@ struct StoreHoursEditView: View {
 
                 Section {
                     ForEach(0..<7, id: \.self) { day in
-                        Toggle(Self.weekdayLabels[day], isOn: Binding(
+                        Toggle(KST.weekdayLabels[day], isOn: Binding(
                             get: { closedWeekdays.contains(day) },
                             set: { on in if on { closedWeekdays.insert(day) } else { closedWeekdays.remove(day) } }
                         ))

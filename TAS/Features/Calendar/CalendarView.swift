@@ -35,6 +35,12 @@ struct CalendarView: View {
 
     private var dateKey: String { KST.dayKey.string(from: selectedDate) }
 
+    /// 요청함은 공개 예약 페이지에서만 생기므로 온라인예약을 켠 **로그인** 매장에서만 노출한다
+    /// (웹 `BookingRequestNotification`의 `useOnlineBooking` 게이트 + 게스트 서버기능 차단 규칙).
+    private var showsBookingRequests: Bool {
+        !session.isGuest && session.currentStore?.useOnlineBooking == true
+    }
+
     var body: some View {
         NavigationStack {
             LoadableView(state: viewModel.state, loadingText: "예약 불러오는 중…") { _ in
@@ -54,6 +60,12 @@ struct CalendarView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     DatePicker("", selection: $selectedDate, displayedComponents: .date)
                         .labelsHidden()
+                }
+                // 고객이 보낸 예약 신청·변경·취소 요청함(웹 헤더 벨과 같은 자리).
+                if showsBookingRequests {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        BookingRequestsButton(onApplied: { await viewModel.reload() })
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -152,7 +164,6 @@ struct CalendarView: View {
 
     // MARK: - 월(Month) 뷰
 
-    private static let weekdaySymbols = ["월", "화", "수", "목", "금", "토", "일"]
     private var gridColumns: [GridItem] { Array(repeating: GridItem(.flexible(), spacing: 4), count: 7) }
 
     @ViewBuilder private var monthView: some View {
@@ -175,7 +186,7 @@ struct CalendarView: View {
             )
 
             LazyVGrid(columns: gridColumns, spacing: 4) {
-                ForEach(Array(Self.weekdaySymbols.enumerated()), id: \.offset) { i, s in
+                ForEach(Array(KST.weekdayLabels.enumerated()), id: \.offset) { i, s in
                     Text(s)
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(i >= 5 ? Color.secondary : Color.primary)
@@ -480,7 +491,6 @@ struct CalendarView: View {
         }
     }
 
-    private static let weekdayLabels = ["월", "화", "수", "목", "금", "토", "일"]
 
     private var weekList: some View {
         List {
@@ -512,7 +522,7 @@ struct CalendarView: View {
     /// "MM.dd 요일" 헤더.
     private func weekdayHeader(_ key: String, index: Int) -> String {
         let parts = key.split(separator: "-")
-        let label = index < Self.weekdayLabels.count ? Self.weekdayLabels[index] : ""
+        let label = index < KST.weekdayLabels.count ? KST.weekdayLabels[index] : ""
         guard parts.count == 3 else { return label }
         return "\(parts[1]).\(parts[2]) \(label)"
     }
