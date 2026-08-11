@@ -57,15 +57,16 @@ TAS/
     Session/           SessionStore · KeychainTokenStore · MobileToken
     Storage/           GuestStore · GuestSnapshot · LocalStore (오프라인 로컬 DB)
     UI/                LoadableView · Badges · FilterChip · ColorAccents · ServiceColor · Formatting
-    KST.swift          매장 기준(Asia/Seoul) 날짜 유틸
+    KST.swift          매장 기준(Asia/Seoul) 날짜 유틸 · 요일 라벨(weekdayLabels)
     ReservationOverlap 담당자 중복 예약(겹침) 판정 공용 유틸
     PointMath          적립금 산식(적립/사용) 공용 유틸
+    NameSort           이름 정렬 규칙(고객 가나다순 · 담당자 영문→한글→기타)
   Models/              Reservation · Customer · Assignee · Service · Store · Notice ·
-                       Coupon · Membership · Common (웹 model.ts 미러링)
+                       Coupon · Membership · BookingRequest · Common (웹 model.ts 미러링)
   Features/
     Login/             소셜 로그인(웹 위임 + 네이티브 Google) · 게스트 시작
     Guest/             약관 동의 · 온보딩
-    Calendar/          일(타임라인)/주/월/년 · 예약 생성·수정·결제·이력
+    Calendar/          일(타임라인)/주/월/년 · 예약 생성·수정·결제·이력 · 온라인 예약 요청함
     Customers/         고객 CRUD · 병합 · 적립금 조정
     Assignees/         담당자 CRUD · 병합 · 근무시간
     Services/          서비스 카탈로그
@@ -115,6 +116,7 @@ TASTests/              유닛 테스트 (XCTest, @testable import TAS)
 | 공지·쿠폰·회원권 | `/api/{notices,coupons,memberships}` | GET · POST · PUT · DELETE |
 | 쿠폰·회원권 발급 | `/api/{coupon-issue,membership-issue}`, `/api/membership-use` | POST · DELETE (로그인 전용) |
 | 매장   | `/api/store`(`?checkSlug=`·`bookingSettings` 포함), `/api/user/stores` | GET · PATCH · PUT |
+| 예약 요청 | `/api/book-requests`(신청·변경·취소 승인 대기) | GET · POST (로그인 전용) |
 | 인증   | `/api/mobile-auth/{exchange,google}`, `/api/migrate-local` | POST |
 
 ## Testing
@@ -123,7 +125,8 @@ TASTests/              유닛 테스트 (XCTest, @testable import TAS)
 겹침 판정(`ReservationOverlap`) · Store 디코딩 · 고객/예약 헬퍼 · 매출 집계·추세 ·
 게스트 스냅샷 CRUD/병합(`GuestStore`) · 적립 산식(`PointMath`) · 이관 인코딩(`MigrateLocalBody`) ·
 업종 카탈로그(`ShopCatalog` — 목록에서 내린 업종의 라벨 해석·Picker 노출) ·
-예약 설정 검증·디코딩(`BookingSettings` — 슬러그·연락처 형식, 기본 안내문구, 부분 응답 폴백).
+예약 설정 검증·디코딩(`BookingSettings` — 슬러그·연락처 형식, 기본 안내문구, 부분 응답 폴백) ·
+근무시간 요약(`DaySchedule.summarize` — 구간 묶기·결손 스케줄) · 이름 정렬(`NameSort`).
 
 ```bash
 xcodebuild test -project TAS.xcodeproj -scheme TAS \

@@ -24,7 +24,6 @@ struct AssigneeFormView: View {
 
     /// 담당자 색 팔레트(웹 자유 색상 대신 iOS 네이티브 감성의 큐레이션 팔레트; 기본 보라 포함).
     static let colorPalette = ["#6526D9", "#4285F4", "#34A853", "#EA4335", "#FBBC04", "#FF6D01", "#46BDC6", "#E91E8C"]
-    static let weekdayLabels = ["월", "화", "수", "목", "금", "토", "일"]
     private static let seoul = TimeZone(identifier: "Asia/Seoul")!
 
     var body: some View {
@@ -110,7 +109,7 @@ struct AssigneeFormView: View {
     private func scheduleRow(_ day: Int) -> some View {
         VStack(spacing: 4) {
             Toggle(isOn: enabledBinding(day)) {
-                Text(Self.weekdayLabels[day]).font(.body.weight(.medium))
+                Text(KST.weekdayLabels[day]).font(.body.weight(.medium))
             }
             if schedule[day].enabled {
                 HStack {

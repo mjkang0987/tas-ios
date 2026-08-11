@@ -4,7 +4,7 @@
 > 백엔드는 [`mjkang0987/tas`](https://github.com/mjkang0987/tas)(로컬 `/workspace/tas`). 구조는 `README.md`, 버전 규약은 `CLAUDE.md`.
 >
 > _상태_ ⬜ 예정 · 🟡 진행 · ✅ 완료 · 🔒 외부 준비 필요(키/설정)
-> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/tas-repo-changes-review-ddrxdk`).
+> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/dev-progress-tpiw43`).
 > 머지된 PR 브랜치엔 이어붙이지 말고 머지된 default에서 새로 딴다._
 
 ---
@@ -93,7 +93,9 @@
 - ✅ **기능 토글 ↔ 설정 진입 일치** — 매장 정보 편집에 **쿠폰 토글 추가**(그동안 앱에선 쿠폰 기능을 켤 수
   없어 웹에서만 가능했다). 설정 화면의 읽기 전용 토글 섹션은 제거하고, 켠 기능마다 **그 기능의 설정
   화면으로 바로 들어가는** 항목을 노출(적립금 설정 · 쿠폰 관리 · 회원권 관리 · 온라인예약 설정).
-- 🟡 **온라인 예약 신청(requested) 처리** — ✅ 상세에서 예약확정(→active)/거절(→cancelled)/삭제 UI(기존 setReservationStatus 재사용). ⬜ 온라인 예약 유입 경로 자체는 🔒 온라인예약 연계 대기.
+- 🟡 **온라인 예약 신청(requested) 처리** — ✅ 상세에서 예약확정(→active)/거절(→cancelled)/삭제 UI(기존 setReservationStatus 재사용).
+  ✅ 대기 목록은 P3.6 **온라인 예약 요청함**(`/api/book-requests`)이 담당 — 신규 신청뿐 아니라 변경·취소 요청까지 한 곳에서 처리한다.
+  ⬜ 온라인 예약 유입 경로 자체는 🔒 온라인예약 연계 대기.
 - ⬜ **다국어 이름(i18n)** — `nameI18n`/`storeNameI18n`/`titleI18n` 편집(공개 예약 페이지용, 우선순위 낮음)
 - ✅ **매출 확장** — 기간 필터(월/년) + 추세 막대 차트(Swift Charts, 일별/월별). 합계·담당자별은 선택 기간 기준으로 집계.
 
@@ -128,11 +130,48 @@
 - 확인만: 공지(`pinned`/카테고리)·쿠폰 `oncePerCustomer`·회원권 모델은 웹과 **이미 일치**. 그 밖의
   tas 변경(모바일 하단탭·설정 UI 공통화·매출 기간선택 iOS Safari 겹침 등)은 웹 전용이라 이식 대상 아님.
 
-### 2026-08-11 확인 — 네이버예약 연동 노출 제한 (tas `claude/naver-booking-exposure-limit-222r0p`)
+## P3.6 — tas 백엔드/웹 변경 동기화 (2026-08-10 확인)
+
+> tas `main`(12538e2, 2026-08-02)까지 훑었다. 7/28 이후 `server/` 변경은 전부 네이버싱크·Gmail
+> 내부(P2 로그인 전용 백엔드)라 **iOS API 계약 변경은 없다.** 이식 대상은 아래 3건.
+
+- 🟡 **온라인 예약 요청함 — `/api/book-requests` 이식** (tas #76·#115·#142, 백엔드 2026-07-16부터 존재)
+  - **왜 지금 나왔나:** tas `index.md`가 "확인/변경/취소(1d, Phase 2) **미구현**"이라고 잘못 적어 두었고
+    7/28 동기화가 그 문장을 믿고 건너뛰었다. tas가 `59eb02c`로 **오표기를 정정**하면서 드러났다.
+  - **실제 갭:** 고객이 공개 예약 페이지(`book.takeaseat.co.kr/{slug}/r/{token}`)에서 보낸 **변경·취소
+    요청**은 즉시 반영이 아니라 `pendingAction`으로 대기하고, 오너가 수락해야 반영된다. 이 대기 항목을
+    **앱에서 볼 방법이 전혀 없다** — 웹 헤더 벨(`BookingRequestNotification`)에만 있다. 앱만 쓰는
+    오너는 고객 요청을 영영 못 본다.
+  - **계약**(`server/api/book-requests.ts`): `GET` → `{requests: [{id, legacyId, kind, customerName,
+    assigneeName, requestedAt, current{date,startTime,endTime,serviceSummary}, requestedChange|null}]}`.
+    `kind`는 `new`(status=requested) · `change` · `cancel`. `POST {id, decision:'approve'|'reject', reason?}`
+    → `{ok, applied}`. 수락 시: new→active, cancel→cancelled, change→저장된 payload 적용.
+    거절 시: new→cancelled, change/cancel→요청만 폐기(예약 유지). 대기 없으면 409 `no_pending`.
+  - **iOS:** `BookingRequest` 모델 + `TASService.fetchBookingRequests()/decideBookingRequest()`(게스트 차단)
+    + `BookingRequestsView`(캘린더 툴바 벨 → 시트). 온라인예약 ON + 로그인일 때만 노출(웹 게이트와 동일).
+  - **iOS 이식 완료**(모델+서비스+UI). ⬜ E2E는 🔒 로그인 후 — 그때까지 호출 경로가 열리지 않아 무회귀.
+- ✅ **이름 정렬 규칙 이식** (tas #175 `compareCustomerName` · 기존 `compareAssigneeName`)
+  - iOS는 `$0.name < $1.name`(코드포인트 비교)이라 `Z`가 `apple`보다 앞서고 `고객10`이 `고객9`보다 앞선다.
+  - 고객: `Intl.Collator('ko', {numeric:true})` → `compare(options:.numeric, locale: ko_KR)`, 동명이인은 id로 안정화.
+  - 담당자: 웹은 **영문 → 한글 → 기타** 그룹 후 `localeCompare('ko')`. iOS엔 이 그룹 규칙이 없었다.
+  - 적용처: 예약 추가 고객 추천 목록(웹이 고친 자리) · 고객 명단 · 담당자 목록.
+- ✅ **근무시간 요약 `summarizeSchedule` 이식** (tas #183) — **기존 표시가 틀렸다.**
+  - iOS `AssigneeRow`는 근무 요일을 전부 `·`로 잇고 **첫 요일의 시간만** 붙인다. 월~금 10–20 / 토 10–18이면
+    `월·화·수·목·금·토 10:00–20:00`으로 **토요일 시간이 틀리게** 나온다.
+  - 웹처럼 같은 근무시간끼리 구간으로 묶는다: `월~금 10:00~20:00 · 토 10:00~18:00 · 일 휴무`.
+  - 7일 미만 스케줄은 모자란 요일을 휴무로 채운다(웹 동작 동일). 검증: `AssigneeScheduleTests`.
+- ✅ **요일 라벨 공용화** — `["월"…"일"]`이 5곳(캘린더 월/주, 영업시간, 담당자 폼/목록)에 복붙돼 있었다.
+  `KST.weekdayLabels` 하나로 모은다(CLAUDE.md 공통 영역 재사용 규칙).
+- 확인만: 7/28 이후 tas `server/` 변경은 네이버싱크 복원력(재시도·페이지네이션·워터마크)·Gmail 토큰 버퍼로
+  **전부 백엔드 내부**. 워크플로/버전/테스트 도입 커밋은 웹 저장소 운영 규약이라 이식 대상 아님.
+
+## P3.7 — tas 백엔드/웹 변경 동기화 (2026-08-11 확인)
+
+> tas #193(네이버예약 연동 노출 제한 + 미구축 "통합 예약 관리" 문구 제거) 반영 확인.
 
 - **iOS 코드 변경 없음.** 웹은 네이버예약 연동을 허용 매장에만 노출하도록 게이트를 걸었지만,
   iOS엔 감출 대상이 **아직 없다** — 연동 UI가 미구현이다(P2 항목). 근거: 앱이 호출하는 API에
-  `/api/gmail/*`·`/api/naver-booking-*`이 없고(`Core` 전수), 설정 화면에 연동 항목이 없다.
+  `/api/gmail/*`·`/api/naver-booking-*`이 없고(`TAS` 전수), 설정 화면에 연동 항목이 없다.
   앱의 네이버 언급은 **SNS 로그인 provider**·**결제수단(네이버페이·네이버 예약금)**·**예약 경로 라벨**뿐인데,
   이 셋은 웹에서도 게이트 대상이 아니라 그대로 두는 것이 웹과 일치하는 상태다.
 - **이식할 때 지킬 것** → P2 "네이버 예약 동기화" 항목의 ⚠️ 참조(`naverBookingEnabled` 확인 없이 화면을 붙이면
@@ -194,6 +233,11 @@
 - ⬜ 접근성/다크모드/다이내믹 타입 재점검(컴팩트 폰트 후 큰 글자 레이아웃)
 - ⬜ 푸시 알림(없음) — APNs 키·등록·백엔드 발송(로그인 기반)
 - ⬜ 로그인 후 다기기 동기화/충돌 처리(웹 `conflict-resolution` 미반영)
+- ⬜ **웹 톤 색상값 중복 정리**(PR #17 리뷰 지적, 출시 전까지 보류) — `A88417`(warning)·`6526D9`(purple)·
+  `EA4335`(danger)가 `Core/UI/Badges.swift`(`StatusBadge`)와 `Calendar/BookingRequestsView.swift`
+  (`BookingRequestKindBadge`)에 **각각** 하드코딩돼 있다. 한쪽만 고치면 같은 톤이 화면마다 어긋난다.
+  정리안: `Core/UI/Color+Hex.swift`에 토큰 3개(`.tasWarning`/`.tasPurple`/`.tasDanger`)를 두고 양쪽이 참조
+  (값 동일 → 화면 변화 0). 배지가 더 늘기 전에 하는 게 싸다. 같이 정리: `CalendarView.swift`의 빈 줄 잔재.
 
 ---
 
