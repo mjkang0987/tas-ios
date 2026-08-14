@@ -491,32 +491,55 @@ struct CalendarView: View {
         }
     }
 
-
     private var weekList: some View {
-        List {
-            ForEach(Array(weekDayKeys.enumerated()), id: \.element) { index, key in
-                let items = viewModel.reservations(on: key, assigneeId: selectedAssigneeId)
-                let summary = viewModel.daySummary(on: key, assigneeId: selectedAssigneeId)
-                Section {
-                    if items.isEmpty {
-                        Text("예약 없음").font(.caption).foregroundStyle(.secondary)
-                    } else {
-                        ForEach(items) { reservationButton($0) }
-                    }
-                } header: {
-                    HStack {
-                        Text(weekdayHeader(key, index: index)).font(.subheadline.weight(.semibold))
-                        Spacer()
-                        if summary.count > 0 {
-                            Text("\(summary.count)건 · \(formatWon(summary.total))")
-                                .font(.caption).foregroundStyle(.secondary)
+        ScrollViewReader { proxy in
+            List {
+                ForEach(Array(weekDayKeys.enumerated()), id: \.element) { index, key in
+                    let items = viewModel.reservations(on: key, assigneeId: selectedAssigneeId)
+                    let summary = viewModel.daySummary(on: key, assigneeId: selectedAssigneeId)
+                    Section {
+                        if items.isEmpty {
+                            Text("예약 없음").font(.caption).foregroundStyle(.secondary)
+                        } else {
+                            ForEach(items) { reservationButton($0) }
+                        }
+                    } header: {
+                        HStack {
+                            Text(weekdayHeader(key, index: index)).font(.subheadline.weight(.semibold))
+                            Spacer()
+                            if summary.count > 0 {
+                                Text("\(summary.count)건 · \(formatWon(summary.total))")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
                         }
                     }
+                    .id(key)   // 스크롤 목표 — 날짜 키("YYYY-MM-DD")
                 }
             }
+            .listStyle(.insetGrouped)
+            .refreshable { await viewModel.load() }
+            // 진입할 때마다 오늘(=기본 선택 날짜) 요일부터 보이게. 안 하면 항상 월요일이 맨 위라
+            // 주 후반엔 매번 손으로 스크롤해야 한다.
+            .onAppear { scrollToSelectedDay(proxy, animated: false) }
+            // 상단 DatePicker로 날짜를 옮기면 그 요일로 따라간다.
+            .onChange(of: dateKey) { _, _ in scrollToSelectedDay(proxy, animated: true) }
         }
-        .listStyle(.insetGrouped)
-        .refreshable { await viewModel.load() }
+    }
+
+    /// 주 리스트를 선택 날짜(진입 시엔 오늘) 섹션으로 올린다.
+    /// 선택 날짜는 항상 표시 중인 주 안에 있지만(`weekDayKeys`가 선택 날짜에서 파생),
+    /// 주 계산이 실패해 비는 경우를 대비해 목표 존재를 확인한다.
+    /// `onAppear` 시점엔 List가 아직 셀을 만들기 전이라 바로 부르면 먹지 않는다 → 다음 런루프로 미룬다.
+    private func scrollToSelectedDay(_ proxy: ScrollViewProxy, animated: Bool) {
+        let key = dateKey
+        guard weekDayKeys.contains(key) else { return }
+        Task { @MainActor in
+            if animated {
+                withAnimation { proxy.scrollTo(key, anchor: .top) }
+            } else {
+                proxy.scrollTo(key, anchor: .top)
+            }
+        }
     }
 
     /// "MM.dd 요일" 헤더.
