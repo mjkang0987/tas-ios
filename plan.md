@@ -4,7 +4,7 @@
 > 백엔드는 [`mjkang0987/tas`](https://github.com/mjkang0987/tas)(로컬 `/workspace/tas`). 구조는 `README.md`, 버전 규약은 `CLAUDE.md`.
 >
 > _상태_ ⬜ 예정 · 🟡 진행 · ✅ 완료 · 🔒 외부 준비 필요(키/설정)
-> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/dev-progress-tpiw43`).
+> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/calendar-weekly-scroll-current-day-rhmmea`).
 > 머지된 PR 브랜치엔 이어붙이지 말고 머지된 default에서 새로 딴다._
 
 ---
@@ -209,6 +209,17 @@
 
 ## P5 — 캘린더·디자인 마감
 
+- ✅ **주(Week) 뷰 진입 시 현재 요일로 스크롤**
+  - **문제:** 주 뷰는 월~일 7개 섹션 리스트인데 진입하면 항상 **맨 위(월요일)** 였다. 주 후반(목~일)엔
+    오늘을 보려고 매번 손으로 스크롤해야 했고, 일 뷰에서 주 뷰로 넘어올 때마다 반복됐다.
+  - **구현:** `weekList`를 `ScrollViewReader`로 감싸고 각 `Section`에 날짜 키(`YYYY-MM-DD`)를 `.id`로
+    준 뒤, 진입(`onAppear`) 시 **선택 날짜(기본값 = 오늘)** 섹션으로 `scrollTo(anchor: .top)`.
+    상단 DatePicker로 날짜를 옮기면(`onChange(of: dateKey)`) 그 요일로 따라간다(이때만 애니메이션).
+    선택 날짜는 항상 표시 중인 주 안에 있다(`weekDayKeys`가 선택 날짜의 주에서 파생).
+  - **주의:** `onAppear` 시점엔 List가 아직 셀을 만들기 전이라 바로 부르면 스크롤이 먹지 않는다
+    → `Task { @MainActor in … }`로 다음 런루프에 호출.
+  - **범위:** `TAS/Features/Calendar/CalendarView.swift`의 주 뷰 한정. 다른 모드(일/월/년)·데이터 로직 무변경.
+    같이 정리: P7에 적어둔 `CalendarView.swift` 빈 줄 잔재 제거.
 - ⬜ 주(week) 타임라인 — 모바일 7칼럼 좁아 **보류 권장**(리스트가 적합)
 - ⬜ 일 타임라인 담당자별 칼럼 분리(담당자 수 적을 때 옵션)
 - 디자인: 네이티브 골격 + 웹 시각언어 유지 확정. 픽셀 매칭 비권장. 거슬리는 화면만 폴리시.
@@ -237,7 +248,8 @@
   `EA4335`(danger)가 `Core/UI/Badges.swift`(`StatusBadge`)와 `Calendar/BookingRequestsView.swift`
   (`BookingRequestKindBadge`)에 **각각** 하드코딩돼 있다. 한쪽만 고치면 같은 톤이 화면마다 어긋난다.
   정리안: `Core/UI/Color+Hex.swift`에 토큰 3개(`.tasWarning`/`.tasPurple`/`.tasDanger`)를 두고 양쪽이 참조
-  (값 동일 → 화면 변화 0). 배지가 더 늘기 전에 하는 게 싸다. 같이 정리: `CalendarView.swift`의 빈 줄 잔재.
+  (값 동일 → 화면 변화 0). 배지가 더 늘기 전에 하는 게 싸다.
+  (`CalendarView.swift`의 빈 줄 잔재는 P5 주 뷰 스크롤 작업 때 함께 제거 — 색상 토큰만 남았다.)
 
 ---
 
