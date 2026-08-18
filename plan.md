@@ -179,6 +179,23 @@
 - 웹이 함께 정리한 "네이버·당근 등 통합 예약 관리" 마케팅 문구는 **이 저장소에 없다**(전수 확인).
   단, **App Store Connect의 앱 이름·부제·설명은 저장소 밖**이라 같은 문구가 남아 있는지는 콘솔에서 확인 필요.
 
+## P3.8 — 휴무(임시 휴업일·정기 휴무) 캘린더 표시 🟡 (판정 로직만 완료)
+
+> 웹(tas)이 캘린더에 휴무를 표시하도록 바뀌었다. iOS도 데이터(`Store.closedDates`/`closedWeekdays`)는
+> 이미 갖고 있으면서 화면에 그리지 않는다.
+
+- ✅ **판정 이식 완료** — `Store.closedKind(on:)`(`TAS/Models/Store.swift`) + `StoreClosedKind`.
+  웹 `getStoreClosedKind`와 같은 규칙: 임시 휴업일이 정기 휴무보다 우선, 요일 인덱스는
+  앱 공통 `0=월 … 6=일`(`Calendar.weekday` 는 `1=일` 이라 `(weekday+5)%7`).
+- ✅ **단위 테스트** `TASTests/StoreClosedKindTests.swift` 6케이스(요일 전수·일요일 경계·우선순위·깨진 날짜).
+  `TASTests` 는 `PBXFileSystemSynchronizedRootGroup` 이라 파일만 추가하면 CI 가 컴파일한다.
+- ⬜ **화면 표시 미구현** — 웹과 같은 방식(**옅은 배경 틴트 + 테두리**, 글자 없음)으로 붙인다.
+  임시=적색 계열, 정기=회색 계열. 대상은 월 뷰 셀 / 일 뷰 헤더 / 주 뷰 섹션 헤더.
+  **배지(글자)는 쓰지 않는다** — 웹에서 모바일 좁은 열에 글자가 안 들어가 결국 걷어냈다.
+  색만으로는 VoiceOver 에 아무것도 전달되지 않으므로 `StoreClosedKind.label` 을
+  `accessibilityLabel` 로 반드시 함께 넣는다.
+- ⬜ **막지는 않는다** — 웹과 동일하게 표시 전용. 휴무일에도 예약 생성은 그대로.
+
 ## P4 — 쿠폰·회원권 발급/차감
 
 > tas 원본 스펙 확인 결과(2026-07-28 갱신): **회원권·쿠폰 모두 발급/취소 API가 실재**

@@ -56,6 +56,31 @@ extension Store {
     }
 }
 
+/// 캘린더 휴무 표시 구분 — 웹 `getStoreClosedKind`(client/features/store-settings/model.ts) 이식.
+/// 임시 휴업일(오너가 찍은 특정 날짜)과 정기 휴무(매주 요일)는 문구·색이 달라 종류까지 구분한다.
+enum StoreClosedKind: Hashable {
+    case date      // 임시 휴업일
+    case weekday   // 정기 휴무
+
+    /// 문구 — 웹과 같은 말을 쓴다. 화면 표시는 글자가 아니라 **틴트 + 테두리**이고,
+    /// 이 문구는 VoiceOver·툴팁 등 접근성 경로에 쓴다(색만으로는 아무것도 전달되지 않는다).
+    var label: String { self == .date ? "휴업일" : "정기휴무" }
+}
+
+extension Store {
+    /// 해당 날짜가 휴무인지, 어떤 휴무인지. 둘 다 해당하면 **임시 휴업일이 이긴다**
+    /// (오너가 직접 찍은 날이 정기 휴무보다 구체적인 의사표시 — 웹과 같은 규칙).
+    func closedKind(on dateKey: String) -> StoreClosedKind? {
+        if closedDates?.contains(dateKey) == true { return .date }
+        guard let closedWeekdays, !closedWeekdays.isEmpty,
+              let date = KST.dayKey.date(from: dateKey) else { return nil }
+
+        // Calendar.weekday 는 1=일 … 7=토, 앱·웹 공통 dayIndex 는 0=월 … 6=일.
+        let dayIndex = (KST.calendar.component(.weekday, from: date) + 5) % 7
+        return closedWeekdays.contains(dayIndex) ? .weekday : nil
+    }
+}
+
 /// 매장 영업시간(전체 공통 오픈/마감) — storeSettings.businessHours.
 struct BusinessHours: Codable, Hashable {
     var start: String   // "HH:mm"
