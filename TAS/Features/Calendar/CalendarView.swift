@@ -35,6 +35,11 @@ struct CalendarView: View {
 
     private var dateKey: String { KST.dayKey.string(from: selectedDate) }
 
+    /// 해당 날짜의 휴무 종류(임시 휴업일 / 정기 휴무). 매장 정보가 없으면 nil.
+    private func closedKind(_ key: String) -> StoreClosedKind? {
+        session.currentStore?.closedKind(on: key)
+    }
+
     /// 요청함은 공개 예약 페이지에서만 생기므로 온라인예약을 켠 **로그인** 매장에서만 노출한다
     /// (웹 `BookingRequestNotification`의 `useOnlineBooking` 게이트 + 게스트 서버기능 차단 규칙).
     private var showsBookingRequests: Bool {
@@ -206,6 +211,7 @@ struct CalendarView: View {
                         monthDayCell(day: day, summary: summaries[key],
                                      isToday: cal.isDateInToday(date),
                                      isSelected: cal.isDate(date, inSameDayAs: selectedDate))
+                            .storeClosed(closedKind(key))
                     }
                     .buttonStyle(.plain)
                 }
@@ -427,6 +433,8 @@ struct CalendarView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 5)
         .background(Color(.secondarySystemBackground))
+        // 가로로 꽉 찬 바라 모서리를 둥글리지 않는다(0). 휴무면 틴트가 회색 배경 위를 덮는다.
+        .storeClosed(closedKind(dateKey), cornerRadius: 0)
     }
 
     @ViewBuilder private var dayList: some View {
@@ -512,6 +520,9 @@ struct CalendarView: View {
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                         }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .storeClosed(closedKind(key), cornerRadius: 6)
                     }
                     .id(key)   // 스크롤 목표 — 날짜 키("YYYY-MM-DD")
                 }
