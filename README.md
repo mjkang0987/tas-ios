@@ -56,7 +56,7 @@ TAS/
     Networking/        APIClient · TASService · Loadable · APIError
     Session/           SessionStore · KeychainTokenStore · MobileToken
     Storage/           GuestStore · GuestSnapshot · LocalStore (오프라인 로컬 DB)
-    UI/                LoadableView · Badges · FilterChip · ColorAccents · ServiceColor · Formatting
+    UI/                LoadableView · Badges · FilterChip · ColorAccents · ServiceColor · Formatting · StoreClosedStyle
     KST.swift          매장 기준(Asia/Seoul) 날짜 유틸 · 요일 라벨(weekdayLabels)
     ReservationOverlap 담당자 중복 예약(겹침) 판정 공용 유틸
     PointMath          적립금 산식(적립/사용) 공용 유틸
