@@ -4,7 +4,7 @@
 > 백엔드는 [`mjkang0987/tas`](https://github.com/mjkang0987/tas)(로컬 `/workspace/tas`). 구조는 `README.md`, 버전 규약은 `CLAUDE.md`.
 >
 > _상태_ ⬜ 예정 · 🟡 진행 · ✅ 완료 · 🔒 외부 준비 필요(키/설정)
-> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/calendar-weekly-scroll-current-day-rhmmea`).
+> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/web-design-mismatch-q7hfs7`).
 > 머지된 PR 브랜치엔 이어붙이지 말고 머지된 default에서 새로 딴다._
 
 ---
@@ -243,6 +243,32 @@
     → `Task { @MainActor in … }`로 다음 런루프에 호출.
   - **범위:** `TAS/Features/Calendar/CalendarView.swift`의 주 뷰 한정. 다른 모드(일/월/년)·데이터 로직 무변경.
     같이 정리: P7에 적어둔 `CalendarView.swift` 빈 줄 잔재 제거.
+- ✅ **시술(서비스) 배지 웹 일치** — 이식 누락 복구
+  - **문제:** "네이티브 골격" 예외가 아니라 웹 정의 이식이 빠진 것. tas 저장소 대조로 3건 확인.
+    1. **색이 서비스별이 아니라 카테고리별.** 웹 `client/features/services/model.ts:126` `buildServiceColorMap`은
+       카테고리 기본색에 `SHADE_STEPS = [0,14,-14,26,-26,36,-36,46,-46]`을 `adjustHexColor`로 얹어
+       **같은 카테고리 안에서 서비스마다 농도**를 준다(남성/여성/주니어커트가 서로 다른 파랑).
+       iOS `CalendarViewModel.swift:148`은 `ServiceColor.categoryColor(item.category)`를 그대로 써서
+       **커트 3종이 전부 같은 `#2D7FF9`.** `adjustHexColor`·`SHADE_STEPS`·`LEGACY_NAME_MAP` 미이식.
+    2. **배지가 아니라 점+회색 글씨.** 웹 `ServiceChip.tsx`는 알약 칩(`radius 999`, `padding 3/7`,
+       배경 `${color}18`≈9% 틴트, **글자색이 서비스색**, 11px/600). iOS는 `ColorDot`+회색 텍스트이거나
+       (`CalendarView:588`, `ReservationDetailView:69`) 색이 아예 없다(`CalendarView:368`,
+       `DayTimelineView:72`, `CustomerDetailView:135`).
+    3. **복수 시술이 안 쪼개짐.** 웹은 `parseServiceString`으로 `+`를 분리(이름에 `+`가 든 서비스는
+       greedy 보존)해 칩 하나씩. iOS는 `"커트+펌"`이 통짜 한 줄.
+  - **구현:** `Core/UI/ServiceColor.swift`에 `adjustHex`·`shadeDelta`·`legacyNameMap`·
+    `buildServiceColorMap`·`serviceHex`·`parseServiceString` 이식. `Core/UI/ServiceChip.swift`
+    **신규 공용 컴포넌트**(`ServiceChipList`/`ServiceChip` + 넘칠 때 흐르는 `Layout`) — 표시 지점이
+    6곳이라 화면마다 칩 마크업을 복붙하면 CLAUDE.md가 금지한 웹의 하드코딩 반복을 그대로 옮기게 된다.
+    `CalendarViewModel`은 `[String: Color]` 대신 웹과 같은 **hex 맵**(`serviceColorMap`)을 들고 있는다.
+  - **웹과 의도적으로 다른 점:** 리스트 행은 `wraps: false`(1줄 말줄임) — 웹도 목록에선
+    `nowrap`+ellipsis로 행 높이가 터지는 걸 막는다(`AddressCustomerSummary.tsx:197` 주석). 상세는 흐름 배치.
+  - **주의:** 웹 `FALLBACK_COLOR`가 3자리 `#999`라 `Color(hex:)`에 3자리 지원을 더해야 한다(기존 6자리 무영향).
+    `serviceHex`의 부분 문자열 폴백은 웹이 길이 내림차순·동률은 카탈로그 순서인데 Swift `Dictionary`는
+    순서가 없어 **동률은 이름 오름차순**으로 결정론적 고정(카탈로그에 없는 이름에서만 타는 경로).
+  - **범위:** `Core/UI/{ServiceColor,ServiceChip,Color+Hex}.swift` · `CalendarViewModel` ·
+    `CalendarView`·`DayTimelineView`·`ReservationDetailView`·`CustomerDetailView`·`ReservationCreateView`.
+    데이터·API 무변경.
 - ⬜ 주(week) 타임라인 — 모바일 7칼럼 좁아 **보류 권장**(리스트가 적합)
 - ⬜ 일 타임라인 담당자별 칼럼 분리(담당자 수 적을 때 옵션)
 - 디자인: 네이티브 골격 + 웹 시각언어 유지 확정. 픽셀 매칭 비권장. 거슬리는 화면만 폴리시.
