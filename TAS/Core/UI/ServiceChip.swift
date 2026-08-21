@@ -32,8 +32,16 @@ struct ServiceChipList: View {
     /// 웹도 목록에선 `nowrap` + ellipsis를 쓴다.
     var wraps: Bool = true
 
-    private var names: [String] {
+    /// 같은 시술이 두 번 들어간 문자열("커트+커트")도 있을 수 있어 순번으로 식별한다.
+    private struct Item: Identifiable {
+        let id: Int
+        let name: String
+    }
+
+    private var items: [Item] {
         ServiceColor.parseServiceString(service, knownNames: Set(colorMap.keys))
+            .enumerated()
+            .map { Item(id: $0.offset, name: $0.element) }
     }
 
     var body: some View {
@@ -44,12 +52,11 @@ struct ServiceChipList: View {
         }
     }
 
-    /// 같은 시술이 두 번 들어간 문자열("커트+커트")도 있을 수 있어 순번으로 식별한다.
-    @ViewBuilder private var chips: some View {
-        ForEach(Array(names.enumerated()), id: \.offset) { pair in
+    private var chips: some View {
+        ForEach(items) { item in
             ServiceChip(
-                name: pair.element,
-                color: ServiceColor.color(pair.element, in: colorMap),
+                name: item.name,
+                color: ServiceColor.color(item.name, in: colorMap),
                 font: font
             )
         }
