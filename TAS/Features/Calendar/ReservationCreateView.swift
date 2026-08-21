@@ -13,6 +13,10 @@ struct ReservationCreateView: View {
     let customers: [Customer]
     let assignees: [Assignee]            // 재직 중
     let catalog: [ServiceItem]
+    /// 서비스명 → hex(웹 `SERVICE_COLOR_MAP`). 시술 칩 색에 쓴다.
+    /// 비워두면 `catalog`로 직접 만든다 — 다만 매장 커스텀 카테고리색은 그 경로로 오지 않으니
+    /// 호출부가 뷰모델의 맵을 넘겨주는 쪽이 정확하다.
+    var serviceColorMap: [String: String] = [:]
     /// 담당자 겹침(중복 예약) 체크용 — 전체 예약(날짜·담당자로 내부 필터).
     let existingReservations: [Reservation]
     /// 매장 적립률(%). 결제완료로 등록 시 자동 적립에 사용. 0이면 적립 없음.
@@ -25,6 +29,10 @@ struct ReservationCreateView: View {
     let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+
+    private var resolvedServiceColorMap: [String: String] {
+        serviceColorMap.isEmpty ? ServiceColor.buildServiceColorMap(catalog: catalog) : serviceColorMap
+    }
 
     // 고객
     @State private var customerId = 0          // 0 = 신규
@@ -145,7 +153,7 @@ struct ReservationCreateView: View {
                             Text("\(r.startTime)–\(r.endTime) · \(customerLabel(r.customerId))")
                                 .font(.subheadline.weight(.medium))
                             if !r.service.isEmpty {
-                                Text(r.service).font(.caption).foregroundStyle(.secondary)
+                                ServiceChipList(service: r.service, colorMap: resolvedServiceColorMap)
                             }
                         }
                     }
@@ -260,21 +268,18 @@ struct ReservationCreateView: View {
         }
     }
 
-    /// 서비스 항목 행 — 웹처럼 체크박스(왼쪽) + 색 배경 칩 + "가격 · 소요시간"(오른쪽).
+    /// 서비스 항목 행 — 웹처럼 체크박스(왼쪽) + 시술 칩 + "가격 · 소요시간"(오른쪽).
     private func serviceItemRow(_ item: ServiceItem) -> some View {
         let selected = selectedServices.contains(item.name)
-        let color = ServiceColor.categoryColor(item.category)
         return Button { toggleService(item.name) } label: {
             HStack(spacing: 10) {
                 Image(systemName: selected ? "checkmark.square.fill" : "square")
                     .foregroundStyle(selected ? Color.accentColor : Color(.tertiaryLabel))
-                Text(item.name)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(color)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(color.opacity(0.12))
-                    .clipShape(Capsule())
+                ServiceChip(
+                    name: item.name,
+                    color: ServiceColor.color(item.name, in: resolvedServiceColorMap),
+                    font: .subheadline
+                )
                 Spacer()
                 Text("\(formatWon(item.price)) · \(item.durationMinutes)분")
                     .font(.caption).foregroundStyle(.secondary)
@@ -415,7 +420,10 @@ struct ReservationCreateView: View {
             customerName = c.name
             customerTel = c.tel
         }
-        selectedServices = r.service.split(separator: "+").map(String.init)
+        selectedServices = ServiceColor.parseServiceString(
+            r.service,
+            knownNames: Set(catalog.map(\.name))
+        )
         date = parseDate(r.date, cal: cal) ?? initialDate
         startTime = parseTime(r.startTime, on: date, cal: cal) ?? date
         isEndManual = true
@@ -508,7 +516,7 @@ struct ReservationCreateView: View {
                 updated.date = KST.dayKey.string(from: date)
                 updated.startTime = timeString(startTime)
                 updated.endTime = timeString(endTime)
-                updated.service = selectedServices.joined(separator: "+")
+                updated.service = ServiceColor.joinServiceNames(selectedServices)
                 updated.customerId = resolvedCustomerId
                 updated.assigneeId = assigneeId == 0 ? nil : assigneeId
                 updated.price = price
@@ -520,7 +528,7 @@ struct ReservationCreateView: View {
                     date: KST.dayKey.string(from: date),
                     startTime: timeString(startTime),
                     endTime: timeString(endTime),
-                    service: selectedServices.joined(separator: "+"),
+                    service: ServiceColor.joinServiceNames(selectedServices),
                     customerId: resolvedCustomerId,
                     assigneeId: assigneeId == 0 ? nil : assigneeId,
                     status: .active,

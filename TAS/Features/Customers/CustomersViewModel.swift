@@ -7,6 +7,8 @@ final class CustomersViewModel {
     struct Data {
         var customers: [Customer]
         var reservationsByCustomer: [Int: [Reservation]]
+        /// 서비스명 → hex(웹 `SERVICE_COLOR_MAP`). 예약 이력의 시술 칩 색.
+        var serviceColorMap: [String: String]
     }
 
     struct VisitStats: Equatable {
@@ -67,17 +69,27 @@ final class CustomersViewModel {
         return VisitStats(visits: visits, cancels: cancels, noshows: noshows)
     }
 
+    var serviceColorMap: [String: String] { state.value?.serviceColorMap ?? [:] }
+
     func load() async {
         state = .loading
         do {
             async let customers = service.fetchCustomers()
             async let reservations = service.fetchReservations()
-            let (cus, res) = try await (customers, reservations)
+            async let services = service.fetchServices()
+            let (cus, res, svc) = try await (customers, reservations, services)
 
             var byCustomer: [Int: [Reservation]] = [:]
             for r in res.reservations { byCustomer[r.customerId, default: []].append(r) }
 
-            state = .loaded(Data(customers: cus.customers, reservationsByCustomer: byCustomer))
+            state = .loaded(Data(
+                customers: cus.customers,
+                reservationsByCustomer: byCustomer,
+                serviceColorMap: ServiceColor.buildServiceColorMap(
+                    catalog: svc.services,
+                    storeMap: svc.categoryBaseColors
+                )
+            ))
         } catch {
             state = .failed((error as? APIError)?.errorDescription ?? error.localizedDescription)
         }

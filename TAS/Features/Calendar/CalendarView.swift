@@ -88,7 +88,7 @@ struct CalendarView: View {
                         reservation: reservation,
                         customer: viewModel.customer(reservation.customerId),
                         assignee: viewModel.assignee(reservation.assigneeId),
-                        serviceColor: viewModel.serviceColor(reservation.service),
+                        serviceColorMap: viewModel.serviceColorMap,
                         isNewCustomer: viewModel.isNewCustomer(reservation),
                         service: TASService(),
                         onChanged: { await viewModel.reload() },
@@ -103,6 +103,7 @@ struct CalendarView: View {
                         customers: viewModel.customers,
                         assignees: viewModel.activeAssignees,
                         catalog: viewModel.serviceCatalog,
+                        serviceColorMap: viewModel.serviceColorMap,
                         existingReservations: viewModel.allReservations,
                         pointRate: pointRate,
                         initialDate: selectedDate,
@@ -116,6 +117,7 @@ struct CalendarView: View {
                         customers: viewModel.customers,
                         assignees: viewModel.activeAssignees,
                         catalog: viewModel.serviceCatalog,
+                        serviceColorMap: viewModel.serviceColorMap,
                         existingReservations: viewModel.allReservations,
                         pointRate: pointRate,
                         initialDate: selectedDate,
@@ -365,7 +367,7 @@ struct CalendarView: View {
                 Text(r.startTime).font(.caption2).foregroundStyle(.secondary).monospacedDigit()
                 VStack(alignment: .leading, spacing: 1) {
                     Text(viewModel.customerName(r.customerId)).font(.subheadline.weight(.medium))
-                    Text(r.service).font(.caption2).foregroundStyle(.secondary)
+                    ServiceChipList(service: r.service, colorMap: viewModel.serviceColorMap, wraps: false)
                 }
                 Spacer()
                 StatusBadge(state: r.displayState)
@@ -415,7 +417,7 @@ struct CalendarView: View {
                 reservation: reservation,
                 customerName: viewModel.customerName(reservation.customerId),
                 assignee: viewModel.assignee(reservation.assigneeId),
-                serviceColor: viewModel.serviceColor(reservation.service),
+                serviceColorMap: viewModel.serviceColorMap,
                 isNewCustomer: viewModel.isNewCustomer(reservation)
             )
         }
@@ -452,6 +454,7 @@ struct CalendarView: View {
                     endHour: range.1,
                     customerName: { viewModel.customerName($0) },
                     color: { timelineColor($0) },
+                    serviceColorMap: viewModel.serviceColorMap,
                     onTap: { activeSheet = .detail($0) }
                 )
             }
@@ -566,7 +569,7 @@ private struct ReservationRow: View {
     let reservation: Reservation
     let customerName: String
     let assignee: Assignee?
-    let serviceColor: Color?
+    let serviceColorMap: [String: String]
     let isNewCustomer: Bool
 
     var body: some View {
@@ -585,12 +588,11 @@ private struct ReservationRow: View {
                     if isNewCustomer { NewCustomerBadge() }
                 }
                 HStack(spacing: 5) {
-                    if let serviceColor { ColorDot(color: serviceColor, size: 6) }
-                    Text(reservation.service)
-                    if let assignee { Text("· \(assignee.name)") }
+                    ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false)
+                    if let assignee {
+                        Text("· \(assignee.name)").font(.caption2).foregroundStyle(.secondary)
+                    }
                 }
-                .font(.caption2)
-                .foregroundStyle(.secondary)
             }
 
             Spacer()

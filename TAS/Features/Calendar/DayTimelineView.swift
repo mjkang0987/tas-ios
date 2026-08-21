@@ -9,6 +9,8 @@ struct DayTimelineView: View {
     let endHour: Int
     var customerName: (Int) -> String = { "고객 #\($0)" }
     var color: (Reservation) -> Color = { _ in .accentColor }
+    /// 서비스명 → hex. 비어 있으면 칩이 폴백색으로 그려진다.
+    var serviceColorMap: [String: String] = [:]
     var onTap: (Reservation) -> Void = { _ in }
 
     private let hourHeight: CGFloat = 56
@@ -69,7 +71,11 @@ struct DayTimelineView: View {
                 Text(p.reservation.startTime).font(.caption2.weight(.semibold)).monospacedDigit()
                 Text(customerName(p.reservation.customerId)).font(.caption2).lineLimit(1)
                 if p.height > 46 {
-                    Text(p.reservation.service).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                    ServiceChipList(
+                        service: p.reservation.service,
+                        colorMap: serviceColorMap,
+                        wraps: false
+                    )
                 }
                 Spacer(minLength: 0)
             }

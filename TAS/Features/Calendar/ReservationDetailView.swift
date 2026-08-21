@@ -8,7 +8,7 @@ struct ReservationDetailView: View {
     let reservation: Reservation
     let customer: Customer?
     let assignee: Assignee?
-    var serviceColor: Color?
+    var serviceColorMap: [String: String] = [:]
     var isNewCustomer: Bool = false
     /// 쓰기 경로(게스트/API 자동 분기). 기본값은 상세 표시만 하던 기존 호출부 호환용.
     var service: TASService = TASService()
@@ -65,10 +65,11 @@ struct ReservationDetailView: View {
                     LabeledContent("날짜", value: reservation.date)
                     LabeledContent("시간", value: "\(reservation.startTime) – \(reservation.endTime)")
                     LabeledContent("서비스") {
-                        HStack(spacing: 6) {
-                            if let serviceColor { ColorDot(color: serviceColor, size: 8) }
-                            Text(reservation.service)
-                        }
+                        ServiceChipList(
+                            service: reservation.service,
+                            colorMap: serviceColorMap,
+                            font: .footnote
+                        )
                     }
                     if let assignee {
                         LabeledContent("담당자") {
