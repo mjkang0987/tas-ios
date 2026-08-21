@@ -89,6 +89,23 @@ final class ServiceColorTests: XCTestCase {
                        ["다운펌+커트", "펌"])
     }
 
+    /// 코드리뷰에서 드러난 실제 경로: '+'가 든 이름은 카탈로그가 아니라 **색 맵 키**로만 온다.
+    /// knownNames로 카탈로그 이름을 넘기면 greedy 분기가 통째로 죽는다.
+    func testColorMapKeysCarryPlusContainingLegacyNames() {
+        let map = ServiceColor.buildServiceColorMap(catalog: catalog)
+        XCTAssertNotNil(map["다운펌+커트"])                       // LEGACY_NAME_MAP → 디자인펌
+        XCTAssertFalse(catalog.map(\.name).contains("다운펌+커트"))
+
+        XCTAssertEqual(
+            ServiceColor.parseServiceString("다운펌+커트", knownNames: Set(map.keys)),
+            ["다운펌+커트"]
+        )
+        XCTAssertEqual(
+            ServiceColor.parseServiceString("다운펌+커트", knownNames: Set(catalog.map(\.name))),
+            ["다운펌", "커트"]
+        )
+    }
+
     func testWithoutKnownNamesPlusAlwaysSplits() {
         XCTAssertEqual(ServiceColor.parseServiceString("다운펌+커트"), ["다운펌", "커트"])
     }

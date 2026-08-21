@@ -420,9 +420,12 @@ struct ReservationCreateView: View {
             customerName = c.name
             customerTel = c.tel
         }
+        // knownNames는 카탈로그 이름이 아니라 **색 맵의 키**여야 한다 — 이름에 '+'가 든
+        // 레거시 서비스("다운펌+커트")는 카탈로그엔 없고 색 맵에만 있어서, 카탈로그로 주면
+        // greedy 보존이 아예 동작하지 않는다(웹도 Object.keys(serviceColorMap)를 넘긴다).
         selectedServices = ServiceColor.parseServiceString(
             r.service,
-            knownNames: Set(catalog.map(\.name))
+            knownNames: Set(resolvedServiceColorMap.keys)
         )
         date = parseDate(r.date, cal: cal) ?? initialDate
         startTime = parseTime(r.startTime, on: date, cal: cal) ?? date

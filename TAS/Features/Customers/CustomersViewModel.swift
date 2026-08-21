@@ -76,8 +76,11 @@ final class CustomersViewModel {
         do {
             async let customers = service.fetchCustomers()
             async let reservations = service.fetchReservations()
-            async let services = service.fetchServices()
-            let (cus, res, svc) = try await (customers, reservations, services)
+            // 서비스 카탈로그는 시술 칩 **색**에만 쓴다. /api/services가 실패했다고
+            // 고객 목록까지 못 보여줄 이유는 없으므로 실패를 삼키고 색만 폴백시킨다.
+            async let services = try? await service.fetchServices()
+            let (cus, res) = try await (customers, reservations)
+            let svc = await services
 
             var byCustomer: [Int: [Reservation]] = [:]
             for r in res.reservations { byCustomer[r.customerId, default: []].append(r) }
@@ -85,10 +88,9 @@ final class CustomersViewModel {
             state = .loaded(Data(
                 customers: cus.customers,
                 reservationsByCustomer: byCustomer,
-                serviceColorMap: ServiceColor.buildServiceColorMap(
-                    catalog: svc.services,
-                    storeMap: svc.categoryBaseColors
-                )
+                serviceColorMap: svc.map {
+                    ServiceColor.buildServiceColorMap(catalog: $0.services, storeMap: $0.categoryBaseColors)
+                } ?? [:]
             ))
         } catch {
             state = .failed((error as? APIError)?.errorDescription ?? error.localizedDescription)

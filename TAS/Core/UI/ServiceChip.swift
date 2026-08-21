@@ -67,6 +67,10 @@ struct ServiceChipList: View {
 private struct ChipFlow: Layout {
     var spacing: CGFloat
 
+    private func clamped(_ size: CGSize, to maxWidth: CGFloat) -> CGSize {
+        CGSize(width: min(size.width, maxWidth), height: size.height)
+    }
+
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let maxWidth = proposal.width ?? .infinity
         var total = CGSize.zero
@@ -74,7 +78,9 @@ private struct ChipFlow: Layout {
         var rowHeight: CGFloat = 0
 
         for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
+            // 이상적 폭을 그대로 쓰면 칸보다 긴 칩("남자 디자인펌" 같은 긴 시술명)이
+            // 밖으로 삐져나간다. 칩은 lineLimit(1)이라 스스로 줄이지 못하므로 여기서 자른다.
+            let size = clamped(subview.sizeThatFits(.unspecified), to: maxWidth)
             if rowWidth > 0, rowWidth + spacing + size.width > maxWidth {
                 total.width = max(total.width, rowWidth)
                 total.height += rowHeight + spacing
@@ -96,12 +102,13 @@ private struct ChipFlow: Layout {
         var rowHeight: CGFloat = 0
 
         for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
+            let size = clamped(subview.sizeThatFits(.unspecified), to: bounds.width)
             if x > bounds.minX, x + size.width > bounds.maxX {
                 x = bounds.minX
                 y += rowHeight + spacing
                 rowHeight = 0
             }
+            // 잘린 폭을 제안으로 넘겨야 Text가 말줄임으로 접힌다.
             subview.place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)

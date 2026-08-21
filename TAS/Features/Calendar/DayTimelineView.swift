@@ -70,7 +70,9 @@ struct DayTimelineView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(p.reservation.startTime).font(.caption2.weight(.semibold)).monospacedDigit()
                 Text(customerName(p.reservation.customerId)).font(.caption2).lineLimit(1)
-                if p.height > 46 {
+                // 칩은 평문보다 위아래 패딩만큼 높다. 임계값을 그대로 두면 60분(56pt)보다
+                // 짧은 블록에서 칩 줄이 잘린다.
+                if p.height > 54 {
                     ServiceChipList(
                         service: p.reservation.service,
                         colorMap: serviceColorMap,
