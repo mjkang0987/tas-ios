@@ -269,6 +269,19 @@
   - **범위:** `Core/UI/{ServiceColor,ServiceChip,Color+Hex}.swift` · `CalendarViewModel` ·
     `CalendarView`·`DayTimelineView`·`ReservationDetailView`·`CustomerDetailView`·`ReservationCreateView`.
     데이터·API 무변경.
+- ✅ **스크린샷 CI가 로그인 화면 대신 캘린더를 찍도록** (시술 배지 확인용)
+  - **문제:** `ios-screenshot.yml`은 앱을 띄우고 10초 뒤 캡처만 해서 **로그인 화면**만 올라왔다.
+    칩·색이 실제로 어떻게 보이는지 확인할 수단이 없었다.
+  - **구현:** 설치 직후 `xcrun simctl get_app_container … data`로 Documents를 찾아
+    `TASTests/Fixtures/guest-seed.json`(날짜 토큰 `__TODAY__`를 KST 오늘로 치환)을
+    `takeaseat.local-db.v1.json`으로 심는다. `SessionStore.restore`가 `hasOnboardedData`를 보고
+    로그인·약관·온보딩을 건너뛰고 캘린더(일 타임라인)로 바로 들어간다.
+  - **주의(핵심):** `LocalStore.load`는 디코딩 실패를 **조용히 삼킨다**(nil → 로그인 화면).
+    시드가 스키마와 어긋나도 워크플로는 초록으로 끝나고 엉뚱한 화면을 올린다. 그래서
+    `GuestSeedTests`가 같은 파일을 `#filePath`로 읽어 디코딩·진입 조건·칩 노출 조건을 검증한다.
+    (실제로 이걸 쓰다가 `paymentMethod: "card"`를 잡았다 — raw value는 `"카드"`.)
+  - **시드 설계:** 커트 3종으로 같은 카테고리 안 농도 차이를, `"여성커트+일반펌"`·`"디자인펌+크리닉"`으로
+    칩 분리를 드러낸다. 전 예약 60분 이상 — 일 타임라인은 블록이 54pt를 넘어야 칩을 그린다.
 - ⬜ 주(week) 타임라인 — 모바일 7칼럼 좁아 **보류 권장**(리스트가 적합)
 - ⬜ 일 타임라인 담당자별 칼럼 분리(담당자 수 적을 때 옵션)
 - 디자인: 네이티브 골격 + 웹 시각언어 유지 확정. 픽셀 매칭 비권장. 거슬리는 화면만 폴리시.

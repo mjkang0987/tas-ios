@@ -1,0 +1,73 @@
+{
+  "onboarded": true,
+  "termsAgreedVersion": "2026-06-16",
+  "storeName": "테이크어시트 살롱",
+  "shopType": "hair",
+  "usePointSystem": true,
+  "useMembershipSystem": false,
+  "useCouponSystem": false,
+  "useOnlineBooking": false,
+  "categoryBaseColors": {},
+  "closedDates": [],
+  "closedWeekdays": [],
+  "history": [],
+  "notices": [],
+  "couponProducts": [],
+  "membershipProducts": [],
+
+  "services": [
+    {"name": "남성커트",   "durationMinutes": 30,  "category": "커트",   "price": 18000},
+    {"name": "여성커트",   "durationMinutes": 30,  "category": "커트",   "price": 20000},
+    {"name": "주니어커트", "durationMinutes": 30,  "category": "커트",   "price": 15000},
+    {"name": "일반펌",     "durationMinutes": 90,  "category": "펌",     "price": 50000},
+    {"name": "디자인펌",   "durationMinutes": 120, "category": "펌",     "price": 70000},
+    {"name": "뿌리염색",   "durationMinutes": 90,  "category": "컬러",   "price": 45000},
+    {"name": "전체염색",   "durationMinutes": 90,  "category": "컬러",   "price": 65000},
+    {"name": "크리닉",     "durationMinutes": 30,  "category": "크리닉", "price": 30000}
+  ],
+
+  "assignees": [
+    {"id": 1, "name": "김디자이너", "color": "#6526D9",
+     "schedule": [
+       {"enabled": true, "start": "10:00", "end": "20:00"},
+       {"enabled": true, "start": "10:00", "end": "20:00"},
+       {"enabled": true, "start": "10:00", "end": "20:00"},
+       {"enabled": true, "start": "10:00", "end": "20:00"},
+       {"enabled": true, "start": "10:00", "end": "20:00"},
+       {"enabled": true, "start": "10:00", "end": "18:00"},
+       {"enabled": false, "start": "10:00", "end": "18:00"}
+     ]},
+    {"id": 2, "name": "박실장", "color": "#00A896",
+     "schedule": [
+       {"enabled": true, "start": "10:00", "end": "20:00"},
+       {"enabled": true, "start": "10:00", "end": "20:00"},
+       {"enabled": true, "start": "10:00", "end": "20:00"},
+       {"enabled": true, "start": "10:00", "end": "20:00"},
+       {"enabled": true, "start": "10:00", "end": "20:00"},
+       {"enabled": true, "start": "10:00", "end": "18:00"},
+       {"enabled": false, "start": "10:00", "end": "18:00"}
+     ]}
+  ],
+
+  "customers": [
+    {"id": 1, "name": "이서연", "tel": "01011112222", "points": 3200},
+    {"id": 2, "name": "정하윤", "tel": "01033334444", "points": 0, "firstVisitDate": "__TODAY__"},
+    {"id": 3, "name": "최민준", "tel": "01055556666", "points": 8100},
+    {"id": 4, "name": "강지우", "tel": "01077778888", "points": 500},
+    {"id": 5, "name": "윤도현", "tel": "01099990000", "points": 0}
+  ],
+
+  "reservations": [
+    {"id": 1, "date": "__TODAY__", "startTime": "10:00", "endTime": "11:30",
+     "service": "여성커트+일반펌", "customerId": 1, "assigneeId": 1, "price": 70000},
+    {"id": 2, "date": "__TODAY__", "startTime": "11:00", "endTime": "12:30",
+     "service": "전체염색", "customerId": 2, "assigneeId": 2, "price": 65000},
+    {"id": 3, "date": "__TODAY__", "startTime": "13:00", "endTime": "14:00",
+     "service": "남성커트", "customerId": 3, "assigneeId": 1, "price": 18000,
+     "paymentCompleted": true, "paymentMethod": "카드"},
+    {"id": 4, "date": "__TODAY__", "startTime": "14:30", "endTime": "16:30",
+     "service": "디자인펌+크리닉", "customerId": 4, "assigneeId": 1, "price": 100000},
+    {"id": 5, "date": "__TODAY__", "startTime": "17:00", "endTime": "18:30",
+     "service": "주니어커트", "customerId": 5, "assigneeId": 2, "price": 15000}
+  ]
+}
