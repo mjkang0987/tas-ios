@@ -274,12 +274,18 @@
     칩·색이 실제로 어떻게 보이는지 확인할 수단이 없었다.
   - **구현:** 설치 직후 `xcrun simctl get_app_container … data`로 Documents를 찾아
     `TASTests/Fixtures/guest-seed.json`(날짜 토큰 `__TODAY__`를 KST 오늘로 치환)을
-    `takeaseat.local-db.v1.json`으로 심는다. `SessionStore.restore`가 `hasOnboardedData`를 보고
+    `takeaseat.local-db.v1.json`으로 심는다. `SessionStore.bootstrap`이 `hasOnboardedData`를 보고
     로그인·약관·온보딩을 건너뛰고 캘린더(일 타임라인)로 바로 들어간다.
   - **주의(핵심):** `LocalStore.load`는 디코딩 실패를 **조용히 삼킨다**(nil → 로그인 화면).
     시드가 스키마와 어긋나도 워크플로는 초록으로 끝나고 엉뚱한 화면을 올린다. 그래서
     `GuestSeedTests`가 같은 파일을 `#filePath`로 읽어 디코딩·진입 조건·칩 노출 조건을 검증한다.
     (실제로 이걸 쓰다가 `paymentMethod: "card"`를 잡았다 — raw value는 `"카드"`.)
+  - **조용한 실패를 막는 장치 3개** (코드리뷰에서 나머지 2개 추가):
+    1. `GuestSeedTests`가 시드를 `GuestSnapshot`으로 디코딩 — 스키마 어긋남을 잡는다.
+    2. 같은 테스트가 워크플로 YAML을 읽어 `LocalStore.fileName`과 시드 경로가 들어있는지 대조 —
+       파일명이 갈리면(v2 마이그레이션 등) 앱은 로그인 화면인데 CI는 초록으로 끝난다.
+    3. 캡처 직전 KST 날짜를 다시 계산해 시드 시점과 다르면 실패 — 실행 중 자정이 넘어가면
+       예약 없는 화면이 찍힌다.
   - **시드 설계:** 커트 3종으로 같은 카테고리 안 농도 차이를, `"여성커트+일반펌"`·`"디자인펌+크리닉"`으로
     칩 분리를 드러낸다. 전 예약 60분 이상 — 일 타임라인은 블록이 54pt를 넘어야 칩을 그린다.
 - ⬜ 주(week) 타임라인 — 모바일 7칼럼 좁아 **보류 권장**(리스트가 적합)

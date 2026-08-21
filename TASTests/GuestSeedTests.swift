@@ -45,7 +45,7 @@ final class GuestSeedTests: XCTestCase {
         let snapshot = try loadSeed()
         XCTAssertTrue(snapshot.onboarded)
         XCTAssertEqual(snapshot.termsAgreedVersion, GuestStore.currentTermsVersion)
-        XCTAssertTrue(snapshot.hasData)   // SessionStore.restore가 게스트로 복귀하는 조건
+        XCTAssertTrue(snapshot.hasData)   // SessionStore.bootstrap이 게스트로 복귀하는 조건
     }
 
     func testSeededReservationsAreOnTheGivenDay() throws {
@@ -81,6 +81,23 @@ final class GuestSeedTests: XCTestCase {
                                   "\(name)이 카탈로그에 없어 폴백 회색으로 그려진다")
             }
         }
+    }
+
+    /// 워크플로가 심는 파일명과 앱이 읽는 파일명이 같은지.
+    ///
+    /// 갈리면 앱은 로그인 화면으로 떨어지는데 `test -s`도, JSON 파싱도, 이 파일의 다른
+    /// 테스트도 전부 통과한다 — 이 시드가 막으려던 바로 그 조용한 실패다.
+    func testScreenshotWorkflowSeedsTheFileTheAppReads() throws {
+        let workflow = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()      // TASTests/
+            .deletingLastPathComponent()      // repo root
+            .appendingPathComponent(".github/workflows/ios-screenshot.yml")
+        let yaml = try String(contentsOf: workflow, encoding: .utf8)
+
+        XCTAssertTrue(yaml.contains(LocalStore.fileName),
+                      "워크플로가 \(LocalStore.fileName)이 아닌 이름으로 시드를 심고 있다")
+        XCTAssertTrue(yaml.contains("TASTests/Fixtures/guest-seed.json"),
+                      "워크플로가 이 테스트가 검증하는 시드 파일을 쓰고 있지 않다")
     }
 
     private func minutes(_ hhmm: String) -> Int {
