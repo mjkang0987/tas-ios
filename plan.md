@@ -299,8 +299,18 @@
   (`com.googleusercontent.apps.REPLACE_WITH_REVERSED_CLIENT_ID`)이 App Store 업로드를 거부시켰다
   (altool **90158**, 언더스코어 불가). 실제 리버스 클라이언트 ID를 받을 때까지 주석 처리.
   키를 받으면 주석을 풀 것 — `docs/GOOGLE_SIGNIN.md`.
-  ⚠️ TestFlight는 **기본 브랜치 push + 커밋 메시지 `[tf]`** 둘 다 만족해야 돈다. `[tf]` 없이 머지하면
+  ⚠️ TestFlight는 **`main` push + 커밋 메시지 `[tf]`** 둘 다 만족해야 돈다. `[tf]` 없이 머지하면
   워크플로가 `skipped`로 넘어가 기기 빌드가 조용히 낡는다(7/24~7/29 실제로 그랬음).
+- ✅ **`testflight.yml`이 죽은 브랜치를 올리던 문제 수정**(PR #20 머지 후 발행하려다 발견)
+  - **문제:** 트리거(`push.branches`)와 **체크아웃 `ref`** 둘 다 `claude/tas-service-ios-stlzh4`로
+    박혀 있었다. 그 브랜치는 PR #15에서 멈춰 `main`보다 **29커밋 뒤**다. 즉
+    (1) `main`에 `[tf]`를 달아 머지해도 워크플로가 아예 돌지 않고,
+    (2) 수동 실행(`workflow_dispatch`)은 **돌긴 하는데 29커밋 전 코드를 올린다.**
+    (2)가 더 나쁘다 — 초록으로 끝나고 무엇이 올라갔는지 화면에 안 나온다.
+  - **원인:** PR #15가 워크플로 기준을 `develop` → `main`으로 옮길 때 이 파일의 브랜치만
+    당시 작업 브랜치로 남겨뒀다. 이 문서의 "기본 브랜치 push" 설명도 실제와 달랐다.
+  - **수정:** `push.branches: [main]`, 체크아웃의 `ref:` 고정 제거(기본값 = 트리거한 커밋 /
+    수동 실행 시 고른 브랜치 HEAD). 업로드 로그에 `ref_name`·`sha`를 찍어 무엇이 올라가는지 남긴다.
 - ⬜ App Store Connect 앱 등록(`kr.co.takeaseat.app`)·SKU·카테고리
 - ⬜ 스크린샷·앱 설명·키워드
 - ⬜ 개인정보 처리방침 URL(웹 `/privacy`·`/terms` 연결) · App Privacy 라벨
