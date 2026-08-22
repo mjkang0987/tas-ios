@@ -44,6 +44,7 @@ struct CustomersView: View {
                         customer: customer,
                         stats: viewModel.stats(for: customer.id),
                         reservations: viewModel.reservations(for: customer.id),
+                        serviceColorMap: viewModel.serviceColorMap,
                         onEdit: { activeSheet = .edit($0) },
                         pointsEnabled: session.currentStore?.usePointSystem ?? false,
                         pointSettings: session.currentStore?.pointSettings,

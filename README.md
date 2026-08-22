@@ -56,7 +56,8 @@ TAS/
     Networking/        APIClient · TASService · Loadable · APIError
     Session/           SessionStore · KeychainTokenStore · MobileToken
     Storage/           GuestStore · GuestSnapshot · LocalStore (오프라인 로컬 DB)
-    UI/                LoadableView · Badges · FilterChip · ColorAccents · ServiceColor · Formatting · StoreClosedStyle
+    UI/                LoadableView · Badges · ServiceChip(시술 배지) · FilterChip · ColorAccents ·
+                       ServiceColor(서비스별 색) · Formatting · StoreClosedStyle
     KST.swift          매장 기준(Asia/Seoul) 날짜 유틸 · 요일 라벨(weekdayLabels)
     ReservationOverlap 담당자 중복 예약(겹침) 판정 공용 유틸
     PointMath          적립금 산식(적립/사용) 공용 유틸
@@ -126,6 +127,7 @@ TASTests/              유닛 테스트 (XCTest, @testable import TAS)
 게스트 스냅샷 CRUD/병합(`GuestStore`) · 적립 산식(`PointMath`) · 이관 인코딩(`MigrateLocalBody`) ·
 업종 카탈로그(`ShopCatalog` — 목록에서 내린 업종의 라벨 해석·Picker 노출) ·
 예약 설정 검증·디코딩(`BookingSettings` — 슬러그·연락처 형식, 기본 안내문구, 부분 응답 폴백) ·
+서비스 색·시술 문자열(`ServiceColor` — 서비스별 농도, 레거시 이름, `+` greedy 분리) ·
 근무시간 요약(`DaySchedule.summarize` — 구간 묶기·결손 스케줄) · 이름 정렬(`NameSort`).
 
 ```bash

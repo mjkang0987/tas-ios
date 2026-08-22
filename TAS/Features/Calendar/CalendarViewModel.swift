@@ -9,7 +9,7 @@ final class CalendarViewModel {
         var reservations: [Reservation]
         var customersById: [Int: Customer]
         var assigneesById: [Int: Assignee]
-        var serviceColorByName: [String: Color]
+        var serviceColorMap: [String: String]
         var services: [ServiceItem]
         var history: [ReservationHistoryEntry]
     }
@@ -111,12 +111,15 @@ final class CalendarViewModel {
 
     func customer(_ id: Int) -> Customer? { state.value?.customersById[id] }
     func assignee(_ id: Int?) -> Assignee? { id.flatMap { state.value?.assigneesById[$0] } }
-    /// 서비스명 → 색. "커트+일반펌"처럼 조합된 문자열이면 첫 서비스 색으로 폴백.
+    /// 서비스명 → hex 색 맵(웹 `SERVICE_COLOR_MAP`). 칩 렌더에 그대로 넘긴다.
+    var serviceColorMap: [String: String] { state.value?.serviceColorMap ?? [:] }
+
+    /// 단색 하나가 필요한 자리(타임라인 블록)용. 카탈로그에서 못 찾으면 nil —
+    /// 폴백색(`#999`)을 억지로 칠하지 않고 호출부가 정하게 둔다.
     func serviceColor(_ name: String) -> Color? {
-        guard let map = state.value?.serviceColorByName else { return nil }
-        if let color = map[name] { return color }
-        let first = name.split(separator: "+").first.map(String.init) ?? name
-        return map[first]
+        let hex = ServiceColor.serviceHex(name, in: serviceColorMap)
+        guard hex != ServiceColor.fallbackHex else { return nil }
+        return Color(hex: hex)
     }
 
     func customerName(_ id: Int) -> String {
@@ -142,17 +145,17 @@ final class CalendarViewModel {
             let customersById = Dictionary(cus.customers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             let assigneesById = Dictionary(asg.assignees.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
 
-            // 서비스명 → 카테고리 색(매장 커스텀 우선).
-            var serviceColorByName: [String: Color] = [:]
-            for item in svc.services {
-                serviceColorByName[item.name] = ServiceColor.categoryColor(item.category, storeMap: svc.categoryBaseColors)
-            }
+            // 서비스명 → 색(웹 buildServiceColorMap: 카테고리 기본색 + 카탈로그 순번 농도).
+            let serviceColorMap = ServiceColor.buildServiceColorMap(
+                catalog: svc.services,
+                storeMap: svc.categoryBaseColors
+            )
 
             state = .loaded(Data(
                 reservations: res.reservations,
                 customersById: customersById,
                 assigneesById: assigneesById,
-                serviceColorByName: serviceColorByName,
+                serviceColorMap: serviceColorMap,
                 services: svc.services,
                 history: res.history ?? []
             ))

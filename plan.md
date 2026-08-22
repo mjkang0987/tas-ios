@@ -4,7 +4,7 @@
 > 백엔드는 [`mjkang0987/tas`](https://github.com/mjkang0987/tas)(로컬 `/workspace/tas`). 구조는 `README.md`, 버전 규약은 `CLAUDE.md`.
 >
 > _상태_ ⬜ 예정 · 🟡 진행 · ✅ 완료 · 🔒 외부 준비 필요(키/설정)
-> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/calendar-weekly-scroll-current-day-rhmmea`).
+> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/web-design-mismatch-q7hfs7`).
 > 머지된 PR 브랜치엔 이어붙이지 말고 머지된 default에서 새로 딴다._
 
 ---
@@ -243,6 +243,51 @@
     → `Task { @MainActor in … }`로 다음 런루프에 호출.
   - **범위:** `TAS/Features/Calendar/CalendarView.swift`의 주 뷰 한정. 다른 모드(일/월/년)·데이터 로직 무변경.
     같이 정리: P7에 적어둔 `CalendarView.swift` 빈 줄 잔재 제거.
+- ✅ **시술(서비스) 배지 웹 일치** — 이식 누락 복구
+  - **문제:** "네이티브 골격" 예외가 아니라 웹 정의 이식이 빠진 것. tas 저장소 대조로 3건 확인.
+    1. **색이 서비스별이 아니라 카테고리별.** 웹 `client/features/services/model.ts:126` `buildServiceColorMap`은
+       카테고리 기본색에 `SHADE_STEPS = [0,14,-14,26,-26,36,-36,46,-46]`을 `adjustHexColor`로 얹어
+       **같은 카테고리 안에서 서비스마다 농도**를 준다(남성/여성/주니어커트가 서로 다른 파랑).
+       iOS `CalendarViewModel.swift:148`은 `ServiceColor.categoryColor(item.category)`를 그대로 써서
+       **커트 3종이 전부 같은 `#2D7FF9`.** `adjustHexColor`·`SHADE_STEPS`·`LEGACY_NAME_MAP` 미이식.
+    2. **배지가 아니라 점+회색 글씨.** 웹 `ServiceChip.tsx`는 알약 칩(`radius 999`, `padding 3/7`,
+       배경 `${color}18`≈9% 틴트, **글자색이 서비스색**, 11px/600). iOS는 `ColorDot`+회색 텍스트이거나
+       (`CalendarView:588`, `ReservationDetailView:69`) 색이 아예 없다(`CalendarView:368`,
+       `DayTimelineView:72`, `CustomerDetailView:135`).
+    3. **복수 시술이 안 쪼개짐.** 웹은 `parseServiceString`으로 `+`를 분리(이름에 `+`가 든 서비스는
+       greedy 보존)해 칩 하나씩. iOS는 `"커트+펌"`이 통짜 한 줄.
+  - **구현:** `Core/UI/ServiceColor.swift`에 `adjustHex`·`shadeDelta`·`legacyNameMap`·
+    `buildServiceColorMap`·`serviceHex`·`parseServiceString` 이식. `Core/UI/ServiceChip.swift`
+    **신규 공용 컴포넌트**(`ServiceChipList`/`ServiceChip` + 넘칠 때 흐르는 `Layout`) — 표시 지점이
+    6곳이라 화면마다 칩 마크업을 복붙하면 CLAUDE.md가 금지한 웹의 하드코딩 반복을 그대로 옮기게 된다.
+    `CalendarViewModel`은 `[String: Color]` 대신 웹과 같은 **hex 맵**(`serviceColorMap`)을 들고 있는다.
+  - **웹과 의도적으로 다른 점:** 리스트 행은 `wraps: false`(1줄 말줄임) — 웹도 목록에선
+    `nowrap`+ellipsis로 행 높이가 터지는 걸 막는다(`AddressCustomerSummary.tsx:197` 주석). 상세는 흐름 배치.
+  - **주의:** 웹 `FALLBACK_COLOR`가 3자리 `#999`라 `Color(hex:)`에 3자리 지원을 더해야 한다(기존 6자리 무영향).
+    `serviceHex`의 부분 문자열 폴백은 웹이 길이 내림차순·동률은 카탈로그 순서인데 Swift `Dictionary`는
+    순서가 없어 **동률은 이름 오름차순**으로 결정론적 고정(카탈로그에 없는 이름에서만 타는 경로).
+  - **범위:** `Core/UI/{ServiceColor,ServiceChip,Color+Hex}.swift` · `CalendarViewModel` ·
+    `CalendarView`·`DayTimelineView`·`ReservationDetailView`·`CustomerDetailView`·`ReservationCreateView`.
+    데이터·API 무변경.
+- ✅ **스크린샷 CI가 로그인 화면 대신 캘린더를 찍도록** (시술 배지 확인용)
+  - **문제:** `ios-screenshot.yml`은 앱을 띄우고 10초 뒤 캡처만 해서 **로그인 화면**만 올라왔다.
+    칩·색이 실제로 어떻게 보이는지 확인할 수단이 없었다.
+  - **구현:** 설치 직후 `xcrun simctl get_app_container … data`로 Documents를 찾아
+    `TASTests/Fixtures/guest-seed.json`(날짜 토큰 `__TODAY__`를 KST 오늘로 치환)을
+    `takeaseat.local-db.v1.json`으로 심는다. `SessionStore.bootstrap`이 `hasOnboardedData`를 보고
+    로그인·약관·온보딩을 건너뛰고 캘린더(일 타임라인)로 바로 들어간다.
+  - **주의(핵심):** `LocalStore.load`는 디코딩 실패를 **조용히 삼킨다**(nil → 로그인 화면).
+    시드가 스키마와 어긋나도 워크플로는 초록으로 끝나고 엉뚱한 화면을 올린다. 그래서
+    `GuestSeedTests`가 같은 파일을 `#filePath`로 읽어 디코딩·진입 조건·칩 노출 조건을 검증한다.
+    (실제로 이걸 쓰다가 `paymentMethod: "card"`를 잡았다 — raw value는 `"카드"`.)
+  - **조용한 실패를 막는 장치 3개** (코드리뷰에서 나머지 2개 추가):
+    1. `GuestSeedTests`가 시드를 `GuestSnapshot`으로 디코딩 — 스키마 어긋남을 잡는다.
+    2. 같은 테스트가 워크플로 YAML을 읽어 `LocalStore.fileName`과 시드 경로가 들어있는지 대조 —
+       파일명이 갈리면(v2 마이그레이션 등) 앱은 로그인 화면인데 CI는 초록으로 끝난다.
+    3. 캡처 직전 KST 날짜를 다시 계산해 시드 시점과 다르면 실패 — 실행 중 자정이 넘어가면
+       예약 없는 화면이 찍힌다.
+  - **시드 설계:** 커트 3종으로 같은 카테고리 안 농도 차이를, `"여성커트+일반펌"`·`"디자인펌+크리닉"`으로
+    칩 분리를 드러낸다. 전 예약 60분 이상 — 일 타임라인은 블록이 54pt를 넘어야 칩을 그린다.
 - ⬜ 주(week) 타임라인 — 모바일 7칼럼 좁아 **보류 권장**(리스트가 적합)
 - ⬜ 일 타임라인 담당자별 칼럼 분리(담당자 수 적을 때 옵션)
 - 디자인: 네이티브 골격 + 웹 시각언어 유지 확정. 픽셀 매칭 비권장. 거슬리는 화면만 폴리시.
@@ -265,11 +310,31 @@
 
 - ✅ 자동 테스트: 유닛 테스트 타깃(TASTests) + `ios-test.yml` CI. 커버: 겹침(ReservationOverlap)·Store 디코딩·고객/예약 헬퍼·매출 집계/추세·**게스트 CRUD/병합**(GuestStore)·**적립 계산·잔액 원장**(PointMath·PointLedger)·이관 인코딩(MigrateLocalBody). (추가 회귀 케이스는 필요 시 확장.)
 - ⬜ 접근성/다크모드/다이내믹 타입 재점검(컴팩트 폰트 후 큰 글자 레이아웃)
+  - 시술 칩 틴트가 웹 값 그대로 9%(`${color}18`)다. 웹은 라이트 전용이라 다크모드에서 흐릴 수 있다.
+  - 일 타임라인의 칩 표시 임계값(`DayTimelineView`의 `p.height > 54`)은 **손으로 잰 픽셀 상수**다.
+    다이내믹 타입이 커지면 어긋난다. 더 깊은 수정은 `ViewThatFits(in: .vertical)`로 레이아웃이
+    스스로 정하게 하는 것 — 이 타임라인은 원래 전부 고정 수치(`hourHeight`·`minBlockHeight`)라
+    다이내믹 타입 대응은 화면 전체를 함께 봐야 해서 여기 묶어둔다.
+- ⬜ **스크린샷 시드 계약을 Swift로**(리팩토링 리뷰 지적) — 지금은 `GuestSeedTests`가 워크플로 YAML을
+  문자열 매칭해 파일명을 대조한다. 파일명 드리프트만 잡고, 번들 ID·컨테이너 경로·런타임 디코딩 실패는
+  여전히 초록으로 지나간다. 더 깊은 수정은 DEBUG 전용 실행 인자(`-seedSnapshotPath`)로 앱이 직접 읽고
+  실패 시 크게 죽는 것. **"YAML에 X가 있는가" 단언이 하나 더 늘어나는 순간** 그때 하는 게 신호다.
 - ⬜ 푸시 알림(없음) — APNs 키·등록·백엔드 발송(로그인 기반)
 - ⬜ 로그인 후 다기기 동기화/충돌 처리(웹 `conflict-resolution` 미반영)
-- ⬜ **웹 톤 색상값 중복 정리**(PR #17 리뷰 지적, 출시 전까지 보류) — `A88417`(warning)·`6526D9`(purple)·
-  `EA4335`(danger)가 `Core/UI/Badges.swift`(`StatusBadge`)와 `Calendar/BookingRequestsView.swift`
-  (`BookingRequestKindBadge`)에 **각각** 하드코딩돼 있다. 한쪽만 고치면 같은 톤이 화면마다 어긋난다.
+- ⬜ **시술 문자열을 쓰는 기존 계산 2곳 정리**(시술 배지 이식 중 발견, 이번 범위 밖이라 보류) —
+  둘 다 이식 전부터 있던 버그고, 이제 `ServiceColor`에 도구가 생겨 고치기 쉬워졌다.
+  - `ReservationCreateView.catalogMap`에 레거시 별칭이 없다(웹 `buildCatalogMap`은 넣는다).
+    옛 이름으로 저장된 예약을 편집하면 소요시간·가격이 0으로 잡힌다.
+  - `RevenueViewModel.swift:81`이 `servicePriceByName[r.service]`로 **조합 문자열 원문**을 찾는다.
+    "커트+펌"은 맵에 없어 0원 처리 → 웹은 `sumPrice(parseServiceString(...))`로 합산한다.
+- ⬜ **웹 톤 색상값 중복 정리 + 알약 배지 통합**(PR #17 리뷰 지적 + 리팩토링 리뷰, 출시 전까지 보류) —
+  `A88417`(warning)·`6526D9`(purple)·`EA4335`(danger)가 `Core/UI/Badges.swift`(`StatusBadge`)와
+  `Calendar/BookingRequestsView.swift`(`BookingRequestKindBadge`)에 **각각** 하드코딩돼 있다.
+  한쪽만 고치면 같은 톤이 화면마다 어긋난다.
+  덧붙여 `BookingRequestKindBadge`는 이제 `Core/UI/ServiceChip.swift`의 `ServiceChip`과 **구조가 같다**
+  (Text → caption2 semibold → 캡슐 틴트 배경 → 틴트 글자). 상수만 다르다(8/3·0.12 vs 7/3·0.094).
+  같이 묶으면 CLAUDE.md의 "공통 영역 컴포넌트화"를 만족하지만, 지금 묶으면 요청함 화면의 픽셀이
+  바뀌므로 색 토큰 정리와 **한 번에** 한다.
   정리안: `Core/UI/Color+Hex.swift`에 토큰 3개(`.tasWarning`/`.tasPurple`/`.tasDanger`)를 두고 양쪽이 참조
   (값 동일 → 화면 변화 0). 배지가 더 늘기 전에 하는 게 싸다.
   (`CalendarView.swift`의 빈 줄 잔재는 P5 주 뷰 스크롤 작업 때 함께 제거 — 색상 토큰만 남았다.)

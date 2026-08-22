@@ -12,7 +12,9 @@ final class LocalStore {
     static let shared = LocalStore()
 
     /// 웹 localStorage 키(`takeaseat.local-db.v1`)에 대응하는 파일명.
-    private let fileName = "takeaseat.local-db.v1.json"
+    /// 스크린샷 CI가 이 파일을 심어 게스트 상태를 만든다 — 이름이 갈리면 앱은 조용히
+    /// 로그인 화면으로 떨어지므로 `GuestSeedTests`가 워크플로와 이 상수를 대조한다.
+    static let fileName = "takeaseat.local-db.v1.json"
     private let fileManager: FileManager
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
@@ -25,7 +27,7 @@ final class LocalStore {
 
     private var fileURL: URL? {
         guard let dir = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
-        return dir.appendingPathComponent(fileName)
+        return dir.appendingPathComponent(Self.fileName)
     }
 
     /// 저장된 스냅샷을 읽는다. 없거나 디코딩 실패 시 nil.

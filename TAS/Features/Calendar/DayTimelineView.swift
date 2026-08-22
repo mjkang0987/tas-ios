@@ -9,6 +9,8 @@ struct DayTimelineView: View {
     let endHour: Int
     var customerName: (Int) -> String = { "고객 #\($0)" }
     var color: (Reservation) -> Color = { _ in .accentColor }
+    /// 서비스명 → hex. 기본값 없음 — 빠뜨리면 칩이 조용히 폴백 회색이 된다.
+    let serviceColorMap: [String: String]
     var onTap: (Reservation) -> Void = { _ in }
 
     private let hourHeight: CGFloat = 56
@@ -68,8 +70,14 @@ struct DayTimelineView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(p.reservation.startTime).font(.caption2.weight(.semibold)).monospacedDigit()
                 Text(customerName(p.reservation.customerId)).font(.caption2).lineLimit(1)
-                if p.height > 46 {
-                    Text(p.reservation.service).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                // 칩은 평문보다 위아래 패딩만큼 높다. 임계값을 그대로 두면 60분(56pt)보다
+                // 짧은 블록에서 칩 줄이 잘린다.
+                if p.height > 54 {
+                    ServiceChipList(
+                        service: p.reservation.service,
+                        colorMap: serviceColorMap,
+                        wraps: false
+                    )
                 }
                 Spacer(minLength: 0)
             }

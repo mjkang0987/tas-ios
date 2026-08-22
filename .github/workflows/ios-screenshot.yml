@@ -7,6 +7,7 @@ on:
     paths:
       - ".github/workflows/ios-screenshot.yml"
       - "TAS/**"
+      - "TASTests/Fixtures/**"   # 게스트 시드가 바뀌면 스크린샷도 다시 찍는다
 
 jobs:
   screenshot:
@@ -31,16 +32,48 @@ jobs:
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
 
-      - name: Install & launch app
+      - name: Install app
         run: |
           APP=$(find build/Build/Products -name "TAS.app" -type d | head -1)
           echo "App: $APP"
           xcrun simctl install "$DEVICE" "$APP"
+
+      # 앱을 그냥 띄우면 로그인 화면만 잡힌다. 게스트 스냅샷을 미리 심어두면
+      # SessionStore.bootstrap이 hasOnboardedData를 보고 바로 캘린더로 들어간다.
+      # 시드 스키마는 GuestSeedTests가 지킨다 — LocalStore.load는 디코딩 실패를
+      # 조용히 삼키므로(nil → 로그인 화면) 여기서 어긋나면 알 길이 없다.
+      - name: Seed guest snapshot
+        run: |
+          TODAY=$(TZ=Asia/Seoul date +%F)
+          echo "KST today: $TODAY"
+          echo "SEEDED_DAY=$TODAY" >> "$GITHUB_ENV"
+
+          CONTAINER=$(xcrun simctl get_app_container "$DEVICE" kr.co.takeaseat.app data)
+          DOCS="$CONTAINER/Documents"
+          mkdir -p "$DOCS"
+
+          sed "s/__TODAY__/$TODAY/g" TASTests/Fixtures/guest-seed.json \
+            > "$DOCS/takeaseat.local-db.v1.json"
+
+          test -s "$DOCS/takeaseat.local-db.v1.json"
+          python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$DOCS/takeaseat.local-db.v1.json"
+          echo "Seeded: $DOCS/takeaseat.local-db.v1.json"
+
+      - name: Launch app
+        run: |
           xcrun simctl launch "$DEVICE" kr.co.takeaseat.app || true
           sleep 10
 
       - name: Capture screenshot
         run: |
+          # 시드와 실행 사이에 KST 자정이 지나면 앱이 보는 '오늘'이 달라져
+          # 예약 없는 화면이 찍힌다. 그래도 워크플로는 초록이므로 여기서 막는다.
+          NOW=$(TZ=Asia/Seoul date +%F)
+          if [ "$NOW" != "$SEEDED_DAY" ]; then
+            echo "::error::KST 날짜가 실행 중에 넘어갔다 (시드 $SEEDED_DAY → 현재 $NOW). 재실행 필요."
+            exit 1
+          fi
+
           xcrun simctl io "$DEVICE" screenshot screen.png
           sips -Z 1000 screen.png || true
           ls -la screen.png

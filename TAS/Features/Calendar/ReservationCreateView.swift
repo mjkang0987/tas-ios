@@ -13,6 +13,9 @@ struct ReservationCreateView: View {
     let customers: [Customer]
     let assignees: [Assignee]            // 재직 중
     let catalog: [ServiceItem]
+    /// 서비스명 → hex(웹 `SERVICE_COLOR_MAP`). 시술 칩 색에 쓴다.
+    /// 기본값을 두지 않는다 — 빠뜨리면 칩이 전부 폴백 회색으로 조용히 그려진다.
+    let serviceColorMap: [String: String]
     /// 담당자 겹침(중복 예약) 체크용 — 전체 예약(날짜·담당자로 내부 필터).
     let existingReservations: [Reservation]
     /// 매장 적립률(%). 결제완료로 등록 시 자동 적립에 사용. 0이면 적립 없음.
@@ -145,7 +148,7 @@ struct ReservationCreateView: View {
                             Text("\(r.startTime)–\(r.endTime) · \(customerLabel(r.customerId))")
                                 .font(.subheadline.weight(.medium))
                             if !r.service.isEmpty {
-                                Text(r.service).font(.caption).foregroundStyle(.secondary)
+                                ServiceChipList(service: r.service, colorMap: serviceColorMap)
                             }
                         }
                     }
@@ -260,21 +263,18 @@ struct ReservationCreateView: View {
         }
     }
 
-    /// 서비스 항목 행 — 웹처럼 체크박스(왼쪽) + 색 배경 칩 + "가격 · 소요시간"(오른쪽).
+    /// 서비스 항목 행 — 웹처럼 체크박스(왼쪽) + 시술 칩 + "가격 · 소요시간"(오른쪽).
     private func serviceItemRow(_ item: ServiceItem) -> some View {
         let selected = selectedServices.contains(item.name)
-        let color = ServiceColor.categoryColor(item.category)
         return Button { toggleService(item.name) } label: {
             HStack(spacing: 10) {
                 Image(systemName: selected ? "checkmark.square.fill" : "square")
                     .foregroundStyle(selected ? Color.accentColor : Color(.tertiaryLabel))
-                Text(item.name)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(color)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(color.opacity(0.12))
-                    .clipShape(Capsule())
+                ServiceChip(
+                    name: item.name,
+                    color: ServiceColor.color(item.name, in: serviceColorMap),
+                    font: .subheadline
+                )
                 Spacer()
                 Text("\(formatWon(item.price)) · \(item.durationMinutes)분")
                     .font(.caption).foregroundStyle(.secondary)
@@ -415,7 +415,13 @@ struct ReservationCreateView: View {
             customerName = c.name
             customerTel = c.tel
         }
-        selectedServices = r.service.split(separator: "+").map(String.init)
+        // knownNames는 카탈로그 이름이 아니라 **색 맵의 키**여야 한다 — 이름에 '+'가 든
+        // 레거시 서비스("다운펌+커트")는 카탈로그엔 없고 색 맵에만 있어서, 카탈로그로 주면
+        // greedy 보존이 아예 동작하지 않는다(웹도 Object.keys(serviceColorMap)를 넘긴다).
+        selectedServices = ServiceColor.parseServiceString(
+            r.service,
+            knownNames: Set(serviceColorMap.keys)
+        )
         date = parseDate(r.date, cal: cal) ?? initialDate
         startTime = parseTime(r.startTime, on: date, cal: cal) ?? date
         isEndManual = true
@@ -508,7 +514,7 @@ struct ReservationCreateView: View {
                 updated.date = KST.dayKey.string(from: date)
                 updated.startTime = timeString(startTime)
                 updated.endTime = timeString(endTime)
-                updated.service = selectedServices.joined(separator: "+")
+                updated.service = ServiceColor.joinServiceNames(selectedServices)
                 updated.customerId = resolvedCustomerId
                 updated.assigneeId = assigneeId == 0 ? nil : assigneeId
                 updated.price = price
@@ -520,7 +526,7 @@ struct ReservationCreateView: View {
                     date: KST.dayKey.string(from: date),
                     startTime: timeString(startTime),
                     endTime: timeString(endTime),
-                    service: selectedServices.joined(separator: "+"),
+                    service: ServiceColor.joinServiceNames(selectedServices),
                     customerId: resolvedCustomerId,
                     assigneeId: assigneeId == 0 ? nil : assigneeId,
                     status: .active,
