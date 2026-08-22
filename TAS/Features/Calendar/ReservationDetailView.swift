@@ -8,7 +8,7 @@ struct ReservationDetailView: View {
     let reservation: Reservation
     let customer: Customer?
     let assignee: Assignee?
-    var serviceColorMap: [String: String] = [:]
+    let serviceColorMap: [String: String]
     var isNewCustomer: Bool = false
     /// 쓰기 경로(게스트/API 자동 분기). 기본값은 상세 표시만 하던 기존 호출부 호환용.
     var service: TASService = TASService()

@@ -39,9 +39,12 @@ struct ServiceChipList: View {
     }
 
     private var items: [Item] {
-        ServiceColor.parseServiceString(service, knownNames: Set(colorMap.keys))
-            .enumerated()
-            .map { Item(id: $0.offset, name: $0.element) }
+        // 목록 행마다 body가 재평가되는 자리다. '+'가 없으면 parseServiceString이
+        // knownNames를 보기도 전에 반환하므로, 그 경우엔 Set을 짓지 않는다.
+        let names = service.contains("+")
+            ? ServiceColor.parseServiceString(service, knownNames: Set(colorMap.keys))
+            : ServiceColor.parseServiceString(service)
+        return names.enumerated().map { Item(id: $0.offset, name: $0.element) }
     }
 
     var body: some View {
@@ -67,51 +70,48 @@ struct ServiceChipList: View {
 private struct ChipFlow: Layout {
     var spacing: CGFloat
 
-    private func clamped(_ size: CGSize, to maxWidth: CGFloat) -> CGSize {
-        CGSize(width: min(size.width, maxWidth), height: size.height)
-    }
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? .infinity
-        var total = CGSize.zero
-        var rowWidth: CGFloat = 0
+    /// 줄바꿈 규칙은 여기 한 벌만 둔다. 측정(`sizeThatFits`)과 배치(`placeSubviews`)가
+    /// 각자 계산하면 둘이 어긋나는 순간 마지막 줄이 잘리는데, 컴파일러는 잡아주지 않는다.
+    ///
+    /// 칸보다 긴 칩("남자 디자인펌" 같은 긴 시술명)은 폭을 잘라둔다 — 칩은 `lineLimit(1)`이라
+    /// 스스로 줄이지 못하고, 잘린 폭을 제안으로 받아야 말줄임으로 접힌다.
+    private func layout(_ subviews: Subviews, maxWidth: CGFloat) -> (size: CGSize, rects: [CGRect]) {
+        var rects: [CGRect] = []
+        var x: CGFloat = 0
+        var y: CGFloat = 0
         var rowHeight: CGFloat = 0
+        var totalWidth: CGFloat = 0
 
         for subview in subviews {
-            // 이상적 폭을 그대로 쓰면 칸보다 긴 칩("남자 디자인펌" 같은 긴 시술명)이
-            // 밖으로 삐져나간다. 칩은 lineLimit(1)이라 스스로 줄이지 못하므로 여기서 자른다.
-            let size = clamped(subview.sizeThatFits(.unspecified), to: maxWidth)
-            if rowWidth > 0, rowWidth + spacing + size.width > maxWidth {
-                total.width = max(total.width, rowWidth)
-                total.height += rowHeight + spacing
-                rowWidth = size.width
-                rowHeight = size.height
-            } else {
-                rowWidth += (rowWidth > 0 ? spacing : 0) + size.width
-                rowHeight = max(rowHeight, size.height)
-            }
-        }
-        total.width = max(total.width, rowWidth)
-        total.height += rowHeight
-        return total
-    }
+            let ideal = subview.sizeThatFits(.unspecified)
+            let size = CGSize(width: min(ideal.width, maxWidth), height: ideal.height)
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX
-        var y = bounds.minY
-        var rowHeight: CGFloat = 0
-
-        for subview in subviews {
-            let size = clamped(subview.sizeThatFits(.unspecified), to: bounds.width)
-            if x > bounds.minX, x + size.width > bounds.maxX {
-                x = bounds.minX
+            if x > 0, x + size.width > maxWidth {
+                totalWidth = max(totalWidth, x - spacing)
+                x = 0
                 y += rowHeight + spacing
                 rowHeight = 0
             }
-            // 잘린 폭을 제안으로 넘겨야 Text가 말줄임으로 접힌다.
-            subview.place(at: CGPoint(x: x, y: y), anchor: .topLeading, proposal: ProposedViewSize(size))
+            rects.append(CGRect(origin: CGPoint(x: x, y: y), size: size))
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
+        }
+
+        totalWidth = max(totalWidth, x - spacing)
+        return (CGSize(width: max(0, totalWidth), height: y + rowHeight), rects)
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        layout(subviews, maxWidth: proposal.width ?? .infinity).size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        for (subview, rect) in zip(subviews, layout(subviews, maxWidth: bounds.width).rects) {
+            subview.place(
+                at: CGPoint(x: bounds.minX + rect.minX, y: bounds.minY + rect.minY),
+                anchor: .topLeading,
+                proposal: ProposedViewSize(rect.size)
+            )
         }
     }
 }

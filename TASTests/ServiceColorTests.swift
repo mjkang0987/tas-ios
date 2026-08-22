@@ -21,23 +21,23 @@ final class ServiceColorTests: XCTestCase {
         ]
     }
 
+    /// 기본 카탈로그로 만든 색 맵 — storeMap을 쓰는 테스트만 따로 만든다.
+    private var map: [String: String] { ServiceColor.buildServiceColorMap(catalog: catalog) }
+
     // MARK: - 서비스별 농도
 
     func testSameCategoryServicesGetDifferentShades() {
-        let map = ServiceColor.buildServiceColorMap(catalog: catalog)
         XCTAssertEqual(Set(["남성커트", "여성커트", "주니어커트"].compactMap { map[$0] }).count, 3)
     }
 
     /// 커트 기본색 #2D7FF9 (45,127,249)에 SHADE_STEPS[0,14,-14]를 얹은 값.
     func testShadeStepsMatchWeb() {
-        let map = ServiceColor.buildServiceColorMap(catalog: catalog)
         XCTAssertEqual(map["남성커트"], "#2d7ff9")   // delta 0
         XCTAssertEqual(map["여성커트"], "#3b8dff")   // delta +14, b는 263 → 255로 잘림
         XCTAssertEqual(map["주니어커트"], "#1f71eb")  // delta -14
     }
 
     func testCategoryColorIsNotServiceColor() {
-        let map = ServiceColor.buildServiceColorMap(catalog: catalog)
         XCTAssertEqual(ServiceColor.categoryBaseHex("커트"), "#2D7FF9")
         XCTAssertNotEqual(map["여성커트"], "#2D7FF9")
     }
@@ -49,7 +49,6 @@ final class ServiceColorTests: XCTestCase {
     }
 
     func testLegacyNameSharesColorWithCurrentName() {
-        let map = ServiceColor.buildServiceColorMap(catalog: catalog)
         // LEGACY_NAME_MAP: 셋팅펌 → 디지털/셋팅
         XCTAssertEqual(map["셋팅펌"], map["디지털/셋팅"])
         XCTAssertNotNil(map["셋팅펌"])
@@ -58,13 +57,11 @@ final class ServiceColorTests: XCTestCase {
     // MARK: - 색 해석
 
     func testUnknownServiceFallsBackToWebFallbackColor() {
-        let map = ServiceColor.buildServiceColorMap(catalog: catalog)
         XCTAssertEqual(ServiceColor.serviceHex("두피 스케일링", in: map), ServiceColor.fallbackHex)
     }
 
     /// 이름이 정확히 없으면 **긴 이름부터** 부분 문자열로 훑는다(웹과 동일).
     func testSubstringMatchPrefersLongerName() {
-        let map = ServiceColor.buildServiceColorMap(catalog: catalog)
         XCTAssertEqual(ServiceColor.serviceHex("남성커트 (숱정리)", in: map), map["남성커트"])
     }
 
@@ -92,7 +89,6 @@ final class ServiceColorTests: XCTestCase {
     /// 코드리뷰에서 드러난 실제 경로: '+'가 든 이름은 카탈로그가 아니라 **색 맵 키**로만 온다.
     /// knownNames로 카탈로그 이름을 넘기면 greedy 분기가 통째로 죽는다.
     func testColorMapKeysCarryPlusContainingLegacyNames() {
-        let map = ServiceColor.buildServiceColorMap(catalog: catalog)
         XCTAssertNotNil(map["다운펌+커트"])                       // LEGACY_NAME_MAP → 디자인펌
         XCTAssertFalse(catalog.map(\.name).contains("다운펌+커트"))
 

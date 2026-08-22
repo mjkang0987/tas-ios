@@ -9,8 +9,8 @@ struct DayTimelineView: View {
     let endHour: Int
     var customerName: (Int) -> String = { "고객 #\($0)" }
     var color: (Reservation) -> Color = { _ in .accentColor }
-    /// 서비스명 → hex. 비어 있으면 칩이 폴백색으로 그려진다.
-    var serviceColorMap: [String: String] = [:]
+    /// 서비스명 → hex. 기본값 없음 — 빠뜨리면 칩이 조용히 폴백 회색이 된다.
+    let serviceColorMap: [String: String]
     var onTap: (Reservation) -> Void = { _ in }
 
     private let hourHeight: CGFloat = 56

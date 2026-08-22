@@ -13,23 +13,26 @@ import XCTest
 final class GuestSeedTests: XCTestCase {
 
     private static let todayToken = "__TODAY__"
+    private static let seedPath = "TASTests/Fixtures/guest-seed.json"
+    private static let repoRoot = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()      // TASTests/
+        .deletingLastPathComponent()      // repo root
+    private static let seedURL = GuestSeedTests.repoRoot.appendingPathComponent(GuestSeedTests.seedPath)
 
-    private func loadSeed(date: String = "2026-08-21") throws -> GuestSnapshot {
-        let url = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .appendingPathComponent("Fixtures/guest-seed.json")
-        let raw = try String(contentsOf: url, encoding: .utf8)
-        let json = raw.replacingOccurrences(of: Self.todayToken, with: date)
+    private static let sampleDay = "2026-08-21"
+
+    private func rawSeed() throws -> String {
+        try String(contentsOf: Self.seedURL, encoding: .utf8)
+    }
+
+    private func loadSeed(date: String = GuestSeedTests.sampleDay) throws -> GuestSnapshot {
+        let json = try rawSeed().replacingOccurrences(of: Self.todayToken, with: date)
         return try JSONDecoder().decode(GuestSnapshot.self, from: Data(json.utf8))
     }
 
     /// 워크플로가 치환하는 토큰이 실제로 파일에 있어야 한다(없으면 sed가 조용히 아무것도 안 한다).
     func testSeedCarriesTodayToken() throws {
-        let url = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .appendingPathComponent("Fixtures/guest-seed.json")
-        let raw = try String(contentsOf: url, encoding: .utf8)
-        XCTAssertTrue(raw.contains(Self.todayToken))
+        XCTAssertTrue(try rawSeed().contains(Self.todayToken))
     }
 
     func testSeedDecodesIntoSnapshot() throws {
@@ -49,8 +52,8 @@ final class GuestSeedTests: XCTestCase {
     }
 
     func testSeededReservationsAreOnTheGivenDay() throws {
-        let snapshot = try loadSeed(date: "2026-08-21")
-        XCTAssertEqual(Set(snapshot.reservations.map(\.date)), ["2026-08-21"])
+        let snapshot = try loadSeed()
+        XCTAssertEqual(Set(snapshot.reservations.map(\.date)), [Self.sampleDay])
     }
 
     /// 일 타임라인은 블록이 54pt를 넘어야 시술 칩을 그린다(56pt = 60분).
@@ -58,7 +61,11 @@ final class GuestSeedTests: XCTestCase {
     func testSeededReservationsAreLongEnoughToShowChips() throws {
         let snapshot = try loadSeed()
         for r in snapshot.reservations {
-            XCTAssertGreaterThanOrEqual(minutes(r.endTime) - minutes(r.startTime), 60, r.service)
+            guard let start = ReservationOverlap.minutes(r.startTime),
+                  let end = ReservationOverlap.minutes(r.endTime) else {
+                return XCTFail("시간 형식이 잘못됐다: \(r.startTime)~\(r.endTime)")
+            }
+            XCTAssertGreaterThanOrEqual(end - start, 60, r.service)
         }
     }
 
@@ -88,20 +95,12 @@ final class GuestSeedTests: XCTestCase {
     /// 갈리면 앱은 로그인 화면으로 떨어지는데 `test -s`도, JSON 파싱도, 이 파일의 다른
     /// 테스트도 전부 통과한다 — 이 시드가 막으려던 바로 그 조용한 실패다.
     func testScreenshotWorkflowSeedsTheFileTheAppReads() throws {
-        let workflow = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()      // TASTests/
-            .deletingLastPathComponent()      // repo root
-            .appendingPathComponent(".github/workflows/ios-screenshot.yml")
+        let workflow = Self.repoRoot.appendingPathComponent(".github/workflows/ios-screenshot.yml")
         let yaml = try String(contentsOf: workflow, encoding: .utf8)
 
         XCTAssertTrue(yaml.contains(LocalStore.fileName),
                       "워크플로가 \(LocalStore.fileName)이 아닌 이름으로 시드를 심고 있다")
-        XCTAssertTrue(yaml.contains("TASTests/Fixtures/guest-seed.json"),
+        XCTAssertTrue(yaml.contains(Self.seedPath),
                       "워크플로가 이 테스트가 검증하는 시드 파일을 쓰고 있지 않다")
-    }
-
-    private func minutes(_ hhmm: String) -> Int {
-        let p = hhmm.split(separator: ":").compactMap { Int($0) }
-        return p.count == 2 ? p[0] * 60 + p[1] : 0
     }
 }

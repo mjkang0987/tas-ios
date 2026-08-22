@@ -152,17 +152,8 @@ enum ServiceColor {
 
     /// adjustHexColor(hex, delta) — RGB 각 채널에 delta를 더하고 0…255로 자른다.
     private static func adjustHex(_ hex: String, delta: Int) -> String {
-        var s = hex
-        if s.hasPrefix("#") { s.removeFirst() }
-        guard s.count == 6, let value = UInt64(s, radix: 16) else { return fallbackHex }
-
-        func component(_ v: Int) -> String {
-            String(format: "%02x", min(max(v + delta, 0), 255))
-        }
-        return "#"
-            + component(Int((value & 0xFF0000) >> 16))
-            + component(Int((value & 0x00FF00) >> 8))
-            + component(Int(value & 0x0000FF))
+        guard let c = HexColor.components(hex) else { return fallbackHex }
+        return HexColor.string(r: c.r + delta, g: c.g + delta, b: c.b + delta)
     }
 
     /// generateCategoryBaseColor — 이름 해시 → HSL(0.62, 0.5).
@@ -177,11 +168,10 @@ enum ServiceColor {
     /// hslToHex — 웹과 동일 알고리즘.
     private static func hslToHex(h: Double, s: Double, l: Double) -> String {
         let a = s * min(l, 1 - l)
-        func component(_ n: Double) -> String {
+        func channel(_ n: Double) -> Int {
             let k = (n + h / 30).truncatingRemainder(dividingBy: 12)
-            let color = l - a * max(min(k - 3, 9 - k, 1), -1)
-            return String(format: "%02x", Int((255 * color).rounded()))
+            return Int((255 * (l - a * max(min(k - 3, 9 - k, 1), -1))).rounded())
         }
-        return "#\(component(0))\(component(8))\(component(4))"
+        return HexColor.string(r: channel(0), g: channel(8), b: channel(4))
     }
 }

@@ -310,6 +310,15 @@
 
 - ✅ 자동 테스트: 유닛 테스트 타깃(TASTests) + `ios-test.yml` CI. 커버: 겹침(ReservationOverlap)·Store 디코딩·고객/예약 헬퍼·매출 집계/추세·**게스트 CRUD/병합**(GuestStore)·**적립 계산·잔액 원장**(PointMath·PointLedger)·이관 인코딩(MigrateLocalBody). (추가 회귀 케이스는 필요 시 확장.)
 - ⬜ 접근성/다크모드/다이내믹 타입 재점검(컴팩트 폰트 후 큰 글자 레이아웃)
+  - 시술 칩 틴트가 웹 값 그대로 9%(`${color}18`)다. 웹은 라이트 전용이라 다크모드에서 흐릴 수 있다.
+  - 일 타임라인의 칩 표시 임계값(`DayTimelineView`의 `p.height > 54`)은 **손으로 잰 픽셀 상수**다.
+    다이내믹 타입이 커지면 어긋난다. 더 깊은 수정은 `ViewThatFits(in: .vertical)`로 레이아웃이
+    스스로 정하게 하는 것 — 이 타임라인은 원래 전부 고정 수치(`hourHeight`·`minBlockHeight`)라
+    다이내믹 타입 대응은 화면 전체를 함께 봐야 해서 여기 묶어둔다.
+- ⬜ **스크린샷 시드 계약을 Swift로**(리팩토링 리뷰 지적) — 지금은 `GuestSeedTests`가 워크플로 YAML을
+  문자열 매칭해 파일명을 대조한다. 파일명 드리프트만 잡고, 번들 ID·컨테이너 경로·런타임 디코딩 실패는
+  여전히 초록으로 지나간다. 더 깊은 수정은 DEBUG 전용 실행 인자(`-seedSnapshotPath`)로 앱이 직접 읽고
+  실패 시 크게 죽는 것. **"YAML에 X가 있는가" 단언이 하나 더 늘어나는 순간** 그때 하는 게 신호다.
 - ⬜ 푸시 알림(없음) — APNs 키·등록·백엔드 발송(로그인 기반)
 - ⬜ 로그인 후 다기기 동기화/충돌 처리(웹 `conflict-resolution` 미반영)
 - ⬜ **시술 문자열을 쓰는 기존 계산 2곳 정리**(시술 배지 이식 중 발견, 이번 범위 밖이라 보류) —
@@ -318,9 +327,14 @@
     옛 이름으로 저장된 예약을 편집하면 소요시간·가격이 0으로 잡힌다.
   - `RevenueViewModel.swift:81`이 `servicePriceByName[r.service]`로 **조합 문자열 원문**을 찾는다.
     "커트+펌"은 맵에 없어 0원 처리 → 웹은 `sumPrice(parseServiceString(...))`로 합산한다.
-- ⬜ **웹 톤 색상값 중복 정리**(PR #17 리뷰 지적, 출시 전까지 보류) — `A88417`(warning)·`6526D9`(purple)·
-  `EA4335`(danger)가 `Core/UI/Badges.swift`(`StatusBadge`)와 `Calendar/BookingRequestsView.swift`
-  (`BookingRequestKindBadge`)에 **각각** 하드코딩돼 있다. 한쪽만 고치면 같은 톤이 화면마다 어긋난다.
+- ⬜ **웹 톤 색상값 중복 정리 + 알약 배지 통합**(PR #17 리뷰 지적 + 리팩토링 리뷰, 출시 전까지 보류) —
+  `A88417`(warning)·`6526D9`(purple)·`EA4335`(danger)가 `Core/UI/Badges.swift`(`StatusBadge`)와
+  `Calendar/BookingRequestsView.swift`(`BookingRequestKindBadge`)에 **각각** 하드코딩돼 있다.
+  한쪽만 고치면 같은 톤이 화면마다 어긋난다.
+  덧붙여 `BookingRequestKindBadge`는 이제 `Core/UI/ServiceChip.swift`의 `ServiceChip`과 **구조가 같다**
+  (Text → caption2 semibold → 캡슐 틴트 배경 → 틴트 글자). 상수만 다르다(8/3·0.12 vs 7/3·0.094).
+  같이 묶으면 CLAUDE.md의 "공통 영역 컴포넌트화"를 만족하지만, 지금 묶으면 요청함 화면의 픽셀이
+  바뀌므로 색 토큰 정리와 **한 번에** 한다.
   정리안: `Core/UI/Color+Hex.swift`에 토큰 3개(`.tasWarning`/`.tasPurple`/`.tasDanger`)를 두고 양쪽이 참조
   (값 동일 → 화면 변화 0). 배지가 더 늘기 전에 하는 게 싸다.
   (`CalendarView.swift`의 빈 줄 잔재는 P5 주 뷰 스크롤 작업 때 함께 제거 — 색상 토큰만 남았다.)

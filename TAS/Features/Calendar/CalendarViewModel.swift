@@ -117,9 +117,7 @@ final class CalendarViewModel {
     /// 단색 하나가 필요한 자리(타임라인 블록)용. 카탈로그에서 못 찾으면 nil —
     /// 폴백색(`#999`)을 억지로 칠하지 않고 호출부가 정하게 둔다.
     func serviceColor(_ name: String) -> Color? {
-        let map = serviceColorMap
-        guard !map.isEmpty else { return nil }
-        let hex = ServiceColor.serviceHex(name, in: map)
+        let hex = ServiceColor.serviceHex(name, in: serviceColorMap)
         guard hex != ServiceColor.fallbackHex else { return nil }
         return Color(hex: hex)
     }

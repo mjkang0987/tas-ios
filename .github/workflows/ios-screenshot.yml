@@ -44,7 +44,7 @@ jobs:
       # 조용히 삼키므로(nil → 로그인 화면) 여기서 어긋나면 알 길이 없다.
       - name: Seed guest snapshot
         run: |
-          TODAY=$(python3 -c "import datetime;print((datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(hours=9)).strftime('%Y-%m-%d'))")
+          TODAY=$(TZ=Asia/Seoul date +%F)
           echo "KST today: $TODAY"
           echo "SEEDED_DAY=$TODAY" >> "$GITHUB_ENV"
 
@@ -68,7 +68,7 @@ jobs:
         run: |
           # 시드와 실행 사이에 KST 자정이 지나면 앱이 보는 '오늘'이 달라져
           # 예약 없는 화면이 찍힌다. 그래도 워크플로는 초록이므로 여기서 막는다.
-          NOW=$(python3 -c "import datetime;print((datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(hours=9)).strftime('%Y-%m-%d'))")
+          NOW=$(TZ=Asia/Seoul date +%F)
           if [ "$NOW" != "$SEEDED_DAY" ]; then
             echo "::error::KST 날짜가 실행 중에 넘어갔다 (시드 $SEEDED_DAY → 현재 $NOW). 재실행 필요."
             exit 1

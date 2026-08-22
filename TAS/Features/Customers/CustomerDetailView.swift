@@ -6,7 +6,7 @@ struct CustomerDetailView: View {
     var stats: CustomersViewModel.VisitStats? = nil
     var reservations: [Reservation] = []
     /// 서비스명 → hex(웹 `SERVICE_COLOR_MAP`). 예약 이력의 시술 칩 색.
-    var serviceColorMap: [String: String] = [:]
+    let serviceColorMap: [String: String]
     /// "수정" 탭 시 편집 폼을 여는 콜백(제공되지 않으면 수정 버튼 숨김).
     var onEdit: ((Customer) -> Void)? = nil
     /// 매장이 적립금 기능을 쓰면 "적립금 조정" 노출.

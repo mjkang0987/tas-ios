@@ -14,9 +14,8 @@ struct ReservationCreateView: View {
     let assignees: [Assignee]            // 재직 중
     let catalog: [ServiceItem]
     /// 서비스명 → hex(웹 `SERVICE_COLOR_MAP`). 시술 칩 색에 쓴다.
-    /// 비워두면 `catalog`로 직접 만든다 — 다만 매장 커스텀 카테고리색은 그 경로로 오지 않으니
-    /// 호출부가 뷰모델의 맵을 넘겨주는 쪽이 정확하다.
-    var serviceColorMap: [String: String] = [:]
+    /// 기본값을 두지 않는다 — 빠뜨리면 칩이 전부 폴백 회색으로 조용히 그려진다.
+    let serviceColorMap: [String: String]
     /// 담당자 겹침(중복 예약) 체크용 — 전체 예약(날짜·담당자로 내부 필터).
     let existingReservations: [Reservation]
     /// 매장 적립률(%). 결제완료로 등록 시 자동 적립에 사용. 0이면 적립 없음.
@@ -29,10 +28,6 @@ struct ReservationCreateView: View {
     let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
-
-    private var resolvedServiceColorMap: [String: String] {
-        serviceColorMap.isEmpty ? ServiceColor.buildServiceColorMap(catalog: catalog) : serviceColorMap
-    }
 
     // 고객
     @State private var customerId = 0          // 0 = 신규
@@ -153,7 +148,7 @@ struct ReservationCreateView: View {
                             Text("\(r.startTime)–\(r.endTime) · \(customerLabel(r.customerId))")
                                 .font(.subheadline.weight(.medium))
                             if !r.service.isEmpty {
-                                ServiceChipList(service: r.service, colorMap: resolvedServiceColorMap)
+                                ServiceChipList(service: r.service, colorMap: serviceColorMap)
                             }
                         }
                     }
@@ -277,7 +272,7 @@ struct ReservationCreateView: View {
                     .foregroundStyle(selected ? Color.accentColor : Color(.tertiaryLabel))
                 ServiceChip(
                     name: item.name,
-                    color: ServiceColor.color(item.name, in: resolvedServiceColorMap),
+                    color: ServiceColor.color(item.name, in: serviceColorMap),
                     font: .subheadline
                 )
                 Spacer()
@@ -425,7 +420,7 @@ struct ReservationCreateView: View {
         // greedy 보존이 아예 동작하지 않는다(웹도 Object.keys(serviceColorMap)를 넘긴다).
         selectedServices = ServiceColor.parseServiceString(
             r.service,
-            knownNames: Set(resolvedServiceColorMap.keys)
+            knownNames: Set(serviceColorMap.keys)
         )
         date = parseDate(r.date, cal: cal) ?? initialDate
         startTime = parseTime(r.startTime, on: date, cal: cal) ?? date
