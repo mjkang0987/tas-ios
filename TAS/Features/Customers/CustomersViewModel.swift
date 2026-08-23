@@ -9,13 +9,13 @@ final class CustomersViewModel {
         var reservationsByCustomer: [Int: [Reservation]]
         /// 서비스명 → hex(웹 `SERVICE_COLOR_MAP`). 예약 이력의 시술 칩 색.
         var serviceColorMap: [String: String]
+        /// 고객별 집계 — 로드 시점에 한 번 만든다. 목록 body는 검색 타이핑마다 재평가되므로
+        /// 여기서 계산하면 매 글자마다 전체 예약을 다시 훑게 된다.
+        var statsByCustomer: [Int: CustomerStats.Summary]
+        /// 집계 기준이 된 매장 기준(KST) 날짜.
+        var today: String
     }
 
-    struct VisitStats: Equatable {
-        var visits: Int
-        var cancels: Int
-        var noshows: Int
-    }
 
     var state: Loadable<Data> = .idle
     var searchText = ""
@@ -48,25 +48,16 @@ final class CustomersViewModel {
         (state.value?.reservationsByCustomer ?? [:]).mapValues(\.count)
     }
 
-    /// 고객의 예약(최근 순).
-    func reservations(for id: Int) -> [Reservation] {
-        (state.value?.reservationsByCustomer[id] ?? []).sorted {
-            ($0.date, $0.startTime) > ($1.date, $1.startTime)
-        }
-    }
+    /// 고객별 집계(최근 시술 + 예약/취소/완료/노쇼) — 웹 `customerStats` 이식.
+    var statsByCustomer: [Int: CustomerStats.Summary] { state.value?.statsByCustomer ?? [:] }
 
-    /// 방문/취소/노쇼 집계. 신청(requested)은 방문에 포함하지 않는다.
-    func stats(for id: Int) -> VisitStats {
-        var visits = 0, cancels = 0, noshows = 0
-        for r in state.value?.reservationsByCustomer[id] ?? [] {
-            switch r.status {
-            case .cancelled: cancels += 1
-            case .noshow: noshows += 1
-            case .requested: break
-            default: visits += 1
-            }
-        }
-        return VisitStats(visits: visits, cancels: cancels, noshows: noshows)
+    func stats(for id: Int) -> CustomerStats.Summary { statsByCustomer[id] ?? .empty }
+
+    /// 상세의 '최근 예약'을 웹처럼 예약/완료/취소/노쇼로 묶는다(비어 있는 그룹은 뺀다).
+    /// 상세를 열 때 한 번만 도므로 그때 계산한다.
+    func reservationGroups(for id: Int) -> [CustomerStats.Group] {
+        guard let data = state.value else { return [] }
+        return CustomerStats.groups(data.reservationsByCustomer[id] ?? [], today: data.today)
     }
 
     var serviceColorMap: [String: String] { state.value?.serviceColorMap ?? [:] }
@@ -85,12 +76,15 @@ final class CustomersViewModel {
             var byCustomer: [Int: [Reservation]] = [:]
             for r in res.reservations { byCustomer[r.customerId, default: []].append(r) }
 
+            let today = KST.dayKey.string(from: Date())
             state = .loaded(Data(
                 customers: cus.customers,
                 reservationsByCustomer: byCustomer,
                 serviceColorMap: svc.map {
                     ServiceColor.buildServiceColorMap(catalog: $0.services, storeMap: $0.categoryBaseColors)
-                } ?? [:]
+                } ?? [:],
+                statsByCustomer: CustomerStats.byCustomer(byCustomer, today: today),
+                today: today
             ))
         } catch {
             state = .failed((error as? APIError)?.errorDescription ?? error.localizedDescription)
