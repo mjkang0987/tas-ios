@@ -43,7 +43,7 @@ struct CustomersView: View {
                     CustomerDetailView(
                         customer: customer,
                         stats: viewModel.stats(for: customer.id),
-                        reservations: viewModel.reservations(for: customer.id),
+                        reservationGroups: viewModel.reservationGroups(for: customer.id),
                         serviceColorMap: viewModel.serviceColorMap,
                         onEdit: { activeSheet = .edit($0) },
                         pointsEnabled: session.currentStore?.usePointSystem ?? false,
@@ -77,11 +77,16 @@ struct CustomersView: View {
             if items.isEmpty {
                 ContentUnavailableView.search
             } else {
+                let stats = viewModel.statsByCustomer
                 List(items) { customer in
                     Button {
                         activeSheet = .detail(customer)
                     } label: {
-                        CustomerRow(customer: customer)
+                        CustomerRow(
+                            customer: customer,
+                            stats: stats[customer.id] ?? .empty,
+                            serviceColorMap: viewModel.serviceColorMap
+                        )
                     }
                     .buttonStyle(.plain)
                 }
@@ -92,23 +97,43 @@ struct CustomersView: View {
     }
 }
 
+/// 고객 목록 행 — 웹 `AddressCustomerSummary`가 접힌 상태에서 보여주는 것과 같은 정보:
+/// 이름·연락처 / 최근 서비스 / 적립금 + 상태별 건수.
 private struct CustomerRow: View {
     let customer: Customer
+    let stats: CustomerStats.Summary
+    let serviceColorMap: [String: String]
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 6) {
                 Text(customer.name).font(.subheadline.weight(.medium))
                 Text(customer.formattedTel).font(.caption2).foregroundStyle(.secondary)
-            }
-            Spacer()
-            if let points = customer.points, points > 0 {
-                Text("\(points.formatted())P")
+                Spacer(minLength: 0)
+                // 적립금은 웹처럼 항상 보인다(0원도) — 없다가 생기면 행 높이가 흔들린다.
+                Text(formatWon(customer.points ?? 0))
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.tint)
+                    .monospacedDigit()
+            }
+
+            HStack(spacing: 6) {
+                Text("최근 시술").font(.caption2).foregroundStyle(.secondary)
+                if let recent = stats.recentService {
+                    ServiceChipList(service: recent, colorMap: serviceColorMap, wraps: false)
+                } else {
+                    Text("-").font(.caption2).foregroundStyle(.tertiary)
+                }
+            }
+
+            // 건수 0인 상태도 웹처럼 전부 노출한다 — 행마다 배지 개수가 달라지면 훑기 어렵다.
+            HStack(spacing: 4) {
+                ForEach(CustomerStats.EffectiveStatus.allCases, id: \.self) { status in
+                    StatusCountBadge(status: status, count: stats.count(status))
+                }
             }
         }
-        .padding(.vertical, 1)
+        .padding(.vertical, 3)
         .contentShape(Rectangle())
     }
 }

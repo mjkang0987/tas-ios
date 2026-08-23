@@ -288,6 +288,20 @@
        예약 없는 화면이 찍힌다.
   - **시드 설계:** 커트 3종으로 같은 카테고리 안 농도 차이를, `"여성커트+일반펌"`·`"디자인펌+크리닉"`으로
     칩 분리를 드러낸다. 전 예약 60분 이상 — 일 타임라인은 블록이 54pt를 넘어야 칩을 그린다.
+- ✅ **고객 화면 정보 노출을 웹과 일치** (`/address` 대조)
+  - **문제:** 목록 행이 이름·연락처·적립금(0 초과일 때만)뿐이었다. 웹 `AddressCustomerSummary`는
+    접힌 상태에서도 **최근 시술 칩 · 적립금(항상) · 예약/취소/완료/노쇼 건수 배지**를 보여준다.
+  - **더 큰 문제 — 집계 기준이 달랐다.** iOS는 방문/취소/노쇼 3버킷에 `requested`를 제외했는데,
+    웹은 예약/취소/완료/노쇼 4버킷이고 **상태 없는 지난 예약을 '완료'로 친다**(`getEffectiveStatus`).
+    웹은 예약을 끝내도 status를 바꾸지 않는 경우가 많아, 이 규칙이 없으면 지난 예약이 전부
+    '예약'으로 남아 숫자가 실제와 어긋난다.
+  - **구현:** `Core/CustomerStats.swift`에 `effectiveStatus`·`summarize`·`groups`·`byCustomer` 이식.
+    목록 행은 `statsByCustomer`로 한 번에 집계해 행마다 다시 훑지 않는다.
+    상세의 '방문 통계'도 같은 4버킷으로, '최근 예약'은 웹처럼 상태 그룹 + 건수로 나눈다.
+  - **배지 색 정리(같이 해결):** 웹은 단일 상태 배지와 카운트 배지를 **같은 스타일 맵**으로 그리는데
+    iOS는 `StatusBadge` 안에 switch로 박혀 있어 카운트 배지를 그릴 수 없었고 `completed` 톤
+    (`#E6F4EA`/`#34A853`)은 이식조차 안 돼 있었다. `BadgeTone`(웹 `RESERVATION_STATUS_BADGE_STYLES`)
+    + `ToneBadge`로 내리고 `StatusBadge`·`StatusCountBadge`가 그걸 쓴다 → P7 색상값 중복 부채도 해소.
 - ⬜ 주(week) 타임라인 — 모바일 7칼럼 좁아 **보류 권장**(리스트가 적합)
 - ⬜ 일 타임라인 담당자별 칼럼 분리(담당자 수 적을 때 옵션)
 - 디자인: 네이티브 골격 + 웹 시각언어 유지 확정. 픽셀 매칭 비권장. 거슬리는 화면만 폴리시.
@@ -341,10 +355,11 @@
     옛 이름으로 저장된 예약을 편집하면 소요시간·가격이 0으로 잡힌다.
   - `RevenueViewModel.swift:81`이 `servicePriceByName[r.service]`로 **조합 문자열 원문**을 찾는다.
     "커트+펌"은 맵에 없어 0원 처리 → 웹은 `sumPrice(parseServiceString(...))`로 합산한다.
-- ⬜ **웹 톤 색상값 중복 정리 + 알약 배지 통합**(PR #17 리뷰 지적 + 리팩토링 리뷰, 출시 전까지 보류) —
-  `A88417`(warning)·`6526D9`(purple)·`EA4335`(danger)가 `Core/UI/Badges.swift`(`StatusBadge`)와
-  `Calendar/BookingRequestsView.swift`(`BookingRequestKindBadge`)에 **각각** 하드코딩돼 있다.
-  한쪽만 고치면 같은 톤이 화면마다 어긋난다.
+- ⬜ **알약 배지 통합**(PR #17 리뷰 지적 + 리팩토링 리뷰, 출시 전까지 보류) —
+  색상값 중복의 절반은 해소됐다: `Core/UI/Badges.swift`의 하드코딩은 `BadgeTone`(웹
+  `RESERVATION_STATUS_BADGE_STYLES` 이식)으로 모았다. 남은 건
+  `Calendar/BookingRequestsView.swift`의 `BookingRequestKindBadge`로, `A88417`·`6526D9`·`EA4335`를
+  아직 자체 switch로 갖고 있다 — `BadgeTone`을 쓰게 바꾸면 된다.
   덧붙여 `BookingRequestKindBadge`는 이제 `Core/UI/ServiceChip.swift`의 `ServiceChip`과 **구조가 같다**
   (Text → caption2 semibold → 캡슐 틴트 배경 → 틴트 글자). 상수만 다르다(8/3·0.12 vs 7/3·0.094).
   같이 묶으면 CLAUDE.md의 "공통 영역 컴포넌트화"를 만족하지만, 지금 묶으면 요청함 화면의 픽셀이

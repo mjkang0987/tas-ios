@@ -11,11 +11,6 @@ final class CustomersViewModel {
         var serviceColorMap: [String: String]
     }
 
-    struct VisitStats: Equatable {
-        var visits: Int
-        var cancels: Int
-        var noshows: Int
-    }
 
     var state: Loadable<Data> = .idle
     var searchText = ""
@@ -48,25 +43,22 @@ final class CustomersViewModel {
         (state.value?.reservationsByCustomer ?? [:]).mapValues(\.count)
     }
 
-    /// 고객의 예약(최근 순).
-    func reservations(for id: Int) -> [Reservation] {
-        (state.value?.reservationsByCustomer[id] ?? []).sorted {
-            ($0.date, $0.startTime) > ($1.date, $1.startTime)
-        }
+    /// 매장 기준(KST) 오늘 — 지난 예약을 '완료'로 판정하는 기준선.
+    private var today: String { KST.dayKey.string(from: Date()) }
+
+    /// 고객별 집계(최근 시술 + 예약/취소/완료/노쇼) — 웹 `customerStats` 이식.
+    /// 목록이 행마다 다시 훑지 않도록 한 번에 만들어 둔다.
+    var statsByCustomer: [Int: CustomerStats.Summary] {
+        CustomerStats.byCustomer(state.value?.reservationsByCustomer ?? [:], today: today)
     }
 
-    /// 방문/취소/노쇼 집계. 신청(requested)은 방문에 포함하지 않는다.
-    func stats(for id: Int) -> VisitStats {
-        var visits = 0, cancels = 0, noshows = 0
-        for r in state.value?.reservationsByCustomer[id] ?? [] {
-            switch r.status {
-            case .cancelled: cancels += 1
-            case .noshow: noshows += 1
-            case .requested: break
-            default: visits += 1
-            }
-        }
-        return VisitStats(visits: visits, cancels: cancels, noshows: noshows)
+    func stats(for id: Int) -> CustomerStats.Summary {
+        CustomerStats.summarize(state.value?.reservationsByCustomer[id] ?? [], today: today)
+    }
+
+    /// 상세의 '최근 예약'을 웹처럼 예약/완료/취소/노쇼로 묶는다(비어 있는 그룹은 뺀다).
+    func reservationGroups(for id: Int) -> [CustomerStats.Group] {
+        CustomerStats.groups(state.value?.reservationsByCustomer[id] ?? [], today: today)
     }
 
     var serviceColorMap: [String: String] { state.value?.serviceColorMap ?? [:] }
