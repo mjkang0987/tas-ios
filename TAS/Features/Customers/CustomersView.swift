@@ -110,8 +110,10 @@ private struct CustomerRow: View {
                 Text(customer.name).font(.subheadline.weight(.medium))
                 Text(customer.formattedTel).font(.caption2).foregroundStyle(.secondary)
                 Spacer(minLength: 0)
-                // 적립금은 웹처럼 항상 보인다(0원도) — 없다가 생기면 행 높이가 흔들린다.
-                Text(formatWon(customer.points ?? 0))
+                // 적립금은 웹처럼 라벨과 함께 항상 보인다(0도) — 없다가 생기면 행 높이가 흔들린다.
+                // 단위는 앱 전체가 쓰는 P로 맞춘다(상세·병합·조정 화면 모두 P).
+                Text("적립금").font(.caption2).foregroundStyle(.secondary)
+                Text("\((customer.points ?? 0).formatted())P")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.tint)
                     .monospacedDigit()
@@ -127,8 +129,9 @@ private struct CustomerRow: View {
             }
 
             // 건수 0인 상태도 웹처럼 전부 노출한다 — 행마다 배지 개수가 달라지면 훑기 어렵다.
-            HStack(spacing: 4) {
-                ForEach(CustomerStats.EffectiveStatus.allCases, id: \.self) { status in
+            // 좁은 폭·큰 글자에서 배지가 줄어들면 숫자가 잘리므로(웹은 flex-shrink: 0) 줄을 바꾼다.
+            WrapLayout(spacing: 4) {
+                ForEach(CustomerStats.EffectiveStatus.summaryOrder, id: \.self) { status in
                     StatusCountBadge(status: status, count: stats.count(status))
                 }
             }

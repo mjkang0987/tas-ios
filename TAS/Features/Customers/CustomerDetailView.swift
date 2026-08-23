@@ -54,9 +54,10 @@ struct CustomerDetailView: View {
                     Section("방문 통계") {
                         HStack {
                             // 웹과 같은 4버킷 — 상태 없는 지난 예약은 '완료'로 친다.
-                            ForEach(CustomerStats.EffectiveStatus.allCases, id: \.self) { status in
-                                if status != .booked { Divider() }   // allCases 첫 항목
-                                statCell(status, stats.count(status))
+                            let buckets = CustomerStats.EffectiveStatus.allCases
+                            ForEach(Array(buckets.indices), id: \.self) { index in
+                                if index > 0 { Divider() }
+                                statCell(buckets[index], stats.count(buckets[index]))
                             }
                         }
                     }
@@ -78,7 +79,11 @@ struct CustomerDetailView: View {
                 ForEach(reservationGroups) { group in
                     Section("\(group.status.label) (\(group.items.count))") {
                         ForEach(group.items.prefix(10)) {
-                            CustomerReservationRow(reservation: $0, serviceColorMap: serviceColorMap)
+                            CustomerReservationRow(
+                                reservation: $0,
+                                status: group.status,
+                                serviceColorMap: serviceColorMap
+                            )
                         }
                         if group.items.count > 10 {
                             Text("외 \(group.items.count - 10)건")
@@ -131,25 +136,19 @@ struct CustomerDetailView: View {
         VStack(spacing: 2) {
             Text("\(count)")
                 .font(.title3.weight(.bold))
-                .foregroundStyle(tone(status).foreground)
+                .foregroundStyle(status.tone.foreground)
                 .monospacedDigit()
             Text(status.label).font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
     }
-
-    private func tone(_ status: CustomerStats.EffectiveStatus) -> BadgeTone {
-        switch status {
-        case .booked: return .booked
-        case .completed: return .completed
-        case .cancelled: return .cancelled
-        case .noshow: return .noshow
-        }
-    }
 }
 
 private struct CustomerReservationRow: View {
     let reservation: Reservation
+    /// 그룹이 판정한 유효 상태. `reservation.displayState`는 날짜를 모르기 때문에
+    /// '완료' 그룹 안에서도 파란 '예약' 배지를 그려버린다.
+    let status: CustomerStats.EffectiveStatus
     let serviceColorMap: [String: String]
 
     var body: some View {
@@ -160,7 +159,7 @@ private struct CustomerReservationRow: View {
                     .font(.caption2).foregroundStyle(.secondary).monospacedDigit()
             }
             Spacer()
-            StatusBadge(state: reservation.displayState)
+            ToneBadge(tone: status.tone, text: status.label)
         }
     }
 }

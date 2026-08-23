@@ -75,22 +75,25 @@ struct StatusBadge: View {
     }
 }
 
+extension CustomerStats.EffectiveStatus {
+    /// 색은 여기 한 곳에서만 고른다 — 배지·통계 숫자가 따로 매핑하면 화면마다 어긋난다.
+    var tone: BadgeTone {
+        switch self {
+        case .booked: return .booked
+        case .completed: return .completed
+        case .cancelled: return .cancelled
+        case .noshow: return .noshow
+        }
+    }
+}
+
 /// 고객 목록의 상태별 건수 배지 — 웹 `AddressCustomerSummary`의 "예약(3)" 형태.
 struct StatusCountBadge: View {
     let status: CustomerStats.EffectiveStatus
     let count: Int
 
     var body: some View {
-        ToneBadge(tone: tone, text: "\(status.label)(\(count))")
-    }
-
-    private var tone: BadgeTone {
-        switch status {
-        case .booked: return .booked
-        case .completed: return .completed
-        case .cancelled: return .cancelled
-        case .noshow: return .noshow
-        }
+        ToneBadge(tone: status.tone, text: "\(status.label)(\(count))")
     }
 }
 

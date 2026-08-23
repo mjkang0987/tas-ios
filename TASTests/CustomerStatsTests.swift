@@ -103,6 +103,27 @@ final class CustomerStatsTests: XCTestCase {
         XCTAssertNil(summary.recentService)
     }
 
+    // MARK: - 표시 순서
+
+    /// 웹은 요약 행(예약/취소/완료/노쇼)과 상세 그룹(예약/완료/취소/노쇼) 순서가 **다르다**.
+    /// 하나로 합치고 싶어지는 자리라 테스트로 못박아둔다.
+    func testSummaryOrderDiffersFromGroupOrder() {
+        XCTAssertEqual(CustomerStats.EffectiveStatus.summaryOrder,
+                       [.booked, .cancelled, .completed, .noshow])
+        XCTAssertEqual(CustomerStats.EffectiveStatus.allCases,
+                       [.booked, .completed, .cancelled, .noshow])
+        XCTAssertNotEqual(CustomerStats.EffectiveStatus.summaryOrder,
+                          CustomerStats.EffectiveStatus.allCases)
+    }
+
+    /// 순서만 다를 뿐 빠진 상태가 있으면 안 된다.
+    func testSummaryOrderCoversEveryStatus() {
+        XCTAssertEqual(Set(CustomerStats.EffectiveStatus.summaryOrder),
+                       Set(CustomerStats.EffectiveStatus.allCases))
+        XCTAssertEqual(CustomerStats.EffectiveStatus.summaryOrder.count,
+                       CustomerStats.EffectiveStatus.allCases.count)
+    }
+
     // MARK: - 그룹
 
     func testGroupsSkipEmptyBucketsAndKeepWebOrder() {

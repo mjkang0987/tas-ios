@@ -12,6 +12,10 @@ enum CustomerStats {
     enum EffectiveStatus: String, CaseIterable {
         case booked, completed, cancelled, noshow
 
+        /// 고객 요약 행의 배지 순서 — 웹 `AddressCustomerSummary`는 예약/취소/완료/노쇼다.
+        /// 상세의 그룹 순서(`allCases`: 예약/완료/취소/노쇼)와 **다르다** — 웹이 실제로 그렇다.
+        static let summaryOrder: [EffectiveStatus] = [.booked, .cancelled, .completed, .noshow]
+
         /// 웹 `STATUS_GROUPS`의 라벨.
         var label: String {
             switch self {
