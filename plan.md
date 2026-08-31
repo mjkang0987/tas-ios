@@ -4,8 +4,69 @@
 > 백엔드는 [`mjkang0987/tas`](https://github.com/mjkang0987/tas)(로컬 `/workspace/tas`). 구조는 `README.md`, 버전 규약은 `CLAUDE.md`.
 >
 > _상태_ ⬜ 예정 · 🟡 진행 · ✅ 완료 · 🔒 외부 준비 필요(키/설정)
-> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/web-design-mismatch-q7hfs7`).
+> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/app-click-info-display-jdww8g`).
 > 머지된 PR 브랜치엔 이어붙이지 말고 머지된 default에서 새로 딴다._
+
+---
+
+## 🟡 진행 중 — 매출·고객 화면 드릴다운(누르면 상세) 웹과 일치 (`claude/app-click-info-display-jdww8g`)
+
+### 배경 (코드 기준)
+
+웹은 매출·고객 화면의 거의 모든 집계 영역이 **탭하면 근거가 되는 예약/고객 목록이 뜨는** 구조다.
+
+| 웹 위치 | 탭 대상 | 뜨는 것 |
+|---|---|---|
+| `RevenueKpiGrid` | KPI 5개(총매출·건수·신규 고객·재방문 고객·결제완료) | `RevenueMetricModal` — 예약 목록 또는 고객 목록 |
+| `RevenueChartGrid` | 추세 점·결제수단·유입경로·담당자 막대·취소/노쇼 행 | 같은 모달(제목·요약만 다름) |
+| `RevenueDailyList` | 날짜 행 | `RevenueDailyDetailModal` — 그날 예약 목록 |
+| 위 목록의 예약 카드 | `ReservationInfoCard` | `ReservationDetail` |
+| 위 목록의 고객 이름 | — | 고객 상세 |
+| `/address` 고객 상세 | 예약 이력 카드(`CustomerReservationCards`) | `ReservationDetail` |
+
+**앱 현황** — `RevenueView`는 전부 읽기 전용이라 어느 영역도 눌리지 않고, `CustomerDetailView`의
+예약 이력 행(`CustomerReservationRow`)도 탭이 안 된다. 즉 화면에 보이는 숫자에서 그 근거로 내려갈 방법이 없다.
+
+### 결정 — 범위 (사용자 승인)
+
+- **KPI는 웹과 동일하게 5개.** 앱엔 매출·건수 2개뿐이라 신규 고객 수·재방문 고객 수·결제완료를 새로 집계해 추가한다.
+- **공용 컴포넌트 2개 신설 승인됨**(`CLAUDE.md` 신규 컴포넌트 통제 절차).
+  - `TAS/Core/UI/ReservationInfoCard.swift` — 웹 `components/ui/ReservationInfoCard.tsx` 이식.
+    지금 `CalendarView.ReservationRow`와 `CustomerDetailView.CustomerReservationRow`에 거의 같은 마크업이
+    **두 벌 복제**돼 있고 매출 드릴다운에서 세 번째가 생긴다. 날짜/금액/상태/시간표시를 옵션으로 켜는 한 벌로 합친다.
+  - `TAS/Features/Revenue/RevenueDetailListView.swift` — 웹 `RevenueMetricModal`+`RevenueDailyDetailModal` 대응.
+    제목·부제·요약 푸터·목록 구조가 웹과 같고, 매출의 모든 탭 지점이 이 하나를 재사용한다.
+- **웹 차트 그리드(결제수단·유입경로 도넛, 취소율·노쇼율)는 이번 범위 밖.** 앱에 그 차트 자체가 없다.
+
+### 구현
+
+- `TAS/Core/UI/ReservationInfoCard.swift` (신규) — 좌측 날짜·시간 / 액센트 바 / 고객명·신규 배지·시술 칩·담당자 /
+  우측 상태 배지·금액. `showDate`·`showPrice`·`showStatus`·`timeMode`·`accentBar` 옵션은 웹 props와 1:1.
+  상태 배지는 기본 `reservation.displayState`, 고객 상세처럼 **유효 상태**(지난 예약=완료)를 아는 자리는
+  `statusOverride`로 덮는다 — 웹은 여기서 지난 예약에도 파란 '예약'을 그리는데, 앱은 기존 판정을 유지한다.
+- `TAS/Features/Calendar/CalendarView.swift` — private `ReservationRow` 삭제하고 공용 카드로 교체(복제 제거).
+- `TAS/Features/Customers/CustomerDetailView.swift` — private `CustomerReservationRow` 삭제하고 공용 카드로 교체,
+  **행을 버튼으로 감싸 `ReservationDetailView` 시트를 연다**(웹 `onReservationClick`).
+- `TAS/Features/Revenue/RevenueView.swift`
+  - `RevenueViewModel`: `fetchCustomers()` 추가 로드. `newCustomers`·`returningCustomers`·`paidReservations`·
+    `paidTotal` 집계 추가(웹 `getRevenueInsights` 이식 — 첫 방문일은 **기간이 아니라 전체 예약**에서 구한다).
+  - KPI 5칸 그리드 + 담당자별 행 + 추세 차트 막대를 전부 탭 가능하게.
+  - 차트는 `chartOverlay` + 탭 위치→x값 해석으로 그 날/그 달 예약을 연다.
+- `TAS/Features/Revenue/RevenueDetailListView.swift` (신규) — 예약 목록 / 고객 목록 두 모드.
+  예약 탭 → `ReservationDetailView`, 고객 탭 → `CustomerDetailView`(읽기).
+  고객 행은 웹 모달과 같은 정보(연락처·적립금·최근 방문일·재방문은 이전 방문 + 간격 배지)를 보여준다.
+- `TASTests/` — 신규/재방문/결제완료 집계와 방문 간격 라벨(`formatVisitGap`) 순수 로직 테스트.
+
+### 리스크·주의
+
+- **매출 금액 산식은 이번에 손대지 않는다.** 앱 `amount()`는 `servicePriceByName[r.service]`로 통째 조회라
+  `"커트+펌"` 같은 복합 시술에서 웹 `sumPrice(parseServiceString(...))`와 어긋난다. 드릴다운 합계는 같은
+  `amount()`를 쓰므로 화면 안에서는 일관되지만, **웹과의 금액 차이는 남는다** → 아래 후속 작업으로 뺀다.
+- 탭 루트가 아닌 push 화면에 `NavigationStack`을 중첩하지 않는다(작업 규약). 시트는 자체 스택 허용.
+
+### 후속(별도 이슈)
+
+- ⬜ 매출 금액 산식을 웹 `resolvePrice`와 일치시키기 — `ServiceColor.parseServiceString`으로 쪼개 카탈로그가 합산.
 
 ---
 

@@ -58,12 +58,14 @@ TAS/
     Storage/           GuestStore · GuestSnapshot · LocalStore (오프라인 로컬 DB)
     UI/                LoadableView · Badges(BadgeTone·StatusBadge·StatusCountBadge) ·
                        ServiceChip(시술 배지) · FilterChip · ColorAccents ·
+                       ReservationInfoCard(예약 목록 공용 행 — 캘린더·고객 상세·매출 드릴다운) ·
                        ServiceColor(서비스별 색) · Formatting · StoreClosedStyle
     KST.swift          매장 기준(Asia/Seoul) 날짜 유틸 · 요일 라벨(weekdayLabels)
     ReservationOverlap 담당자 중복 예약(겹침) 판정 공용 유틸
     PointMath          적립금 산식(적립/사용) 공용 유틸
     NameSort           이름 정렬 규칙(고객 가나다순 · 담당자 영문→한글→기타)
     CustomerStats      고객 예약 집계(예약/완료/취소/노쇼 · 최근 시술) — 지난 예약은 완료로 판정
+    RevenueStats       매출 대상·결제완료·신규/재방문 고객 판정(웹 revenue.ts 이식)
   Models/              Reservation · Customer · Assignee · Service · Store · Notice ·
                        Coupon · Membership · BookingRequest · Common (웹 model.ts 미러링)
   Features/
@@ -74,7 +76,7 @@ TAS/
     Assignees/         담당자 CRUD · 병합 · 근무시간
     Services/          서비스 카탈로그
     Notices/ Coupons/ Memberships/   설정 하위 관리 화면
-    Revenue/           매출(월/년 · 추세 차트 · 담당자별)
+    Revenue/           매출(월/년 · KPI 5종 · 추세 차트 · 담당자별) — 집계를 탭하면 근거 목록(RevenueDetailListView)
     Settings/          매장 정보(기능 토글) · 영업시간 · 적립금 설정 · 온라인예약 설정 · 로그아웃
   Resources/           Assets.xcassets (AppIcon, AccentColor)
 TASTests/              유닛 테스트 (XCTest, @testable import TAS)
@@ -127,6 +129,7 @@ TASTests/              유닛 테스트 (XCTest, @testable import TAS)
 유닛 테스트는 `TASTests`(호스티드, `@testable import TAS`)에 있고, 순수 로직 위주로 커버한다:
 겹침 판정(`ReservationOverlap`) · Store 디코딩 · 고객/예약 헬퍼 · 매출 집계·추세 ·
 게스트 스냅샷 CRUD/병합(`GuestStore`) · 적립 산식(`PointMath`) · 이관 인코딩(`MigrateLocalBody`) ·
+매출 판정·신규/재방문·방문 간격(`RevenueStats`)과 드릴다운 목록 구성(`RevenueViewModel`) ·
 업종 카탈로그(`ShopCatalog` — 목록에서 내린 업종의 라벨 해석·Picker 노출) ·
 예약 설정 검증·디코딩(`BookingSettings` — 슬러그·연락처 형식, 기본 안내문구, 부분 응답 폴백) ·
 서비스 색·시술 문자열(`ServiceColor` — 서비스별 농도, 레거시 이름, `+` greedy 분리) ·
