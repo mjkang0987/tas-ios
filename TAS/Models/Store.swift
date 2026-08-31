@@ -22,6 +22,14 @@ struct Store: Codable, Identifiable, Hashable {
     var bookingSettings: BookingSettings? = nil
 
     // GET /api/store는 `name` 대신 `storeName`을 주고 `id`는 주지 않는다(웹 스키마).
+    /// 결제 시 자동 적립에 실제로 쓰이는 적립률(%) — 적립 기능이나 적립률이 꺼져 있으면 0.
+    /// 예약 상세의 결제 화면을 여는 자리가 여럿(캘린더·고객 상세·매출 드릴다운)이라
+    /// 판정을 화면마다 다시 쓰면 한 곳만 빠져도 조용히 적립이 안 된다.
+    var effectivePointRate: Int {
+        guard usePointSystem == true, let settings = pointSettings, settings.enableServiceRate else { return 0 }
+        return settings.serviceRate
+    }
+
     // 실제 매장 id는 JWT claims에서 가져오므로, 디코딩 시 id는 없어도 되게 한다.
     enum CodingKeys: String, CodingKey {
         case id
