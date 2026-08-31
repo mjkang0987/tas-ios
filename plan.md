@@ -9,7 +9,7 @@
 
 ---
 
-## 🟡 진행 중 — 매출·고객 화면 드릴다운(누르면 상세) 웹과 일치 (`claude/app-click-info-display-jdww8g`)
+## ✅ 검증 완료(머지 대기) — 매출·고객 화면 드릴다운(누르면 상세) 웹과 일치 (`claude/app-click-info-display-jdww8g`)
 
 ### 배경 (코드 기준)
 
@@ -50,12 +50,15 @@
 - `TAS/Features/Revenue/RevenueView.swift`
   - `RevenueViewModel`: `fetchCustomers()` 추가 로드. `newCustomers`·`returningCustomers`·`paidReservations`·
     `paidTotal` 집계 추가(웹 `getRevenueInsights` 이식 — 첫 방문일은 **기간이 아니라 전체 예약**에서 구한다).
-  - KPI 5칸 그리드 + 담당자별 행 + 추세 차트 막대를 전부 탭 가능하게.
+  - KPI 5칸 + 담당자별 행 + 추세 차트 막대를 전부 탭 가능하게.
   - 차트는 `chartOverlay` + 탭 위치→x값 해석으로 그 날/그 달 예약을 연다.
+  - **화면은 목록이 아니라 `DetailKey`(무엇을 탭했는지)만 들고, 목록은 렌더마다 `layer(for:)`로 다시 만든다.**
+    탭 시점 스냅샷을 들면 드릴다운 안에서 예약을 취소·삭제해도 행이 남는다(리뷰에서 잡아 고친 결함).
+    빈 날을 열지 않는 판단은 `trendKey`가 맡고, `trendLayer`는 항상 목록을 만든다.
 - `TAS/Features/Revenue/RevenueDetailListView.swift` (신규) — 예약 목록 / 고객 목록 두 모드.
   예약 탭 → `ReservationDetailView`, 고객 탭 → `CustomerDetailView`(읽기).
   고객 행은 웹 모달과 같은 정보(연락처·적립금·최근 방문일·재방문은 이전 방문 + 간격 배지)를 보여준다.
-- `TASTests/` — 신규/재방문/결제완료 집계와 방문 간격 라벨(`formatVisitGap`) 순수 로직 테스트.
+- `TASTests/` — 신규/재방문/결제완료 집계, 방문 간격 라벨, 드릴다운 목록 재계산 테스트.
 
 ### 리스크·주의
 
@@ -64,9 +67,29 @@
   `amount()`를 쓰므로 화면 안에서는 일관되지만, **웹과의 금액 차이는 남는다** → 아래 후속 작업으로 뺀다.
 - 탭 루트가 아닌 push 화면에 `NavigationStack`을 중첩하지 않는다(작업 규약). 시트는 자체 스택 허용.
 
+### 웹과 의도적으로 다르게 둔 것
+
+- **방문 간격 라벨**: 웹 `formatVisitGap`은 28~29일에서 `floor(28/30)`이 0이라 "0달전"을 그린다. 그 자리만 1로 올렸다.
+- **예약 이력 상태 배지**: 웹은 날짜를 안 봐서 '완료' 그룹에도 파란 '예약'을 그린다. 앱은 `CustomerStats.effectiveStatus` 판정을 유지한다.
+
+### 웹과 같게 남긴 것(고치지 않음 — 근거)
+
+- **결제완료 상세의 푸터 합계 ≠ 행 금액 합.** 푸터는 실제 결제 금액 합(`paidTotal`), 행은 예약가라
+  부분 결제가 있으면 어긋난다. 웹 `RevenueMetricModal`+`ReservationInfoCard`가 정확히 같다 —
+  한쪽만 바꾸면 웹과 숫자가 달라진다. 코드에 근거 주석을 남겼다.
+
+### 검증
+
+`plan.md` 작업 규약대로 **푸시 후 CI 그린**으로 검증했다(리눅스 컨테이너라 로컬 xcodebuild 불가).
+`iOS Build`(시뮬레이터 빌드) · `iOS Test`(유닛 테스트) 둘 다 통과.
+
 ### 후속(별도 이슈)
 
 - ⬜ 매출 금액 산식을 웹 `resolvePrice`와 일치시키기 — `ServiceColor.parseServiceString`으로 쪼개 카탈로그가 합산.
+  지금은 `servicePriceByName[r.service]` 통째 조회라 `"커트+펌"` 같은 복합 시술에서 웹과 금액이 어긋난다.
+- ⬜ **접근성**: 추세 차트 막대는 VoiceOver로 값은 읽히지만(막대별 label/value 부여) **탭으로 여는 드릴다운은
+  제스처 전용**이라 도달할 수 없다. 앱엔 웹의 일자별 목록(`RevenueDailyList`)이 없어 그 날짜의 예약으로
+  내려가는 다른 경로도 없다 → 일자별 목록을 붙이거나 차트에 접근성 액션을 준다. (P7)
 
 ---
 

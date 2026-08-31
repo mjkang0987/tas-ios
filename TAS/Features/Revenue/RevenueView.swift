@@ -134,13 +134,8 @@ final class RevenueViewModel {
     // MARK: - 집계
 
     /// 금액 — 웹 resolvePrice(price 우선, 없으면 카탈로그가).
-    private func amount(_ r: Reservation, _ data: Data) -> Int {
-        r.price ?? data.servicePriceByName[r.service] ?? 0
-    }
-
     func amount(_ r: Reservation) -> Int {
-        guard let data = state.value else { return r.price ?? 0 }
-        return amount(r, data)
+        r.price ?? state.value?.servicePriceByName[r.service] ?? 0
     }
 
     /// 기간과 무관한 전체 대상 예약 — 첫 방문일 판정에 쓴다.
@@ -149,15 +144,20 @@ final class RevenueViewModel {
     }
 
     /// 집계 기간 안의 대상 예약(날짜·시작시간 오름차순).
-    var periodTargets: [Reservation] {
+    var periodTargets: [Reservation] { targetsInPeriod(of: allTargets) }
+
+    /// 이름을 프로퍼티와 겹치지 않게 둔다 — 같은 이름이면 재귀 호출로 읽힌다.
+    private func targetsInPeriod(of all: [Reservation]) -> [Reservation] {
         let prefix = periodPrefix
-        return RevenueStats.sortedChronologically(allTargets.filter { $0.date.hasPrefix(prefix) })
+        return RevenueStats.sortedChronologically(all.filter { $0.date.hasPrefix(prefix) })
     }
 
     var metrics: Metrics {
         guard state.value != nil else { return Metrics() }
-        let targets = periodTargets
-        let visits = RevenueStats.customerVisits(periodTargets: targets, allTargets: allTargets)
+        // 전체 대상은 한 번만 훑는다 — `periodTargets`가 다시 훑게 두면 렌더마다 두 배로 돈다.
+        let all = allTargets
+        let targets = targetsInPeriod(of: all)
+        let visits = RevenueStats.customerVisits(periodTargets: targets, allTargets: all)
 
         var result = Metrics()
         result.total = targets.reduce(0) { $0 + amount($1) }
@@ -174,7 +174,7 @@ final class RevenueViewModel {
         var groups: [Int?: (total: Int, count: Int)] = [:]
         for r in periodTargets {
             let cur = groups[r.assigneeId] ?? (0, 0)
-            groups[r.assigneeId] = (cur.total + amount(r, data), cur.count + 1)
+            groups[r.assigneeId] = (cur.total + amount(r), cur.count + 1)
         }
         return groups
             .map { key, val in (key.flatMap { data.assigneesById[$0] }, val.total, val.count) }
@@ -235,7 +235,8 @@ final class RevenueViewModel {
     /// (차트 탭 좌표가 축 밖으로 튀는 경우도 여기서 걸러진다.)
     func trendKey(index: Int) -> DetailKey? {
         guard let dateKey = trendDateKey(index: index) else { return nil }
-        guard periodTargets.contains(where: { $0.date.hasPrefix(dateKey) }) else { return nil }
+        // 있는지만 보면 되므로 정렬까지 돌지 않는다.
+        guard allTargets.contains(where: { $0.date.hasPrefix(dateKey) }) else { return nil }
         return .trend(index)
     }
 
@@ -498,6 +499,10 @@ private struct RevenueTrendChart: View {
                     y: .value("매출", point.total)
                 )
                 .foregroundStyle(Color.accentColor.gradient)
+                // 막대마다 접근성 요소를 만들어 VoiceOver 로 값을 읽을 수 있게 한다.
+                // (탭으로 여는 상세는 아직 제스처 전용이다 — plan.md P7 잔여 작업)
+                .accessibilityLabel("\(point.index)\(unitLabel)")
+                .accessibilityValue(formatWon(point.total))
             }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 6)) { value in
@@ -528,7 +533,6 @@ private struct RevenueTrendChart: View {
                         }
                 }
             }
-            .accessibilityLabel("\(unitLabel)별 매출 추세. 막대를 탭하면 상세 목록이 열립니다.")
         }
     }
 

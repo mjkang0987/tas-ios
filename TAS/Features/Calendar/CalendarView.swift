@@ -406,7 +406,8 @@ struct CalendarView: View {
 
     /// 예약 행 버튼 — 일/주 뷰 공용.
     private func reservationButton(_ reservation: Reservation) -> some View {
-        Button {
+        let assignee = viewModel.assignee(reservation.assigneeId)
+        return Button {
             activeSheet = .detail(reservation)
         } label: {
             ReservationInfoCard(
@@ -414,8 +415,8 @@ struct CalendarView: View {
                 serviceColorMap: viewModel.serviceColorMap,
                 customerName: viewModel.customerName(reservation.customerId),
                 isNewCustomer: viewModel.isNewCustomer(reservation),
-                assigneeName: viewModel.assignee(reservation.assigneeId)?.name,
-                assigneeColor: Color(hex: viewModel.assignee(reservation.assigneeId)?.color)
+                assigneeName: assignee?.name,
+                assigneeColor: Color(hex: assignee?.color)
             )
         }
         .buttonStyle(.plain)

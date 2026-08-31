@@ -85,14 +85,15 @@ struct CustomerDetailView: View {
                 ForEach(reservationGroups) { group in
                     Section("\(group.status.label) (\(group.items.count))") {
                         ForEach(group.items.prefix(10)) { reservation in
+                            let rowAssignee = assignee(reservation.assigneeId)
                             Button {
                                 selectedReservation = reservation
                             } label: {
                                 ReservationInfoCard(
                                     reservation: reservation,
                                     serviceColorMap: serviceColorMap,
-                                    assigneeName: assignee(reservation.assigneeId)?.name,
-                                    assigneeColor: Color(hex: assignee(reservation.assigneeId)?.color),
+                                    assigneeName: rowAssignee?.name,
+                                    assigneeColor: Color(hex: rowAssignee?.color),
                                     showDate: true,
                                     showPrice: true,
                                     // 그룹이 판정한 유효 상태로 덮는다. `displayState`는 날짜를 몰라
@@ -143,6 +144,7 @@ struct CustomerDetailView: View {
                     customer: customer,
                     assignee: assignee(reservation.assigneeId),
                     serviceColorMap: serviceColorMap,
+                    isNewCustomer: customer.isNewCustomerVisit(on: reservation.date),
                     service: service,
                     // 상태·결제가 바뀌면 상위를 다시 읽되 고객 상세는 닫지 않는다.
                     onChanged: { await onChanged() },

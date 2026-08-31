@@ -44,6 +44,12 @@ struct ReservationInfoCard: View {
     /// 앱은 `CustomerStats.effectiveStatus` 판정을 유지한다.
     var statusOverride: CustomerStats.EffectiveStatus? = nil
 
+    // 좌측 칸 폭은 글자 크기를 따라간다 — 고정폭이면 손쉬운 사용의 큰 글자에서
+    // "2026-08-31"이 칸에 안 들어가 말줄임된다. (기본값 있는 private 저장 프로퍼티라
+    //  memberwise init 에는 나타나지 않는다 — 호출부는 그대로다.)
+    @ScaledMetric(relativeTo: .caption2) private var dateColumnWidth: CGFloat = 76
+    @ScaledMetric(relativeTo: .subheadline) private var timeColumnWidth: CGFloat = 44
+
     var body: some View {
         HStack(spacing: 10) {
             if showDate || timeMode != .hidden {
@@ -90,7 +96,7 @@ struct ReservationInfoCard: View {
             }
         }
         // 날짜("2026-08-31")가 붙으면 시간만 있을 때보다 넓어야 잘리지 않는다.
-        .frame(width: showDate ? 76 : 44, alignment: .leading)
+        .frame(width: showDate ? dateColumnWidth : timeColumnWidth, alignment: .leading)
         .lineLimit(1)
         .minimumScaleFactor(0.85)
     }

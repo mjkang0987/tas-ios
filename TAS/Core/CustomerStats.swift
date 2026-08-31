@@ -78,19 +78,14 @@ enum CustomerStats {
     static func recentService(_ reservations: [Reservation]) -> String? {
         reservations
             .filter { $0.status != .cancelled && $0.status != .noshow }
-            .max { sortsBefore($0, $1) }
+            .max { $0.precedes($1) }
             .map(\.service)
             .flatMap { $0.isEmpty ? nil : $0 }
     }
 
     /// 미래 → 과거(날짜 내림, 시간 내림) — 웹 `sortFutureFirst`.
     static func sortedFutureFirst(_ reservations: [Reservation]) -> [Reservation] {
-        reservations.sorted { sortsBefore($1, $0) }
-    }
-
-    /// a가 b보다 **과거**면 true. `max(by:)`와 `sorted(by:)`가 같은 기준을 쓰도록 한 곳에 둔다.
-    private static func sortsBefore(_ a: Reservation, _ b: Reservation) -> Bool {
-        (a.date, a.startTime) < (b.date, b.startTime)
+        reservations.sorted { $1.precedes($0) }
     }
 
     /// 상태별로 묶인 예약 묶음 — `ForEach`가 바로 쓰도록 Identifiable.

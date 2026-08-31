@@ -48,6 +48,15 @@ struct Reservation: Codable, Identifiable, Hashable {
     }
 }
 
+extension Reservation {
+    /// 이 예약이 `other`보다 **과거**인가 — 날짜, 같으면 시작시간.
+    /// 예약을 시간순으로 놓는 규칙은 여기 한 곳만 둔다. 정렬(`sorted`)과 최신 건 찾기(`max`)가
+    /// 서로 다른 기준을 쓰면 화면마다 순서가 달라진다.
+    func precedes(_ other: Reservation) -> Bool {
+        (date, startTime) < (other.date, other.startTime)
+    }
+}
+
 /// 예약 카드/리스트 뱃지 상태 — 웹 `RESERVATION_STATUS_BADGE_STYLES` 매핑에 대응.
 enum ReservationDisplayState {
     case booked, paid, cancelled, noshow, requested

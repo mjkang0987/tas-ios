@@ -137,8 +137,8 @@ enum RevenueStats {
         return "\(days / 365)년전"
     }
 
-    /// 날짜·시작시간 오름차순 — 목록 표시 순서의 단일 기준.
+    /// 날짜·시작시간 오름차순 — 순서 규칙은 `Reservation.precedes` 한 곳에서 온다.
     static func sortedChronologically(_ reservations: [Reservation]) -> [Reservation] {
-        reservations.sorted { ($0.date, $0.startTime) < ($1.date, $1.startTime) }
+        reservations.sorted { $0.precedes($1) }
     }
 }

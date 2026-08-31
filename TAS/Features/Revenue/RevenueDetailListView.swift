@@ -49,11 +49,13 @@ struct RevenueDetailListView: View {
                 }
             }
             .sheet(item: $selectedReservation) { reservation in
+                let customer = viewModel.customer(reservation.customerId)
                 ReservationDetailView(
                     reservation: reservation,
-                    customer: viewModel.customer(reservation.customerId),
+                    customer: customer,
                     assignee: viewModel.assignee(reservation.assigneeId),
                     serviceColorMap: viewModel.serviceColorMap,
+                    isNewCustomer: customer?.isNewCustomerVisit(on: reservation.date) ?? false,
                     service: service,
                     onChanged: { await onChanged() },
                     assigneeName: { viewModel.assignee($0)?.name ?? "미지정" },
@@ -84,16 +86,21 @@ struct RevenueDetailListView: View {
                 Text(Self.emptyText).font(.footnote).foregroundStyle(.secondary)
             } else {
                 ForEach(reservations) { reservation in
+                    let customer = viewModel.customer(reservation.customerId)
+                    let assignee = viewModel.assignee(reservation.assigneeId)
                     Button {
                         selectedReservation = reservation
                     } label: {
                         ReservationInfoCard(
                             reservation: reservation,
                             serviceColorMap: viewModel.serviceColorMap,
-                            customerName: viewModel.customer(reservation.customerId)?.name ?? "고객 미지정",
-                            assigneeName: viewModel.assignee(reservation.assigneeId)?.name,
-                            assigneeColor: Color(hex: viewModel.assignee(reservation.assigneeId)?.color),
+                            customerName: customer?.name ?? "고객 미지정",
+                            isNewCustomer: customer?.isNewCustomerVisit(on: reservation.date) ?? false,
+                            assigneeName: assignee?.name,
+                            assigneeColor: Color(hex: assignee?.color),
                             showDate: true,
+                            // 행 금액은 **예약가**다. 부분 결제가 있으면 결제완료 상세의 푸터 합계
+                            // (실제 결제 금액 합)와 다를 수 있다 — 웹 ReservationInfoCard 도 같다.
                             showPrice: true
                         )
                     }
@@ -106,13 +113,15 @@ struct RevenueDetailListView: View {
                 Text(Self.emptyText).font(.footnote).foregroundStyle(.secondary)
             } else {
                 ForEach(visits) { visit in
+                    let customer = viewModel.customer(visit.customerId)
                     Button {
-                        selectedCustomer = viewModel.customer(visit.customerId)
+                        selectedCustomer = customer
                     } label: {
-                        CustomerVisitRow(visit: visit, customer: viewModel.customer(visit.customerId))
+                        CustomerVisitRow(visit: visit, customer: customer)
                     }
                     .buttonStyle(.plain)
-                    .disabled(viewModel.customer(visit.customerId) == nil)
+                    // 고객이 지워졌는데 예약만 남은 경우 — 열 상세가 없으니 누르지 못하게 한다.
+                    .disabled(customer == nil)
                 }
             }
         }
