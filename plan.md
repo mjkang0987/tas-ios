@@ -9,90 +9,6 @@
 
 ---
 
-## ✅ 검증 완료(머지 대기) — 매출·고객 화면 드릴다운(누르면 상세) 웹과 일치 (`claude/app-click-info-display-jdww8g`)
-
-### 배경 (코드 기준)
-
-웹은 매출·고객 화면의 거의 모든 집계 영역이 **탭하면 근거가 되는 예약/고객 목록이 뜨는** 구조다.
-
-| 웹 위치 | 탭 대상 | 뜨는 것 |
-|---|---|---|
-| `RevenueKpiGrid` | KPI 5개(총매출·건수·신규 고객·재방문 고객·결제완료) | `RevenueMetricModal` — 예약 목록 또는 고객 목록 |
-| `RevenueChartGrid` | 추세 점·결제수단·유입경로·담당자 막대·취소/노쇼 행 | 같은 모달(제목·요약만 다름) |
-| `RevenueDailyList` | 날짜 행 | `RevenueDailyDetailModal` — 그날 예약 목록 |
-| 위 목록의 예약 카드 | `ReservationInfoCard` | `ReservationDetail` |
-| 위 목록의 고객 이름 | — | 고객 상세 |
-| `/address` 고객 상세 | 예약 이력 카드(`CustomerReservationCards`) | `ReservationDetail` |
-
-**앱 현황** — `RevenueView`는 전부 읽기 전용이라 어느 영역도 눌리지 않고, `CustomerDetailView`의
-예약 이력 행(`CustomerReservationRow`)도 탭이 안 된다. 즉 화면에 보이는 숫자에서 그 근거로 내려갈 방법이 없다.
-
-### 결정 — 범위 (사용자 승인)
-
-- **KPI는 웹과 동일하게 5개.** 앱엔 매출·건수 2개뿐이라 신규 고객 수·재방문 고객 수·결제완료를 새로 집계해 추가한다.
-- **공용 컴포넌트 2개 신설 승인됨**(`CLAUDE.md` 신규 컴포넌트 통제 절차).
-  - `TAS/Core/UI/ReservationInfoCard.swift` — 웹 `components/ui/ReservationInfoCard.tsx` 이식.
-    지금 `CalendarView.ReservationRow`와 `CustomerDetailView.CustomerReservationRow`에 거의 같은 마크업이
-    **두 벌 복제**돼 있고 매출 드릴다운에서 세 번째가 생긴다. 날짜/금액/상태/시간표시를 옵션으로 켜는 한 벌로 합친다.
-  - `TAS/Features/Revenue/RevenueDetailListView.swift` — 웹 `RevenueMetricModal`+`RevenueDailyDetailModal` 대응.
-    제목·부제·요약 푸터·목록 구조가 웹과 같고, 매출의 모든 탭 지점이 이 하나를 재사용한다.
-- **웹 차트 그리드(결제수단·유입경로 도넛, 취소율·노쇼율)는 이번 범위 밖.** 앱에 그 차트 자체가 없다.
-
-### 구현
-
-- `TAS/Core/UI/ReservationInfoCard.swift` (신규) — 좌측 날짜·시간 / 액센트 바 / 고객명·신규 배지·시술 칩·담당자 /
-  우측 상태 배지·금액. `showDate`·`showPrice`·`showStatus`·`timeMode`·`accentBar` 옵션은 웹 props와 1:1.
-  상태 배지는 기본 `reservation.displayState`, 고객 상세처럼 **유효 상태**(지난 예약=완료)를 아는 자리는
-  `statusOverride`로 덮는다 — 웹은 여기서 지난 예약에도 파란 '예약'을 그리는데, 앱은 기존 판정을 유지한다.
-- `TAS/Features/Calendar/CalendarView.swift` — private `ReservationRow` 삭제하고 공용 카드로 교체(복제 제거).
-- `TAS/Features/Customers/CustomerDetailView.swift` — private `CustomerReservationRow` 삭제하고 공용 카드로 교체,
-  **행을 버튼으로 감싸 `ReservationDetailView` 시트를 연다**(웹 `onReservationClick`).
-- `TAS/Features/Revenue/RevenueView.swift`
-  - `RevenueViewModel`: `fetchCustomers()` 추가 로드. `newCustomers`·`returningCustomers`·`paidReservations`·
-    `paidTotal` 집계 추가(웹 `getRevenueInsights` 이식 — 첫 방문일은 **기간이 아니라 전체 예약**에서 구한다).
-  - KPI 5칸 + 담당자별 행 + 추세 차트 막대를 전부 탭 가능하게.
-  - 차트는 `chartOverlay` + 탭 위치→x값 해석으로 그 날/그 달 예약을 연다.
-  - **화면은 목록이 아니라 `DetailKey`(무엇을 탭했는지)만 들고, 목록은 렌더마다 `layer(for:)`로 다시 만든다.**
-    탭 시점 스냅샷을 들면 드릴다운 안에서 예약을 취소·삭제해도 행이 남는다(리뷰에서 잡아 고친 결함).
-    빈 날을 열지 않는 판단은 `trendKey`가 맡고, `trendLayer`는 항상 목록을 만든다.
-- `TAS/Features/Revenue/RevenueDetailListView.swift` (신규) — 예약 목록 / 고객 목록 두 모드.
-  예약 탭 → `ReservationDetailView`, 고객 탭 → `CustomerDetailView`(읽기).
-  고객 행은 웹 모달과 같은 정보(연락처·적립금·최근 방문일·재방문은 이전 방문 + 간격 배지)를 보여준다.
-- `TASTests/` — 신규/재방문/결제완료 집계, 방문 간격 라벨, 드릴다운 목록 재계산 테스트.
-
-### 리스크·주의
-
-- **매출 금액 산식은 이번에 손대지 않는다.** 앱 `amount()`는 `servicePriceByName[r.service]`로 통째 조회라
-  `"커트+펌"` 같은 복합 시술에서 웹 `sumPrice(parseServiceString(...))`와 어긋난다. 드릴다운 합계는 같은
-  `amount()`를 쓰므로 화면 안에서는 일관되지만, **웹과의 금액 차이는 남는다** → 아래 후속 작업으로 뺀다.
-- 탭 루트가 아닌 push 화면에 `NavigationStack`을 중첩하지 않는다(작업 규약). 시트는 자체 스택 허용.
-
-### 웹과 의도적으로 다르게 둔 것
-
-- **방문 간격 라벨**: 웹 `formatVisitGap`은 28~29일에서 `floor(28/30)`이 0이라 "0달전"을 그린다. 그 자리만 1로 올렸다.
-- **예약 이력 상태 배지**: 웹은 날짜를 안 봐서 '완료' 그룹에도 파란 '예약'을 그린다. 앱은 `CustomerStats.effectiveStatus` 판정을 유지한다.
-
-### 웹과 같게 남긴 것(고치지 않음 — 근거)
-
-- **결제완료 상세의 푸터 합계 ≠ 행 금액 합.** 푸터는 실제 결제 금액 합(`paidTotal`), 행은 예약가라
-  부분 결제가 있으면 어긋난다. 웹 `RevenueMetricModal`+`ReservationInfoCard`가 정확히 같다 —
-  한쪽만 바꾸면 웹과 숫자가 달라진다. 코드에 근거 주석을 남겼다.
-
-### 검증
-
-`plan.md` 작업 규약대로 **푸시 후 CI 그린**으로 검증했다(리눅스 컨테이너라 로컬 xcodebuild 불가).
-`iOS Build`(시뮬레이터 빌드) · `iOS Test`(유닛 테스트) 둘 다 통과.
-
-### 후속(별도 이슈)
-
-- ⬜ 매출 금액 산식을 웹 `resolvePrice`와 일치시키기 — `ServiceColor.parseServiceString`으로 쪼개 카탈로그가 합산.
-  지금은 `servicePriceByName[r.service]` 통째 조회라 `"커트+펌"` 같은 복합 시술에서 웹과 금액이 어긋난다.
-- ⬜ **접근성**: 추세 차트 막대는 VoiceOver로 값은 읽히지만(막대별 label/value 부여) **탭으로 여는 드릴다운은
-  제스처 전용**이라 도달할 수 없다. 앱엔 웹의 일자별 목록(`RevenueDailyList`)이 없어 그 날짜의 예약으로
-  내려가는 다른 경로도 없다 → 일자별 목록을 붙이거나 차트에 접근성 액션을 준다. (P7)
-
----
-
 ## 0. 현재 상태 (완료 ✅ · 게스트 기반 운영 기능은 사실상 완성)
 
 **진입**
@@ -108,12 +24,16 @@
 
 **고객/담당자/서비스**
 - ✅ 고객 등록·수정·적립금 조정·**병합**
+- ✅ 고객 상세의 예약 이력을 누르면 **예약 상세**로(웹 `/address` `onReservationClick`)
 - ✅ 담당자 추가·수정·삭제·근무시간·**병합**
 - ✅ 서비스 카탈로그 CRUD
 
 **매장/설정**
 - ✅ 매장 이름·업종·기능토글·영업시간/휴무·적립률/충전 설정
 - ✅ 설정>관리: 서비스·담당자·**공지**·**쿠폰(상품)**·**회원권(상품)**·매출
+- ✅ **매출 드릴다운**(PR #24) — KPI 5종(총 매출·건수·신규 고객·재방문 고객·결제완료) ·
+  KPI/추세 차트 막대/담당자별 행을 누르면 근거 예약·고객 목록(`RevenueDetailListView`) →
+  예약 상세 / 고객 상세. 판정·집계는 `RevenueStats`(웹 `utils/revenue.ts` 이식)
 - ✅ **Store 디코딩 버그 수정**(로그인 대비): `storeName→name`, `id` 누락 허용
 
 **인프라**
@@ -182,6 +102,7 @@
   ⬜ 온라인 예약 유입 경로 자체는 🔒 온라인예약 연계 대기.
 - ⬜ **다국어 이름(i18n)** — `nameI18n`/`storeNameI18n`/`titleI18n` 편집(공개 예약 페이지용, 우선순위 낮음)
 - ✅ **매출 확장** — 기간 필터(월/년) + 추세 막대 차트(Swift Charts, 일별/월별). 합계·담당자별은 선택 기간 기준으로 집계.
+  KPI는 웹 `RevenueKpiGrid`와 같은 5종이고, 집계된 숫자를 누르면 근거 목록이 열린다(PR #24).
 
 ## P3.5 — tas 백엔드/웹 변경 동기화 (2026-07-28 확인)
 
@@ -420,8 +341,12 @@
 
 ## P7 — 품질
 
-- ✅ 자동 테스트: 유닛 테스트 타깃(TASTests) + `ios-test.yml` CI. 커버: 겹침(ReservationOverlap)·Store 디코딩·고객/예약 헬퍼·매출 집계/추세·**게스트 CRUD/병합**(GuestStore)·**적립 계산·잔액 원장**(PointMath·PointLedger)·이관 인코딩(MigrateLocalBody). (추가 회귀 케이스는 필요 시 확장.)
+- ✅ 자동 테스트: 유닛 테스트 타깃(TASTests) + `ios-test.yml` CI. 커버: 겹침(ReservationOverlap)·Store 디코딩·고객/예약 헬퍼·매출 집계/추세·**매출 판정·신규/재방문·방문 간격**(RevenueStats)·**드릴다운 목록 재계산**(RevenueViewModel)·**게스트 CRUD/병합**(GuestStore)·**적립 계산·잔액 원장**(PointMath·PointLedger)·이관 인코딩(MigrateLocalBody). (추가 회귀 케이스는 필요 시 확장.)
 - ⬜ 접근성/다크모드/다이내믹 타입 재점검(컴팩트 폰트 후 큰 글자 레이아웃)
+  - **매출 추세 차트의 드릴다운이 VoiceOver로 도달 불가**(PR #24 리뷰에서 확인). 막대에 label/value는
+    붙여 값은 읽히지만, 목록을 여는 것은 `chartOverlay` 탭 제스처뿐이라 활성화할 방법이 없다.
+    앱엔 웹의 일자별 목록(`RevenueDailyList`)이 없어 **그 날짜의 예약으로 내려가는 다른 경로도 없다** —
+    일자별 목록을 붙이거나 차트에 접근성 액션을 준다.
   - 시술 칩 틴트가 웹 값 그대로 9%(`${color}18`)다. 웹은 라이트 전용이라 다크모드에서 흐릴 수 있다.
   - 일 타임라인의 칩 표시 임계값(`DayTimelineView`의 `p.height > 54`)은 **손으로 잰 픽셀 상수**다.
     다이내믹 타입이 커지면 어긋난다. 더 깊은 수정은 `ViewThatFits(in: .vertical)`로 레이아웃이
@@ -437,8 +362,10 @@
   둘 다 이식 전부터 있던 버그고, 이제 `ServiceColor`에 도구가 생겨 고치기 쉬워졌다.
   - `ReservationCreateView.catalogMap`에 레거시 별칭이 없다(웹 `buildCatalogMap`은 넣는다).
     옛 이름으로 저장된 예약을 편집하면 소요시간·가격이 0으로 잡힌다.
-  - `RevenueViewModel.swift:81`이 `servicePriceByName[r.service]`로 **조합 문자열 원문**을 찾는다.
+  - `RevenueViewModel.amount(_:)`가 `servicePriceByName[r.service]`로 **조합 문자열 원문**을 찾는다.
     "커트+펌"은 맵에 없어 0원 처리 → 웹은 `sumPrice(parseServiceString(...))`로 합산한다.
+    PR #24 에서 KPI·드릴다운이 전부 이 `amount()`를 쓰게 됐으므로 **화면 안에서는 일관되지만
+    웹과의 금액 차이는 그대로다.** 고치면 매출 숫자가 바뀌므로 단독 변경으로 다룬다.
 - ⬜ **알약 배지 통합**(PR #17 리뷰 지적 + 리팩토링 리뷰, 출시 전까지 보류) —
   색상값 중복의 절반은 해소됐다: `Core/UI/Badges.swift`의 하드코딩은 `BadgeTone`(웹
   `RESERVATION_STATUS_BADGE_STYLES` 이식)으로 모았다. 남은 건
