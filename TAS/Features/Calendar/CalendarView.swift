@@ -11,12 +11,8 @@ struct CalendarView: View {
     @State private var mode: Mode = .day
     @State private var activeSheet: ActiveSheet?
 
-    /// 매장 적립률(%) — 적립 기능이 켜졌을 때만, 아니면 0.
-    private var pointRate: Int {
-        guard session.currentStore?.usePointSystem == true,
-              let p = session.currentStore?.pointSettings, p.enableServiceRate else { return 0 }
-        return p.serviceRate
-    }
+    /// 매장 적립률(%) — 판정은 `Store.effectivePointRate` 한 곳에서만 한다.
+    private var pointRate: Int { session.currentStore?.effectivePointRate ?? 0 }
 
     /// 예약 상세/추가 시트를 하나의 `.sheet(item:)`로 통합
     /// (같은 뷰에 `.sheet` 여러 개를 붙이면 SwiftUI에서 충돌해 안 뜨는 버그를 회피).
@@ -410,15 +406,17 @@ struct CalendarView: View {
 
     /// 예약 행 버튼 — 일/주 뷰 공용.
     private func reservationButton(_ reservation: Reservation) -> some View {
-        Button {
+        let assignee = viewModel.assignee(reservation.assigneeId)
+        return Button {
             activeSheet = .detail(reservation)
         } label: {
-            ReservationRow(
+            ReservationInfoCard(
                 reservation: reservation,
-                customerName: viewModel.customerName(reservation.customerId),
-                assignee: viewModel.assignee(reservation.assigneeId),
                 serviceColorMap: viewModel.serviceColorMap,
-                isNewCustomer: viewModel.isNewCustomer(reservation)
+                customerName: viewModel.customerName(reservation.customerId),
+                isNewCustomer: viewModel.isNewCustomer(reservation),
+                assigneeName: assignee?.name,
+                assigneeColor: Color(hex: assignee?.color)
             )
         }
         .buttonStyle(.plain)
@@ -562,45 +560,6 @@ struct CalendarView: View {
         let label = index < KST.weekdayLabels.count ? KST.weekdayLabels[index] : ""
         guard parts.count == 3 else { return label }
         return "\(parts[1]).\(parts[2]) \(label)"
-    }
-}
-
-private struct ReservationRow: View {
-    let reservation: Reservation
-    let customerName: String
-    let assignee: Assignee?
-    let serviceColorMap: [String: String]
-    let isNewCustomer: Bool
-
-    var body: some View {
-        HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 1) {
-                Text(reservation.startTime).font(.subheadline.weight(.semibold)).monospacedDigit()
-                Text(reservation.endTime).font(.caption2).foregroundStyle(.secondary).monospacedDigit()
-            }
-            .frame(width: 44, alignment: .leading)
-
-            ColorAccentBar(color: Color(hex: assignee?.color), height: 28)
-
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(customerName).font(.subheadline.weight(.semibold))
-                    if isNewCustomer { NewCustomerBadge() }
-                }
-                HStack(spacing: 5) {
-                    ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false)
-                    if let assignee {
-                        Text("· \(assignee.name)").font(.caption2).foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            Spacer()
-
-            StatusBadge(state: reservation.displayState)
-        }
-        .padding(.vertical, 2)
-        .contentShape(Rectangle())
     }
 }
 

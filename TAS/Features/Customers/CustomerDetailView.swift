@@ -21,11 +21,17 @@ struct CustomerDetailView: View {
     var mergeCandidates: [Customer] = []
     /// 고객 id → 예약 건수. 병합 대상 선택 시 판단 근거로 쓴다.
     var reservationCounts: [Int: Int] = [:]
+    /// 담당자 id → 담당자. 예약 이력 행의 이름·색, 예약 상세에 쓴다.
+    var assigneesById: [Int: Assignee] = [:]
+    /// 매장 적립률(%) — 예약 상세에서 결제하면 자동 적립된다(`Store.effectivePointRate`).
+    var pointRate: Int = 0
 
     @Environment(\.dismiss) private var dismiss
     @State private var showPointAdjust = false
     @State private var showPointRecharge = false
     @State private var showMerge = false
+    /// 탭한 예약 — 웹 `/address`의 예약 카드 클릭(`onReservationClick`)과 같다.
+    @State private var selectedReservation: Reservation?
 
     var body: some View {
         NavigationStack {
@@ -78,12 +84,24 @@ struct CustomerDetailView: View {
                 // 웹은 예약/완료/취소/노쇼 그룹마다 건수를 달고 나눠 보여준다.
                 ForEach(reservationGroups) { group in
                     Section("\(group.status.label) (\(group.items.count))") {
-                        ForEach(group.items.prefix(10)) {
-                            CustomerReservationRow(
-                                reservation: $0,
-                                status: group.status,
-                                serviceColorMap: serviceColorMap
-                            )
+                        ForEach(group.items.prefix(10)) { reservation in
+                            let rowAssignee = assignee(reservation.assigneeId)
+                            Button {
+                                selectedReservation = reservation
+                            } label: {
+                                ReservationInfoCard(
+                                    reservation: reservation,
+                                    serviceColorMap: serviceColorMap,
+                                    assigneeName: rowAssignee?.name,
+                                    assigneeColor: Color(hex: rowAssignee?.color),
+                                    showDate: true,
+                                    showPrice: true,
+                                    // 그룹이 판정한 유효 상태로 덮는다. `displayState`는 날짜를 몰라
+                                    // '완료' 그룹 안에서도 파란 '예약' 배지를 그려버린다.
+                                    statusOverride: group.status
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
                         if group.items.count > 10 {
                             Text("외 \(group.items.count - 10)건")
@@ -120,6 +138,20 @@ struct CustomerDetailView: View {
                     onCompleted: { await onChanged(); dismiss() }
                 )
             }
+            .sheet(item: $selectedReservation) { reservation in
+                ReservationDetailView(
+                    reservation: reservation,
+                    customer: customer,
+                    assignee: assignee(reservation.assigneeId),
+                    serviceColorMap: serviceColorMap,
+                    isNewCustomer: customer.isNewCustomerVisit(on: reservation.date),
+                    service: service,
+                    // 상태·결제가 바뀌면 상위를 다시 읽되 고객 상세는 닫지 않는다.
+                    onChanged: { await onChanged() },
+                    assigneeName: { [assigneesById] id in id.flatMap { assigneesById[$0] }?.name ?? "미지정" },
+                    pointRate: pointRate
+                )
+            }
             .sheet(isPresented: $showMerge) {
                 CustomerMergePicker(
                     source: customer,
@@ -132,6 +164,8 @@ struct CustomerDetailView: View {
         }
     }
 
+    private func assignee(_ id: Int?) -> Assignee? { id.flatMap { assigneesById[$0] } }
+
     private func statCell(_ status: CustomerStats.EffectiveStatus, _ count: Int) -> some View {
         VStack(spacing: 2) {
             Text("\(count)")
@@ -141,26 +175,6 @@ struct CustomerDetailView: View {
             Text(status.label).font(.caption).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-private struct CustomerReservationRow: View {
-    let reservation: Reservation
-    /// 그룹이 판정한 유효 상태. `reservation.displayState`는 날짜를 모르기 때문에
-    /// '완료' 그룹 안에서도 파란 '예약' 배지를 그려버린다.
-    let status: CustomerStats.EffectiveStatus
-    let serviceColorMap: [String: String]
-
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false)
-                Text("\(reservation.date) \(reservation.startTime)")
-                    .font(.caption2).foregroundStyle(.secondary).monospacedDigit()
-            }
-            Spacer()
-            ToneBadge(tone: status.tone, text: status.label)
-        }
     }
 }
 

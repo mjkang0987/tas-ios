@@ -7,6 +7,8 @@ final class CustomersViewModel {
     struct Data {
         var customers: [Customer]
         var reservationsByCustomer: [Int: [Reservation]]
+        /// 담당자 id → 담당자. 예약 이력 행의 이름·색과 예약 상세에 쓴다.
+        var assigneesById: [Int: Assignee]
         /// 서비스명 → hex(웹 `SERVICE_COLOR_MAP`). 예약 이력의 시술 칩 색.
         var serviceColorMap: [String: String]
         /// 고객별 집계 — 로드 시점에 한 번 만든다. 목록 body는 검색 타이핑마다 재평가되므로
@@ -62,16 +64,22 @@ final class CustomersViewModel {
 
     var serviceColorMap: [String: String] { state.value?.serviceColorMap ?? [:] }
 
+    /// 담당자 id → 담당자 — 상세가 예약 이력 행의 이름·색을 그릴 때 쓴다.
+    var assigneesById: [Int: Assignee] { state.value?.assigneesById ?? [:] }
+
     func load() async {
         state = .loading
         do {
             async let customers = service.fetchCustomers()
             async let reservations = service.fetchReservations()
+            // 담당자도 색·이름 표시용이라 실패해도 고객 목록은 보여준다(색만 폴백).
+            async let assignees = try? await service.fetchAssignees()
             // 서비스 카탈로그는 시술 칩 **색**에만 쓴다. /api/services가 실패했다고
             // 고객 목록까지 못 보여줄 이유는 없으므로 실패를 삼키고 색만 폴백시킨다.
             async let services = try? await service.fetchServices()
             let (cus, res) = try await (customers, reservations)
             let svc = await services
+            let asg = await assignees
 
             var byCustomer: [Int: [Reservation]] = [:]
             for r in res.reservations { byCustomer[r.customerId, default: []].append(r) }
@@ -80,6 +88,10 @@ final class CustomersViewModel {
             state = .loaded(Data(
                 customers: cus.customers,
                 reservationsByCustomer: byCustomer,
+                assigneesById: Dictionary(
+                    (asg?.assignees ?? []).map { ($0.id, $0) },
+                    uniquingKeysWith: { first, _ in first }
+                ),
                 serviceColorMap: svc.map {
                     ServiceColor.buildServiceColorMap(catalog: $0.services, storeMap: $0.categoryBaseColors)
                 } ?? [:],

@@ -51,7 +51,9 @@ struct CustomersView: View {
                         service: TASService(),
                         onChanged: { await viewModel.load() },
                         mergeCandidates: viewModel.allCustomers.filter { $0.id != customer.id },
-                        reservationCounts: viewModel.reservationCounts
+                        reservationCounts: viewModel.reservationCounts,
+                        assigneesById: viewModel.assigneesById,
+                        pointRate: session.currentStore?.effectivePointRate ?? 0
                     )
                 case .create:
                     CustomerFormView(
