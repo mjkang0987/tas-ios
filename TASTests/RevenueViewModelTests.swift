@@ -186,17 +186,45 @@ final class RevenueViewModelTests: XCTestCase {
         m.period = .month
         m.mode = .completed
 
-        let layer = m.trendLayer(index: 3)
-        XCTAssertEqual(layer?.title, "2026-07-03 매출 상세")
-        guard case .reservations(let items)? = layer?.content else {
+        XCTAssertEqual(m.trendKey(index: 3), RevenueViewModel.DetailKey.trend(3))
+        let layer = m.layer(for: .trend(3))
+        XCTAssertEqual(layer.title, "2026-07-03 매출 상세")
+        guard case .reservations(let items) = layer.content else {
             return XCTFail("추세 막대는 예약 목록이어야 한다")
         }
         XCTAssertEqual(items.map(\.id), [1])
 
         // 매출 없는 날은 열 것이 없다.
-        XCTAssertNil(m.trendLayer(index: 10))
+        XCTAssertNil(m.trendKey(index: 10))
         // 달 범위를 벗어난 인덱스도 마찬가지(차트 탭 좌표가 튀는 경우).
-        XCTAssertNil(m.trendLayer(index: 32))
+        XCTAssertNil(m.trendKey(index: 32))
+    }
+
+    /// 목록은 키에서 **매번 다시** 만들어져야 한다 — 상세에서 예약을 취소하면
+    /// 드릴다운 목록에서도 사라져야 하기 때문이다(탭 시점 스냅샷이면 남는다).
+    func testLayerIsRecomputedFromKey() {
+        let m = makeVM([
+            res(1, date: "2026-07-03", price: 10000, status: .completed),
+            res(2, date: "2026-07-04", price: 5000, status: .completed),
+        ])
+        m.selectedDate = day("2026-07-15")
+        m.mode = .completed
+
+        guard case .reservations(let before) = m.layer(for: .metric(.sales)).content else {
+            return XCTFail("총 매출은 예약 목록이어야 한다")
+        }
+        XCTAssertEqual(before.map(\.id), [1, 2])
+
+        // 상세에서 취소한 상황을 흉내낸다.
+        var reservations = m.state.value!.reservations
+        reservations[0].status = .cancelled
+        m.state = .loaded(RevenueViewModel.Data(
+            reservations: reservations, assigneesById: [:], servicePriceByName: [:]))
+
+        guard case .reservations(let after) = m.layer(for: .metric(.sales)).content else {
+            return XCTFail("총 매출은 예약 목록이어야 한다")
+        }
+        XCTAssertEqual(after.map(\.id), [2])
     }
 
     func testAssigneeLayerFiltersByAssignee() {

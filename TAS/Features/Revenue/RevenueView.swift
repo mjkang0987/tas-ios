@@ -37,14 +37,30 @@ final class RevenueViewModel {
         }
     }
 
+    /// **무엇을 탭했는지**. 목록 자체가 아니라 이 키를 들고 있어야
+    /// 상세에서 예약을 취소·삭제한 뒤에도 목록이 다시 계산된다(탭 시점 스냅샷이면 남는다).
+    enum DetailKey: Identifiable, Hashable {
+        case metric(MetricKey)
+        case assignee(Int?)
+        /// 추세 차트의 한 칸 — 월 보기는 일(1…말일), 연 보기는 월(1…12).
+        case trend(Int)
+
+        var id: String {
+            switch self {
+            case .metric(let key): return "metric-\(key.rawValue)"
+            case .assignee(let id): return "assignee-\(id.map(String.init) ?? "none")"
+            case .trend(let index): return "trend-\(index)"
+            }
+        }
+    }
+
     /// 탭한 영역이 열어 보여줄 목록 — 웹 `RevenueMetricModal` / `RevenueDailyDetailModal`.
-    struct DetailLayer: Identifiable {
+    struct DetailLayer {
         enum Content {
             case reservations([Reservation])
             case customers([RevenueStats.CustomerVisit])
         }
 
-        let id: String
         let title: String
         var subtitle: String? = nil
         /// 푸터 요약("12건 · 1,200,000원").
@@ -206,26 +222,40 @@ final class RevenueViewModel {
 
     // MARK: - 드릴다운 목록 구성 (웹 RevenueMetricModal)
 
+    /// 키 → 목록. **볼 때마다 다시 계산한다** — 상세에서 예약이 바뀌면 목록도 따라 바뀌어야 한다.
+    func layer(for key: DetailKey) -> DetailLayer {
+        switch key {
+        case .metric(let metric): return metricLayer(metric)
+        case .assignee(let assigneeId): return assigneeLayer(assigneeId: assigneeId)
+        case .trend(let index): return trendLayer(index: index)
+        }
+    }
+
+    /// 추세 차트에서 탭한 칸이 열 만한 것이 있는지 — 빈 날은 열지 않는다.
+    /// (차트 탭 좌표가 축 밖으로 튀는 경우도 여기서 걸러진다.)
+    func trendKey(index: Int) -> DetailKey? {
+        guard let dateKey = trendDateKey(index: index) else { return nil }
+        guard periodTargets.contains(where: { $0.date.hasPrefix(dateKey) }) else { return nil }
+        return .trend(index)
+    }
+
     func metricLayer(_ key: MetricKey) -> DetailLayer {
         let m = metrics
         switch key {
         case .sales:
             return DetailLayer(
-                id: key.rawValue,
                 title: key.detailTitle,
                 summary: Self.summary(count: m.count, total: m.total),
                 content: .reservations(periodTargets)
             )
         case .count:
             return DetailLayer(
-                id: key.rawValue,
                 title: key.detailTitle,
                 summary: "\(m.count)건",
                 content: .reservations(periodTargets)
             )
         case .new:
             return DetailLayer(
-                id: key.rawValue,
                 title: key.detailTitle,
                 subtitle: mode == .completed
                     ? "선택 기간 안에서 첫 예약완료가 발생한 고객 목록"
@@ -235,7 +265,6 @@ final class RevenueViewModel {
             )
         case .returning:
             return DetailLayer(
-                id: key.rawValue,
                 title: key.detailTitle,
                 subtitle: mode == .completed
                     ? "선택 기간 내 예약완료가 있고, 그 이전 예약완료 이력이 있는 고객 목록"
@@ -245,7 +274,6 @@ final class RevenueViewModel {
             )
         case .paid:
             return DetailLayer(
-                id: key.rawValue,
                 title: key.detailTitle,
                 summary: Self.summary(count: m.paidReservations.count, total: m.paidTotal),
                 content: .reservations(m.paidReservations)
@@ -258,7 +286,6 @@ final class RevenueViewModel {
         let items = periodTargets.filter { $0.assigneeId == assigneeId }
         let name = assigneeId.flatMap { state.value?.assigneesById[$0]?.name } ?? "미지정"
         return DetailLayer(
-            id: "assignee-\(assigneeId.map(String.init) ?? "none")",
             title: "\(name) 매출 상세",
             summary: Self.summary(count: items.count, total: items.reduce(0) { $0 + amount($1) }),
             content: .reservations(items)
@@ -267,25 +294,22 @@ final class RevenueViewModel {
 
     /// 추세 차트 막대 탭 — 웹 차트의 날짜 점 클릭(`kind: 'date'`).
     /// 월 보기는 그 날짜, 연 보기는 그 달의 예약을 연다.
-    func trendLayer(index: Int) -> DetailLayer? {
-        let prefix = periodPrefix
-        let key: String
-        switch period {
-        case .month:
-            guard index >= 1, index <= daysInSelectedMonth else { return nil }
-            key = "\(prefix)-\(String(format: "%02d", index))"
-        case .year:
-            guard index >= 1, index <= 12 else { return nil }
-            key = "\(prefix)-\(String(format: "%02d", index))"
-        }
-        let items = periodTargets.filter { $0.date.hasPrefix(key) }
-        guard !items.isEmpty else { return nil }
+    func trendLayer(index: Int) -> DetailLayer {
+        let dateKey = trendDateKey(index: index)
+        let items = dateKey.map { key in periodTargets.filter { $0.date.hasPrefix(key) } } ?? []
         return DetailLayer(
-            id: "trend-\(key)",
-            title: "\(key) 매출 상세",
+            title: "\(dateKey ?? periodLabel) 매출 상세",
             summary: Self.summary(count: items.count, total: items.reduce(0) { $0 + amount($1) }),
             content: .reservations(items)
         )
+    }
+
+    /// 추세 차트의 index번째 칸이 가리키는 날짜 프리픽스("YYYY-MM-DD" 또는 "YYYY-MM").
+    /// 축 범위를 벗어나면 nil.
+    private func trendDateKey(index: Int) -> String? {
+        let upperBound = period == .month ? daysInSelectedMonth : 12
+        guard index >= 1, index <= upperBound else { return nil }
+        return "\(periodPrefix)-\(String(format: "%02d", index))"
     }
 
     /// 웹 모달 푸터와 같은 형식.
@@ -350,7 +374,9 @@ final class RevenueViewModel {
 struct RevenueView: View {
     @Environment(SessionStore.self) private var session
     @State private var viewModel = RevenueViewModel()
-    @State private var detailLayer: RevenueViewModel.DetailLayer?
+    /// 열려 있는 드릴다운이 **무엇인지**만 들고 있는다 — 목록 자체를 들면
+    /// 상세에서 예약을 취소·삭제해도 그 행이 그대로 남는다.
+    @State private var detailKey: RevenueViewModel.DetailKey?
 
     var body: some View {
         @Bindable var viewModel = viewModel
@@ -374,7 +400,7 @@ struct RevenueView: View {
                     RevenueTrendChart(
                         points: viewModel.trend,
                         unitLabel: viewModel.period == .month ? "일" : "월",
-                        onSelect: { index in detailLayer = viewModel.trendLayer(index: index) }
+                        onSelect: { index in detailKey = viewModel.trendKey(index: index) }
                     )
                     .frame(height: 180)
                     .listRowInsets(EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12))
@@ -385,7 +411,7 @@ struct RevenueView: View {
                     Section("담당자별") {
                         ForEach(Array(byAssignee.enumerated()), id: \.offset) { item in
                             Button {
-                                detailLayer = viewModel.assigneeLayer(assigneeId: item.element.assignee?.id)
+                                detailKey = .assignee(item.element.assignee?.id)
                             } label: {
                                 AssigneeRevenueRow(row: item.element)
                             }
@@ -397,9 +423,9 @@ struct RevenueView: View {
         }
         .navigationTitle("매출")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(item: $detailLayer) { layer in
+        .sheet(item: $detailKey) { key in
             RevenueDetailListView(
-                layer: layer,
+                key: key,
                 viewModel: viewModel,
                 pointRate: session.currentStore?.effectivePointRate ?? 0,
                 pointsEnabled: session.currentStore?.usePointSystem ?? false,
@@ -424,7 +450,7 @@ struct RevenueView: View {
 
     private func metricRow(_ key: RevenueViewModel.MetricKey, value: String) -> some View {
         Button {
-            detailLayer = viewModel.metricLayer(key)
+            detailKey = .metric(key)
         } label: {
             HStack {
                 Text(key.label)

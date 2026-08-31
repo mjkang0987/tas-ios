@@ -6,7 +6,9 @@ import SwiftUI
 /// 무엇을 눌렀는지는 `RevenueViewModel.DetailLayer`가 이미 정해서 넘겨준다.
 /// 목록에서 한 번 더 내려갈 수 있다 — 예약 → 예약 상세, 고객 → 고객 상세(웹과 동일).
 struct RevenueDetailListView: View {
-    let layer: RevenueViewModel.DetailLayer
+    /// 무엇을 탭했는지. 목록은 매 렌더마다 여기서 다시 계산한다 —
+    /// 예약을 취소·삭제하고 돌아왔을 때 그 행이 남아 있으면 안 된다.
+    let key: RevenueViewModel.DetailKey
     let viewModel: RevenueViewModel
     /// 매장 적립률(%) — 예약 상세에서 결제하면 자동 적립된다.
     var pointRate: Int = 0
@@ -25,10 +27,12 @@ struct RevenueDetailListView: View {
     private static let emptyText = "등록된 데이터가 없습니다"
 
     var body: some View {
-        NavigationStack {
+        // 한 번만 계산해 제목·푸터·목록이 같은 스냅샷을 쓰게 한다.
+        let layer = viewModel.layer(for: key)
+        return NavigationStack {
             List {
                 Section {
-                    content
+                    content(of: layer)
                 } header: {
                     if let subtitle = layer.subtitle {
                         Text(subtitle).textCase(nil)
@@ -73,7 +77,7 @@ struct RevenueDetailListView: View {
         }
     }
 
-    @ViewBuilder private var content: some View {
+    @ViewBuilder private func content(of layer: RevenueViewModel.DetailLayer) -> some View {
         switch layer.content {
         case .reservations(let reservations):
             if reservations.isEmpty {
