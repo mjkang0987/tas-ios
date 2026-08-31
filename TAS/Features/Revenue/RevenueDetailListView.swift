@@ -3,7 +3,7 @@ import SwiftUI
 /// 매출 드릴다운 — 웹 `RevenueMetricModal` + `RevenueDailyDetailModal` 이식.
 ///
 /// 매출 화면에서 **탭한 모든 지점**(KPI 5칸·추세 차트 막대·담당자별 행)이 이 하나를 재사용한다.
-/// 무엇을 눌렀는지는 `RevenueViewModel.DetailLayer`가 이미 정해서 넘겨준다.
+/// 무엇을 눌렀는지는 `RevenueViewModel.DetailKey`가 정하고, 목록은 여기서 매번 다시 만든다.
 /// 목록에서 한 번 더 내려갈 수 있다 — 예약 → 예약 상세, 고객 → 고객 상세(웹과 동일).
 struct RevenueDetailListView: View {
     /// 무엇을 탭했는지. 목록은 매 렌더마다 여기서 다시 계산한다 —
