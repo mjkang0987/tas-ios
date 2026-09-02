@@ -4,12 +4,12 @@
 > 백엔드는 [`mjkang0987/tas`](https://github.com/mjkang0987/tas)(로컬 `/workspace/tas`). 구조는 `README.md`, 버전 규약은 `CLAUDE.md`.
 >
 > _상태_ ⬜ 예정 · 🟡 진행 · ✅ 완료 · 🔒 외부 준비 필요(키/설정)
-> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/app-click-info-display-jdww8g`).
+> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/customer-search-initial-consonant-lli2i9`).
 > 머지된 PR 브랜치엔 이어붙이지 말고 머지된 default에서 새로 딴다._
 
 ---
 
-## 🟡 진행 중 — 고객 검색: 초성 검색 + 매치 하이라이트 + 메모 검색·노출 (`claude/customer-search-initial-consonant-lli2i9`)
+## ✅ 완료 — 고객 검색: 초성 검색 + 매치 하이라이트 + 메모 검색·노출 (`claude/customer-search-initial-consonant-lli2i9`)
 
 > 웹(tas)에 이미 들어간 같은 기능을 앱에도 이식해 달라는 요청(대화 중 추가 요청 "앱도 초성검색 기능
 > 필요해" / "하이라이트도" / "메모 검색도 가능한거면 노출도" / "다 앱도 마찬가지야"). 웹 쪽 소스오브트루스:
@@ -25,28 +25,42 @@
   `TAS/Core/` 순수 유틸 자리.
 - `TAS/Core/SearchHighlight.swift` **(신규, 순수)** — 웹 `search-highlight.ts` 1:1 이식.
   `matchRange(in:query:caseInsensitive:)` — 일반 부분일치 우선, 없으면 초성 부분일치.
-  Swift `String.Index` 기반이라 웹처럼 "글자 수 보존"을 인덱스 산술로 직접 증명할 필요 없이
-  `String.range(of:)`/문자 오프셋 변환으로 처리(구현 시 실제 방식 확정).
-- `CustomersViewModel.filtered` — 이름 매칭에 `Chosung.matches` 추가, 메모 태그 매칭 추가(현재는
-  이름·전화만 검색됨 — 메모는 검색 대상이 아니었다). 웹 `address.tsx` `filteredCustomers`와 동일 규칙.
-- `CustomersViewModel`에 매치된 메모 태그를 함께 낼 방법 추가(웹에서 "행마다 매칭 로직 재구현" 리뷰
-  지적을 받아 필터 계산 지점에서 한 번에 산출하도록 고쳤다 — 앱도 처음부터 그 자리에서 계산).
-- `CustomersView.swift`의 `CustomerRow` — 이름에 매치 하이라이트(웹은 `<mark>`, 앱은 `AttributedString`/
-  `Text` 조합), 메모로 걸린 경우에만 매치된 메모 태그를 행에 노출(기존 `CustomerDetailView.FlowTags`의
-  `ColorDot` 패턴 재사용 — 신규 컴포넌트 아님, 기존 표시 방식을 행 컨텍스트에 맞게 재사용).
+  `Chosung.extract`가 문자 수를 보존하는 성질을 이용해, 초성열에서 찾은 문자 오프셋
+  (`distance(from:to:)`)을 `text.index(_:offsetBy:limitedBy:)`로 원문 `String.Index`로 그대로 옮긴다.
+- `CustomersViewModel.filterResult`(구 `filtered`) — 이름 매칭에 `Chosung.matches` 추가, 메모 태그
+  매칭 추가(원래 이름·전화만 검색됐다 — 메모는 검색 대상이 아니었다). 웹 `address.tsx`
+  `filteredCustomers`와 동일 규칙. 필터링과 "검색어로 걸린 메모 태그" 산출을 **한 번에** 해서
+  `FilterResult{customers, matchedMemoTags: [Int:[CustomerMemoTag]]}`로 낸다 — 행마다 같은 매칭
+  규칙을 다시 구현하지 않는다(코드리뷰 지적, 웹에서도 같은 클래스 문제를 같은 방식으로 고쳤다).
+- `CustomersView.swift`의 `CustomerRow` — 이름에 매치 하이라이트, 메모로 걸린 경우에만 매치된 메모
+  태그를 행에 노출(기존 `CustomerDetailView.FlowTags`의 `ColorDot` 패턴 재사용 — 신규 컴포넌트 아님).
 - **신규 컴포넌트 통제**: 하이라이트 텍스트 렌더링은 별도 View가 아니라 `Text`를 만들어 주는 순수
-  헬퍼(기존 `Formatting.swift`의 `formatWon`과 같은 자리)로 둔다 — 사용처가 `CustomerRow` 한 곳뿐이라
-  재사용 컴포넌트로 승격할 근거가 아직 없다(웹은 2곳이라 컴포넌트였다).
+  헬퍼 `highlightedText(_:range:)`(`Formatting.swift`의 `formatWon`과 같은 자리)로 뒀다 — 사용처가
+  `CustomerRow` 한 곳뿐이라 재사용 컴포넌트로 승격할 근거가 없다(웹은 2곳이라 컴포넌트였다).
+  구현은 `AttributedString` + `String.Index → AttributedString.Index` 변환 + SwiftUI `backgroundColor`
+  속성(iOS 15+, 이 앱 타깃 17+에서 문제없음).
+
+### 코드리뷰에서 고친 것 (opus 정적 리뷰 — 이 컨테이너는 Xcode가 없어 컴파일 확인 불가하므로 특히 꼼꼼히)
+- 컴파일을 막을 문법 오류는 없다고 확인(문자열 API·`AttributedString` 변환·기존 코드베이스의
+  동일 패턴 대조 포함). 손검산으로 초성 인덱스 계산도 재검증(예: "이김민수"+`ㄱㅁㅅ` → "김민수").
+- **메모 매치 계산이 필터와 행 두 곳에 있었다.** 처음 구현은 `matchedMemoTags(for:)`를 `filtered`
+  안에서도, `CustomerRow`를 만드는 자리에서도 각각 불렀다 — 위 `filterResult`로 합쳐 해결.
+- **로케일 불일치.** 필터는 `localizedCaseInsensitiveContains`(로케일 인식)를 쓰는데
+  `SearchHighlight.matchRange`는 로케일 없는 `.caseInsensitive`만 썼다 — 필터엔 걸리는데 하이라이트만
+  안 뜨는 로케일 의존 문자가 있을 수 있어 `range(of:options:locale:)`로 로케일을 맞췄다.
+- NFD 분해 한글(자모가 분리 저장된 경우)은 초성 변환을 건너뛴다 — 웹 `chosung.ts`도 같은 한계
+  (`charCodeAt` 기반)이고, 서버가 주는 데이터는 실무상 NFC라 영향 없음. **스킵**.
 
 ### 검증
-- `TASTests/ChosungTests.swift`·`TASTests/SearchHighlightTests.swift` 신규(웹 테스트 케이스 이식).
-- 이 컨테이너엔 Xcode가 없어 로컬 빌드·렌더 확인이 불가 — **푸시 후 CI(`ios-test.yml`/`ios-build.yml`)
-  green까지가 검증**(작업 규약).
+- `TASTests/ChosungTests.swift`·`TASTests/SearchHighlightTests.swift` 신규(웹 테스트 케이스 이식,
+  15케이스). 이 컨테이너엔 Xcode가 없어 로컬 빌드·렌더 확인이 불가 — **푸시 후 CI green이 검증**
+  (작업 규약). 결과: `ios-build.yml`·`ios-test.yml`·`ios-screenshot.yml` **전부 success**
+  (커밋 `a1e5ed5` 기준, 코드리뷰 반영 커밋 포함).
 
 ### 영향 파일
 `TAS/Core/Chosung.swift`(신규)·`TAS/Core/SearchHighlight.swift`(신규)·`TASTests/ChosungTests.swift`(신규)·
 `TASTests/SearchHighlightTests.swift`(신규)·`TAS/Features/Customers/CustomersViewModel.swift`·
-`TAS/Features/Customers/CustomersView.swift`.
+`TAS/Features/Customers/CustomersView.swift`·`TAS/Core/UI/Formatting.swift`.
 
 ---
 
