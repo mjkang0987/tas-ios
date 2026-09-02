@@ -74,7 +74,8 @@ struct CustomersView: View {
     }
 
     private var list: some View {
-        let items = viewModel.filtered
+        let result = viewModel.filterResult
+        let items = result.customers
         return Group {
             if items.isEmpty {
                 ContentUnavailableView.search
@@ -90,7 +91,7 @@ struct CustomersView: View {
                             stats: stats[customer.id] ?? .empty,
                             serviceColorMap: viewModel.serviceColorMap,
                             searchQuery: query,
-                            matchedMemoTags: viewModel.matchedMemoTags(for: customer)
+                            matchedMemoTags: result.matchedMemoTags[customer.id] ?? []
                         )
                     }
                     .buttonStyle(.plain)

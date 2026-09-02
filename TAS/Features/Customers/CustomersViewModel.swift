@@ -28,26 +28,36 @@ final class CustomersViewModel {
         self.service = service
     }
 
-    var filtered: [Customer] {
-        let all = (state.value?.customers ?? []).sortedByName()
-        let query = searchText.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return all }
-        let digits = query.filter(\.isNumber)
-        return all.filter { customer in
-            customer.name.localizedCaseInsensitiveContains(query)
-                || Chosung.matches(customer.name, query)
-                || (!digits.isEmpty && customer.tel.contains(digits))
-                || !matchedMemoTags(for: customer).isEmpty
-        }
+    struct FilterResult {
+        var customers: [Customer]
+        /// 검색어로 걸린 메모 태그(고객 id별) — 이름·전화가 아니라 메모 때문에 뜬 결과를
+        /// 행에서 근거로 보여줄 때 쓴다(웹 `address.tsx`의 memoTags 매칭과 동일 규칙 — 초성 대상 아님).
+        var matchedMemoTags: [Int: [CustomerMemoTag]]
     }
 
-    /// 검색어로 걸린 메모 태그 — 이름·전화가 아니라 메모 때문에 뜬 결과를 행에서 근거로
-    /// 보여줄 때 쓴다(웹 `address.tsx`의 memoTags 매칭과 동일 규칙 — 초성 대상 아님).
-    func matchedMemoTags(for customer: Customer) -> [CustomerMemoTag] {
+    /// 필터링과 메모 매치 산출을 한 번에 한다 — 행마다 같은 매칭 규칙을 다시 구현하지 않는다
+    /// (웹 코드리뷰에서 지적된 중복 계산과 같은 클래스, 여기서도 필터 계산 지점 한 곳으로 모은다).
+    var filterResult: FilterResult {
+        let all = (state.value?.customers ?? []).sortedByName()
         let query = searchText.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return [] }
-        return (customer.memoTags ?? []).filter { $0.text.localizedCaseInsensitiveContains(query) }
+        guard !query.isEmpty else { return FilterResult(customers: all, matchedMemoTags: [:]) }
+
+        let digits = query.filter(\.isNumber)
+        var tagsByCustomer: [Int: [CustomerMemoTag]] = [:]
+        let filtered = all.filter { customer in
+            let matchedTags = (customer.memoTags ?? []).filter { $0.text.localizedCaseInsensitiveContains(query) }
+            if !matchedTags.isEmpty { tagsByCustomer[customer.id] = matchedTags }
+
+            return customer.name.localizedCaseInsensitiveContains(query)
+                || Chosung.matches(customer.name, query)
+                || (!digits.isEmpty && customer.tel.contains(digits))
+                || !matchedTags.isEmpty
+        }
+
+        return FilterResult(customers: filtered, matchedMemoTags: tagsByCustomer)
     }
+
+    var filtered: [Customer] { filterResult.customers }
 
     /// 다음 고객 정수 id(현재 최대 +1) — 신규 등록 폼용(웹 getNextNumericId).
     var nextCustomerId: Int { ((state.value?.customers.map(\.id).max()) ?? 0) + 1 }
