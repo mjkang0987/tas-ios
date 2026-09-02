@@ -9,6 +9,47 @@
 
 ---
 
+## 🟡 진행 중 — 고객 검색: 초성 검색 + 매치 하이라이트 + 메모 검색·노출 (`claude/customer-search-initial-consonant-lli2i9`)
+
+> 웹(tas)에 이미 들어간 같은 기능을 앱에도 이식해 달라는 요청(대화 중 추가 요청 "앱도 초성검색 기능
+> 필요해" / "하이라이트도" / "메모 검색도 가능한거면 노출도" / "다 앱도 마찬가지야"). 웹 쪽 소스오브트루스:
+> tas `client/features/customers/{chosung,search-highlight}.ts` + `pages/address.tsx`.
+
+### 대상
+앱의 고객 검색은 화면 하나뿐이다(`CustomersView.swift`의 `.searchable`) — 웹의 "고객명단"에 대응.
+웹의 "고객 검색 레이어"(헤더 돋보기 모달)에 대응하는 화면은 앱에 없다.
+
+### 구현 방침
+- `TAS/Core/Chosung.swift` **(신규, 순수)** — 웹 `chosung.ts` 1:1 이식. `extract(_:)`(음절→초성,
+  비한글 통과) · `isQuery(_:)` · `matches(_:_:)`. `NameSort.swift`·`ReservationOverlap.swift`와 같은
+  `TAS/Core/` 순수 유틸 자리.
+- `TAS/Core/SearchHighlight.swift` **(신규, 순수)** — 웹 `search-highlight.ts` 1:1 이식.
+  `matchRange(in:query:caseInsensitive:)` — 일반 부분일치 우선, 없으면 초성 부분일치.
+  Swift `String.Index` 기반이라 웹처럼 "글자 수 보존"을 인덱스 산술로 직접 증명할 필요 없이
+  `String.range(of:)`/문자 오프셋 변환으로 처리(구현 시 실제 방식 확정).
+- `CustomersViewModel.filtered` — 이름 매칭에 `Chosung.matches` 추가, 메모 태그 매칭 추가(현재는
+  이름·전화만 검색됨 — 메모는 검색 대상이 아니었다). 웹 `address.tsx` `filteredCustomers`와 동일 규칙.
+- `CustomersViewModel`에 매치된 메모 태그를 함께 낼 방법 추가(웹에서 "행마다 매칭 로직 재구현" 리뷰
+  지적을 받아 필터 계산 지점에서 한 번에 산출하도록 고쳤다 — 앱도 처음부터 그 자리에서 계산).
+- `CustomersView.swift`의 `CustomerRow` — 이름에 매치 하이라이트(웹은 `<mark>`, 앱은 `AttributedString`/
+  `Text` 조합), 메모로 걸린 경우에만 매치된 메모 태그를 행에 노출(기존 `CustomerDetailView.FlowTags`의
+  `ColorDot` 패턴 재사용 — 신규 컴포넌트 아님, 기존 표시 방식을 행 컨텍스트에 맞게 재사용).
+- **신규 컴포넌트 통제**: 하이라이트 텍스트 렌더링은 별도 View가 아니라 `Text`를 만들어 주는 순수
+  헬퍼(기존 `Formatting.swift`의 `formatWon`과 같은 자리)로 둔다 — 사용처가 `CustomerRow` 한 곳뿐이라
+  재사용 컴포넌트로 승격할 근거가 아직 없다(웹은 2곳이라 컴포넌트였다).
+
+### 검증
+- `TASTests/ChosungTests.swift`·`TASTests/SearchHighlightTests.swift` 신규(웹 테스트 케이스 이식).
+- 이 컨테이너엔 Xcode가 없어 로컬 빌드·렌더 확인이 불가 — **푸시 후 CI(`ios-test.yml`/`ios-build.yml`)
+  green까지가 검증**(작업 규약).
+
+### 영향 파일
+`TAS/Core/Chosung.swift`(신규)·`TAS/Core/SearchHighlight.swift`(신규)·`TASTests/ChosungTests.swift`(신규)·
+`TASTests/SearchHighlightTests.swift`(신규)·`TAS/Features/Customers/CustomersViewModel.swift`·
+`TAS/Features/Customers/CustomersView.swift`.
+
+---
+
 ## 0. 현재 상태 (완료 ✅ · 게스트 기반 운영 기능은 사실상 완성)
 
 **진입**
