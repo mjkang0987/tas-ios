@@ -8,7 +8,7 @@ enum SearchHighlight {
     static func matchRange(in text: String, query: String, caseInsensitive: Bool = false) -> Range<String.Index>? {
         guard !query.isEmpty else { return nil }
 
-        // 로케일까지 맞추는 이유: 호출부(CustomersViewModel.filtered)가 필터링에
+        // 로케일까지 맞추는 이유: 호출부(CustomersViewModel.filterResult)가 필터링에
         // localizedCaseInsensitiveContains(로케일 인식)를 쓴다. 여기서 로케일 없이 비교하면
         // 필터엔 걸렸는데 하이라이트만 안 뜨는 경우가 생길 수 있다.
         let options: String.CompareOptions = caseInsensitive ? [.caseInsensitive] : []

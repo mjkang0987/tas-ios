@@ -137,7 +137,8 @@ private struct CustomerRow: View {
             if !matchedMemoTags.isEmpty {
                 // 색 점 자체가 "이 메모 때문에 걸렸다"는 근거라 글자 안에 다시 마킹을 얹지 않는다
                 // (상세 화면 `FlowTags`와 같은 표시 방식 재사용, 컨텍스트만 목록 행).
-                HStack(spacing: 8) {
+                // 태그가 여럿이거나 길면 한 줄로는 잘리므로 상태 배지와 같은 WrapLayout으로 줄바꿈한다.
+                WrapLayout(spacing: 8) {
                     ForEach(Array(matchedMemoTags.enumerated()), id: \.offset) { item in
                         HStack(spacing: 4) {
                             ColorDot(color: Color(hex: item.element.color) ?? .gray, size: 8)

@@ -57,8 +57,6 @@ final class CustomersViewModel {
         return FilterResult(customers: filtered, matchedMemoTags: tagsByCustomer)
     }
 
-    var filtered: [Customer] { filterResult.customers }
-
     /// 다음 고객 정수 id(현재 최대 +1) — 신규 등록 폼용(웹 getNextNumericId).
     var nextCustomerId: Int { ((state.value?.customers.map(\.id).max()) ?? 0) + 1 }
 
