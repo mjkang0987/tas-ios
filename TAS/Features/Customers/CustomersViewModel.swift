@@ -35,8 +35,18 @@ final class CustomersViewModel {
         let digits = query.filter(\.isNumber)
         return all.filter { customer in
             customer.name.localizedCaseInsensitiveContains(query)
+                || Chosung.matches(customer.name, query)
                 || (!digits.isEmpty && customer.tel.contains(digits))
+                || !matchedMemoTags(for: customer).isEmpty
         }
+    }
+
+    /// 검색어로 걸린 메모 태그 — 이름·전화가 아니라 메모 때문에 뜬 결과를 행에서 근거로
+    /// 보여줄 때 쓴다(웹 `address.tsx`의 memoTags 매칭과 동일 규칙 — 초성 대상 아님).
+    func matchedMemoTags(for customer: Customer) -> [CustomerMemoTag] {
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return [] }
+        return (customer.memoTags ?? []).filter { $0.text.localizedCaseInsensitiveContains(query) }
     }
 
     /// 다음 고객 정수 id(현재 최대 +1) — 신규 등록 폼용(웹 getNextNumericId).
