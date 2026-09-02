@@ -51,11 +51,29 @@
 - NFD 분해 한글(자모가 분리 저장된 경우)은 초성 변환을 건너뛴다 — 웹 `chosung.ts`도 같은 한계
   (`charCodeAt` 기반)이고, 서버가 주는 데이터는 실무상 NFC라 영향 없음. **스킵**.
 
+### 2라운드 코드리뷰에서 고친 것 (사용자 요청으로 리뷰 사이클 재실행, opus 정적 리뷰)
+- **매치된 메모 태그 행이 `HStack`이라 줄바꿈이 안 됐다.** 태그 2개 이상이거나 텍스트가 길면 압축·
+  잘림 — 바로 아래 상태 배지가 쓰는 `WrapLayout`으로 교체(웹의 `flex-wrap: wrap`에 대응하는 기존
+  공용 레이아웃, 신규 컴포넌트 아님).
+- **`CustomersViewModel.filtered`가 죽은 코드였다.** `filterResult`로 옮긴 뒤 아무도 안 부르는데
+  편의상 남겨뒀다 — 실제로 호출부가 0곳임을 재확인하고 삭제.
+- `SearchHighlight.swift`의 주석이 이름이 바뀐 `CustomersViewModel.filtered`를 그대로 가리키고
+  있었다 — `filterResult`로 정정.
+- **테스트 공백**: `CustomersViewModel`(뷰모델) 테스트가 아예 없었다 — 이번에 바뀐 로직(이름/전화/
+  초성/메모 OR 결합, 매치된 메모 태그 산출) 중 유일하게 미검증이던 부분이라 `RevenueViewModelTests`와
+  같은 패턴(`state`를 직접 주입, 네트워크 없음)으로 `TASTests/CustomersViewModelTests.swift` 신설.
+- **스킵(근거 남김)**: `filterResult`가 SwiftUI body 재평가마다(시트 열고닫을 때도) 매번
+  `sortedByName()`부터 다시 계산한다는 지적 — 이건 이번에 새로 생긴 문제가 아니라 원래
+  `filtered`도 같은 특성이었다(회귀 아님). 게스트/실 매장 모두 고객 수가 수십~수백 규모라 매
+  재평가가 무시 가능한 비용이고, 진짜 캐싱하려면 `searchText`/`state` 변경만 추적하는 별도
+  캐시 인프라가 필요해 지금 규모엔 과하다.
+
 ### 검증
-- `TASTests/ChosungTests.swift`·`TASTests/SearchHighlightTests.swift` 신규(웹 테스트 케이스 이식,
-  15케이스). 이 컨테이너엔 Xcode가 없어 로컬 빌드·렌더 확인이 불가 — **푸시 후 CI green이 검증**
-  (작업 규약). 결과: `ios-build.yml`·`ios-test.yml`·`ios-screenshot.yml` **전부 success**
-  (커밋 `a1e5ed5` 기준, 코드리뷰 반영 커밋 포함).
+- `TASTests/ChosungTests.swift`·`TASTests/SearchHighlightTests.swift`(웹 테스트 케이스 이식, 15케이스)
+  + `TASTests/CustomersViewModelTests.swift`(신규, 7케이스). 이 컨테이너엔 Xcode가 없어 로컬
+  빌드·렌더 확인이 불가 — **푸시 후 CI green이 검증**(작업 규약).
+- 1라운드 결과: `ios-build.yml`·`ios-test.yml`·`ios-screenshot.yml` **전부 success**(커밋 `a1e5ed5`).
+- 2라운드(이 절) 결과는 푸시 후 갱신.
 
 ### 영향 파일
 `TAS/Core/Chosung.swift`(신규)·`TAS/Core/SearchHighlight.swift`(신규)·`TASTests/ChosungTests.swift`(신규)·
