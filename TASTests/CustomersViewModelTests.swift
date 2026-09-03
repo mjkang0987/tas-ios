@@ -77,4 +77,20 @@ final class CustomersViewModelTests: XCTestCase {
         m.searchText = "   "
         XCTAssertEqual(m.filterResult.customers.map(\.id), [1])
     }
+
+    func testMemoMatchingIsNotChosungAware() {
+        // 메모 태그 매칭은 일반 부분일치만 본다(웹 address.tsx와 동일 규칙) — 이름과 달리 초성
+        // 질의로는 메모가 걸리지 않아야 한다. "김치"의 초성은 "ㄱㅊ"이지만 매칭 대상이 아니다.
+        let m = makeVM([customer(1, "박서준", memoTags: [CustomerMemoTag(text: "김치", color: "#4285F4")])])
+        m.searchText = "ㄱㅊ"
+        XCTAssertTrue(m.filterResult.customers.isEmpty, "메모는 초성 대상이 아니므로 결과가 없어야 한다")
+    }
+
+    func testTrimmedSearchQueryMatchesFilterTrimRule() {
+        // 필터(filterResult)와 화면(하이라이트 등)이 같은 트림 규칙을 봐야 한다 — 각자 다시
+        // 트림하면 규칙이 갈릴 때 필터엔 걸리는데 하이라이트만 안 뜨는 어긋남이 생긴다.
+        let m = CustomersViewModel()
+        m.searchText = "  김민수  "
+        XCTAssertEqual(m.trimmedSearchQuery, "김민수")
+    }
 }
