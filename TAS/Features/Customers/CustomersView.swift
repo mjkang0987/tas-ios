@@ -74,12 +74,14 @@ struct CustomersView: View {
     }
 
     private var list: some View {
-        let items = viewModel.filtered
+        let result = viewModel.filterResult
+        let items = result.customers
         return Group {
             if items.isEmpty {
                 ContentUnavailableView.search
             } else {
                 let stats = viewModel.statsByCustomer
+                let query = viewModel.trimmedSearchQuery
                 List(items) { customer in
                     Button {
                         activeSheet = .detail(customer)
@@ -87,7 +89,9 @@ struct CustomersView: View {
                         CustomerRow(
                             customer: customer,
                             stats: stats[customer.id] ?? .empty,
-                            serviceColorMap: viewModel.serviceColorMap
+                            serviceColorMap: viewModel.serviceColorMap,
+                            searchQuery: query,
+                            matchedMemoTags: result.matchedMemoTags[customer.id] ?? []
                         )
                     }
                     .buttonStyle(.plain)
@@ -105,11 +109,20 @@ private struct CustomerRow: View {
     let customer: Customer
     let stats: CustomerStats.Summary
     let serviceColorMap: [String: String]
+    /// 트림된 실제 검색어(없으면 하이라이트 없음).
+    var searchQuery: String = ""
+    /// 이 검색어로 매치된 메모 태그 — 이름/전화가 아니라 메모 때문에 뜬 결과의 근거로 보여준다.
+    var matchedMemoTags: [CustomerMemoTag] = []
+
+    private var nameMatchRange: Range<String.Index>? {
+        guard !searchQuery.isEmpty else { return nil }
+        return SearchHighlight.matchRange(in: customer.name, query: searchQuery, caseInsensitive: true)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
-                Text(customer.name).font(.subheadline.weight(.medium))
+                highlightedText(customer.name, range: nameMatchRange).font(.subheadline.weight(.medium))
                 Text(customer.formattedTel).font(.caption2).foregroundStyle(.secondary)
                 Spacer(minLength: 0)
                 // 적립금은 웹처럼 라벨과 함께 항상 보인다(0도) — 없다가 생기면 행 높이가 흔들린다.
@@ -119,6 +132,24 @@ private struct CustomerRow: View {
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.tint)
                     .monospacedDigit()
+            }
+
+            if !matchedMemoTags.isEmpty {
+                // 색 점 자체가 "이 메모 때문에 걸렸다"는 근거라 글자 안에 다시 마킹을 얹지 않는다
+                // (상세 화면 `FlowTags`와 같은 표시 방식 재사용, 컨텍스트만 목록 행).
+                // 태그가 여럿이거나 길면 한 줄로는 잘리므로 상태 배지와 같은 WrapLayout으로 줄바꿈한다.
+                WrapLayout(spacing: 8) {
+                    ForEach(Array(matchedMemoTags.enumerated()), id: \.offset) { item in
+                        HStack(spacing: 4) {
+                            ColorDot(color: Color(hex: item.element.color) ?? .gray, size: 8)
+                            // WrapLayout은 한 줄 높이로 측정하고 폭만 잘라 배치한다 — lineLimit(1)이
+                            // 없으면 폭보다 긴 태그가 두 줄로 감싸이면서 레이아웃이 어긋난다.
+                            Text(item.element.text).lineLimit(1)
+                        }
+                    }
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
             }
 
             HStack(spacing: 6) {

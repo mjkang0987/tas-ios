@@ -4,8 +4,83 @@
 > 백엔드는 [`mjkang0987/tas`](https://github.com/mjkang0987/tas)(로컬 `/workspace/tas`). 구조는 `README.md`, 버전 규약은 `CLAUDE.md`.
 >
 > _상태_ ⬜ 예정 · 🟡 진행 · ✅ 완료 · 🔒 외부 준비 필요(키/설정)
-> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/app-click-info-display-jdww8g`).
+> _작업 브랜치: 세션마다 지정되는 `claude/*` 브랜치(현재 `claude/customer-search-initial-consonant-lli2i9`).
 > 머지된 PR 브랜치엔 이어붙이지 말고 머지된 default에서 새로 딴다._
+
+---
+
+## ✅ 완료 — 고객 검색: 초성 검색 + 매치 하이라이트 + 메모 검색·노출 (`claude/customer-search-initial-consonant-lli2i9`)
+
+> 웹(tas)에 이미 들어간 같은 기능을 앱에도 이식해 달라는 요청(대화 중 추가 요청 "앱도 초성검색 기능
+> 필요해" / "하이라이트도" / "메모 검색도 가능한거면 노출도" / "다 앱도 마찬가지야"). 웹 쪽 소스오브트루스:
+> tas `client/features/customers/{chosung,search-highlight}.ts` + `pages/address.tsx`.
+
+### 대상
+앱의 고객 검색은 화면 하나뿐이다(`CustomersView.swift`의 `.searchable`) — 웹의 "고객명단"에 대응.
+웹의 "고객 검색 레이어"(헤더 돋보기 모달)에 대응하는 화면은 앱에 없다.
+
+### 구현 방침
+- `TAS/Core/Chosung.swift` **(신규, 순수)** — 웹 `chosung.ts` 1:1 이식. `extract(_:)`(음절→초성,
+  비한글 통과) · `isQuery(_:)` · `matches(_:_:)`. `NameSort.swift`·`ReservationOverlap.swift`와 같은
+  `TAS/Core/` 순수 유틸 자리.
+- `TAS/Core/SearchHighlight.swift` **(신규, 순수)** — 웹 `search-highlight.ts` 1:1 이식.
+  `matchRange(in:query:caseInsensitive:)` — 일반 부분일치 우선, 없으면 초성 부분일치.
+  `Chosung.extract`가 문자 수를 보존하는 성질을 이용해, 초성열에서 찾은 문자 오프셋
+  (`distance(from:to:)`)을 `text.index(_:offsetBy:limitedBy:)`로 원문 `String.Index`로 그대로 옮긴다.
+- `CustomersViewModel.filterResult`(구 `filtered`) — 이름 매칭에 `Chosung.matches` 추가, 메모 태그
+  매칭 추가(원래 이름·전화만 검색됐다 — 메모는 검색 대상이 아니었다). 웹 `address.tsx`
+  `filteredCustomers`와 동일 규칙. 필터링과 "검색어로 걸린 메모 태그" 산출을 **한 번에** 해서
+  `FilterResult{customers, matchedMemoTags: [Int:[CustomerMemoTag]]}`로 낸다 — 행마다 같은 매칭
+  규칙을 다시 구현하지 않는다(코드리뷰 지적, 웹에서도 같은 클래스 문제를 같은 방식으로 고쳤다).
+- `CustomersView.swift`의 `CustomerRow` — 이름에 매치 하이라이트, 메모로 걸린 경우에만 매치된 메모
+  태그를 행에 노출(기존 `CustomerDetailView.FlowTags`의 `ColorDot` 패턴 재사용 — 신규 컴포넌트 아님).
+- **신규 컴포넌트 통제**: 하이라이트 텍스트 렌더링은 별도 View가 아니라 `Text`를 만들어 주는 순수
+  헬퍼 `highlightedText(_:range:)`(`Formatting.swift`의 `formatWon`과 같은 자리)로 뒀다 — 사용처가
+  `CustomerRow` 한 곳뿐이라 재사용 컴포넌트로 승격할 근거가 없다(웹은 2곳이라 컴포넌트였다).
+  구현은 `AttributedString` + `String.Index → AttributedString.Index` 변환 + SwiftUI `backgroundColor`
+  속성(iOS 15+, 이 앱 타깃 17+에서 문제없음).
+
+### 코드리뷰에서 고친 것 (opus 정적 리뷰 — 이 컨테이너는 Xcode가 없어 컴파일 확인 불가하므로 특히 꼼꼼히)
+- 컴파일을 막을 문법 오류는 없다고 확인(문자열 API·`AttributedString` 변환·기존 코드베이스의
+  동일 패턴 대조 포함). 손검산으로 초성 인덱스 계산도 재검증(예: "이김민수"+`ㄱㅁㅅ` → "김민수").
+- **메모 매치 계산이 필터와 행 두 곳에 있었다.** 처음 구현은 `matchedMemoTags(for:)`를 `filtered`
+  안에서도, `CustomerRow`를 만드는 자리에서도 각각 불렀다 — 위 `filterResult`로 합쳐 해결.
+- **로케일 불일치.** 필터는 `localizedCaseInsensitiveContains`(로케일 인식)를 쓰는데
+  `SearchHighlight.matchRange`는 로케일 없는 `.caseInsensitive`만 썼다 — 필터엔 걸리는데 하이라이트만
+  안 뜨는 로케일 의존 문자가 있을 수 있어 `range(of:options:locale:)`로 로케일을 맞췄다.
+- NFD 분해 한글(자모가 분리 저장된 경우)은 초성 변환을 건너뛴다 — 웹 `chosung.ts`도 같은 한계
+  (`charCodeAt` 기반)이고, 서버가 주는 데이터는 실무상 NFC라 영향 없음. **스킵**.
+
+### 2라운드 코드리뷰에서 고친 것 (사용자 요청으로 리뷰 사이클 재실행, opus 정적 리뷰)
+- **매치된 메모 태그 행이 `HStack`이라 줄바꿈이 안 됐다.** 태그 2개 이상이거나 텍스트가 길면 압축·
+  잘림 — 바로 아래 상태 배지가 쓰는 `WrapLayout`으로 교체(웹의 `flex-wrap: wrap`에 대응하는 기존
+  공용 레이아웃, 신규 컴포넌트 아님).
+- **`CustomersViewModel.filtered`가 죽은 코드였다.** `filterResult`로 옮긴 뒤 아무도 안 부르는데
+  편의상 남겨뒀다 — 실제로 호출부가 0곳임을 재확인하고 삭제.
+- `SearchHighlight.swift`의 주석이 이름이 바뀐 `CustomersViewModel.filtered`를 그대로 가리키고
+  있었다 — `filterResult`로 정정.
+- **테스트 공백**: `CustomersViewModel`(뷰모델) 테스트가 아예 없었다 — 이번에 바뀐 로직(이름/전화/
+  초성/메모 OR 결합, 매치된 메모 태그 산출) 중 유일하게 미검증이던 부분이라 `RevenueViewModelTests`와
+  같은 패턴(`state`를 직접 주입, 네트워크 없음)으로 `TASTests/CustomersViewModelTests.swift` 신설.
+- **스킵(근거 남김)**: `filterResult`가 SwiftUI body 재평가마다(시트 열고닫을 때도) 매번
+  `sortedByName()`부터 다시 계산한다는 지적 — 이건 이번에 새로 생긴 문제가 아니라 원래
+  `filtered`도 같은 특성이었다(회귀 아님). 게스트/실 매장 모두 고객 수가 수십~수백 규모라 매
+  재평가가 무시 가능한 비용이고, 진짜 캐싱하려면 `searchText`/`state` 변경만 추적하는 별도
+  캐시 인프라가 필요해 지금 규모엔 과하다.
+
+### 검증
+- `TASTests/ChosungTests.swift`·`TASTests/SearchHighlightTests.swift`(웹 테스트 케이스 이식, 15케이스)
+  + `TASTests/CustomersViewModelTests.swift`(신규, 7케이스). 이 컨테이너엔 Xcode가 없어 로컬
+  빌드·렌더 확인이 불가 — **푸시 후 CI green이 검증**(작업 규약).
+- 1라운드 결과: `ios-build.yml`·`ios-test.yml`·`ios-screenshot.yml` **전부 success**(커밋 `a1e5ed5`).
+- 2라운드 결과: 동일 3워크플로 **전부 success**(커밋 `87cc0e3`, `CustomersViewModelTests` 9케이스 포함).
+- 3라운드(최종): 요구사항 3가지(초성검색·하이라이트·메모 노출)가 실제 코드 경로로 연결돼 있는지
+  처음부터 재확인, 테스트 신뢰성(손검산)도 재검증. 실질적인 남은 문제 없음 — 사이클 종료.
+
+### 영향 파일
+`TAS/Core/Chosung.swift`(신규)·`TAS/Core/SearchHighlight.swift`(신규)·`TASTests/ChosungTests.swift`(신규)·
+`TASTests/SearchHighlightTests.swift`(신규)·`TAS/Features/Customers/CustomersViewModel.swift`·
+`TAS/Features/Customers/CustomersView.swift`·`TAS/Core/UI/Formatting.swift`.
 
 ---
 
