@@ -81,7 +81,7 @@ struct CustomersView: View {
                 ContentUnavailableView.search
             } else {
                 let stats = viewModel.statsByCustomer
-                let query = viewModel.searchText.trimmingCharacters(in: .whitespaces)
+                let query = viewModel.trimmedSearchQuery
                 List(items) { customer in
                     Button {
                         activeSheet = .detail(customer)
@@ -142,7 +142,9 @@ private struct CustomerRow: View {
                     ForEach(Array(matchedMemoTags.enumerated()), id: \.offset) { item in
                         HStack(spacing: 4) {
                             ColorDot(color: Color(hex: item.element.color) ?? .gray, size: 8)
-                            Text(item.element.text)
+                            // WrapLayout은 한 줄 높이로 측정하고 폭만 잘라 배치한다 — lineLimit(1)이
+                            // 없으면 폭보다 긴 태그가 두 줄로 감싸이면서 레이아웃이 어긋난다.
+                            Text(item.element.text).lineLimit(1)
                         }
                     }
                 }

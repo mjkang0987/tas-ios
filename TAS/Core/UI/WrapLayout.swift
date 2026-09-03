@@ -2,8 +2,8 @@ import SwiftUI
 
 /// 가로로 넘치면 다음 줄로 흐르는 배치 — 웹 `flex-wrap: wrap`.
 ///
-/// 시술 칩(`ServiceChipList`)과 고객 목록의 상태 카운트 배지가 함께 쓴다.
-/// 둘 다 `lineLimit(1)`이라 한 줄에 밀어넣으면 내용이 잘린다 — 줄바꿈이 답이다.
+/// 시술 칩(`ServiceChipList`)·고객 목록의 상태 카운트 배지·매치된 메모 태그가 함께 쓴다.
+/// 셋 다 자식에 `lineLimit(1)`을 둬 한 줄에 밀어넣으면 내용이 잘린다 — 줄바꿈이 답이다.
 struct WrapLayout: Layout {
     var spacing: CGFloat
 

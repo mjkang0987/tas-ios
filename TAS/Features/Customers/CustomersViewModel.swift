@@ -35,11 +35,15 @@ final class CustomersViewModel {
         var matchedMemoTags: [Int: [CustomerMemoTag]]
     }
 
+    /// 트림된 검색어 — 필터와 화면(하이라이트 등)이 같은 트림 규칙을 보게 한다. 각자 트림하면
+    /// 규칙이 갈릴 때 "필터엔 걸리는데 하이라이트만 안 뜨는" 어긋남이 생긴다.
+    var trimmedSearchQuery: String { searchText.trimmingCharacters(in: .whitespaces) }
+
     /// 필터링과 메모 매치 산출을 한 번에 한다 — 행마다 같은 매칭 규칙을 다시 구현하지 않는다
     /// (웹 코드리뷰에서 지적된 중복 계산과 같은 클래스, 여기서도 필터 계산 지점 한 곳으로 모은다).
     var filterResult: FilterResult {
         let all = (state.value?.customers ?? []).sortedByName()
-        let query = searchText.trimmingCharacters(in: .whitespaces)
+        let query = trimmedSearchQuery
         guard !query.isEmpty else { return FilterResult(customers: all, matchedMemoTags: [:]) }
 
         let digits = query.filter(\.isNumber)
