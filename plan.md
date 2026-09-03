@@ -73,7 +73,9 @@
   + `TASTests/CustomersViewModelTests.swift`(신규, 7케이스). 이 컨테이너엔 Xcode가 없어 로컬
   빌드·렌더 확인이 불가 — **푸시 후 CI green이 검증**(작업 규약).
 - 1라운드 결과: `ios-build.yml`·`ios-test.yml`·`ios-screenshot.yml` **전부 success**(커밋 `a1e5ed5`).
-- 2라운드(이 절) 결과는 푸시 후 갱신.
+- 2라운드 결과: 동일 3워크플로 **전부 success**(커밋 `87cc0e3`, `CustomersViewModelTests` 9케이스 포함).
+- 3라운드(최종): 요구사항 3가지(초성검색·하이라이트·메모 노출)가 실제 코드 경로로 연결돼 있는지
+  처음부터 재확인, 테스트 신뢰성(손검산)도 재검증. 실질적인 남은 문제 없음 — 사이클 종료.
 
 ### 영향 파일
 `TAS/Core/Chosung.swift`(신규)·`TAS/Core/SearchHighlight.swift`(신규)·`TASTests/ChosungTests.swift`(신규)·
