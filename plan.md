@@ -312,6 +312,22 @@
 
 ## P5 — 캘린더·디자인 마감
 
+- 🟡 **하단 탭바에 매출 추가 — 웹과 동일하게 4탭** (#28)
+  - **문제:** 앱과 웹을 같은 시드로 나란히 띄워 비교하니, 둘 다 하단 탭바를 쓰는데 항목이 달랐다.
+    웹은 캘린더·고객·**매출**·설정 4개(`client/components/layout/MobileTabBar.tsx:20-23`),
+    앱은 캘린더·고객·설정 3개. 앱에서 매출은 `설정 > 관리 > 매출`로 두 단계 안쪽이라
+    웹에서 한 번에 닿던 사용자가 찾지 못한다. 조작 관용구(하단 탭바) 자체는 양쪽이 이미 같으므로
+    네이티브 골격 예외가 아니라 **정보구조 차이**다.
+  - **구현:** `MainTabView`에 매출 탭 추가(`wonsign.circle` — 앱이 이미 매출에 쓰던 심볼).
+    `RevenueView`는 설정에서 push 되던 화면이라 `.navigationTitle`만 있고 자기 스택이 없었다 →
+    `body`를 `NavigationStack { content }`로 감싸고 기존 본문을 `content`로 내린다
+    (다른 탭 루트 `CalendarView`·`CustomersView`·`SettingsView`와 같은 형태).
+    `SettingsView`의 `관리 > 매출`은 제거 — 웹도 탭바에 올린 항목을 설정 목록에서 뺀다
+    (`client/pages/menu.tsx`의 `HIDDEN_IN_MENU`).
+  - **범위:** `App/RootView.swift` · `Features/Revenue/RevenueView.swift` ·
+    `Features/Settings/SettingsView.swift`. 데이터·API·매출 화면 내부 무변경.
+
+
 - ✅ **주(Week) 뷰 진입 시 현재 요일로 스크롤**
   - **문제:** 주 뷰는 월~일 7개 섹션 리스트인데 진입하면 항상 **맨 위(월요일)** 였다. 주 후반(목~일)엔
     오늘을 보려고 매번 손으로 스크롤해야 했고, 일 뷰에서 주 뷰로 넘어올 때마다 반복됐다.
