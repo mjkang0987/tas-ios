@@ -23,3 +23,6 @@ Carthage/Build/
 
 # Secrets
 *.xcconfig.local
+
+# JetBrains IDE (개인 설정)
+.idea/
