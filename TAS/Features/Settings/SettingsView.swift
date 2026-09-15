@@ -108,11 +108,8 @@ struct SettingsView: View {
                     } label: {
                         Label("공지", systemImage: "megaphone")
                     }
-                    NavigationLink {
-                        RevenueView()
-                    } label: {
-                        Label("매출", systemImage: "wonsign.circle")
-                    }
+                    // 매출은 하단 탭바에 있으므로 여기서 중복으로 두지 않는다
+                    // (웹 `pages/menu.tsx`의 HIDDEN_IN_MENU와 같은 규칙).
                 }
 
                 Section {
