@@ -379,7 +379,13 @@ struct RevenueView: View {
     /// 상세에서 예약을 취소·삭제해도 그 행이 그대로 남는다.
     @State private var detailKey: RevenueViewModel.DetailKey?
 
+    // 탭 루트라 자기 NavigationStack 을 갖는다(다른 탭 루트 CalendarView·CustomersView·
+    // SettingsView 와 같은 형태). 예전엔 설정에서 push 되던 화면이라 부모 스택에 얹혀 있었다.
     var body: some View {
+        NavigationStack { content }
+    }
+
+    private var content: some View {
         @Bindable var viewModel = viewModel
         return LoadableView(state: viewModel.state, loadingText: "매출 불러오는 중…") { _ in
             List {
