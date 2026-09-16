@@ -51,7 +51,9 @@ struct RootView: View {
 }
 
 /// Primary navigation, mirroring the web app's top-level pages
-/// (캘린더 `/`, 주소록 `/address`, 설정 — 서비스는 설정 하위로).
+/// (캘린더 `/`, 주소록 `/address`, 매출 `/settings/revenue`, 설정 `/menu`).
+/// 웹 `MobileTabBar`와 항목·순서를 맞춘다 — 탭바에 올린 화면은 설정 목록에서 뺀다
+/// (웹 `pages/menu.tsx`의 `HIDDEN_IN_MENU`와 같은 규칙).
 struct MainTabView: View {
     var body: some View {
         TabView {
@@ -60,6 +62,9 @@ struct MainTabView: View {
 
             CustomersView()
                 .tabItem { Label("고객", systemImage: "person.2") }
+
+            RevenueView()
+                .tabItem { Label("매출", systemImage: "wonsign") }
 
             SettingsView()
                 .tabItem { Label("설정", systemImage: "gearshape") }
