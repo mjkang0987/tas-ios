@@ -326,6 +326,20 @@
     (`client/pages/menu.tsx`의 `HIDDEN_IN_MENU`).
   - **범위:** `App/RootView.swift` · `Features/Revenue/RevenueView.swift` ·
     `Features/Settings/SettingsView.swift`. 데이터·API·매출 화면 내부 무변경.
+  - **코드리뷰에서 잡은 회귀 — `.refreshable` 부재.** 설정에서 push 되던 시절엔 들어갈 때마다
+    뷰가 새로 생성돼 `.task` 가 다시 돌았다(실패해도 나갔다 들어오면 재시도). 탭 루트가 되면서
+    `@State` 뷰모델이 앱 수명 내내 살아, 첫 로드가 실패하면 `LoadableView` 의 실패 화면에
+    재시도 수단이 없어 **앱을 껐다 켜야** 복구된다. 다른 탭 루트 둘
+    (`CustomersView:100`·`CalendarView:532`)은 이미 `.refreshable` 을 갖고 있었다 — 매출만 없었다.
+  - **`.task` 위치를 다른 탭 루트와 맞춤.** 스택 안쪽에 붙였다가 바깥으로 옮겼다. 지금은 push
+    목적지가 없어(드릴다운이 전부 시트) 차이가 없지만, 나중에 `NavigationLink` 를 더하면
+    루트가 사라질 때 task 가 취소되는 함정에 이 화면만 노출된다.
+  - **심볼 구분.** 탭 아이콘을 `wonsign.circle` → `wonsign` 으로. 웹은 `revenue`(원 없는 통화 획)와
+    `point`(원 안의 ₩)를 구분하는데, 앱이 가져다 쓴 `wonsign.circle` 은 웹에서 **적립금** 쪽 모양이고
+    실제로 같은 앱의 "적립금 설정"이 그 심볼을 쓰고 있었다.
+  - **검증(시뮬레이터 실구동):** 매출 탭 노출·제목 정상, 기준 세그먼트 전환 시 KPI 가
+    0원/0건 → 268,000원/5건 으로 즉시 갱신(= `@Bindable` 을 computed property 로 옮겨도
+    뷰 갱신 추적이 유지됨을 확인), 드릴다운 시트 5건 상세·합계 일치, 차트 정상.
 
 
 - ✅ **주(Week) 뷰 진입 시 현재 요일로 스크롤**
