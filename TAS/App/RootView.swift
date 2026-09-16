@@ -64,7 +64,7 @@ struct MainTabView: View {
                 .tabItem { Label("고객", systemImage: "person.2") }
 
             RevenueView()
-                .tabItem { Label("매출", systemImage: "wonsign.circle") }
+                .tabItem { Label("매출", systemImage: "wonsign") }
 
             SettingsView()
                 .tabItem { Label("설정", systemImage: "gearshape") }

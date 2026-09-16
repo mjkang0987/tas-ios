@@ -383,6 +383,9 @@ struct RevenueView: View {
     // SettingsView 와 같은 형태). 예전엔 설정에서 push 되던 화면이라 부모 스택에 얹혀 있었다.
     var body: some View {
         NavigationStack { content }
+            // 다른 탭 루트(CalendarView·CustomersView)와 같이 스택 **바깥**에 붙인다.
+            // 안쪽에 두면 나중에 push 목적지가 생겼을 때 루트가 사라지며 task 가 취소된다.
+            .task { await viewModel.load() }
     }
 
     private var content: some View {
@@ -428,6 +431,9 @@ struct RevenueView: View {
                 }
             }
         }
+        // 탭 루트라 @State 뷰모델이 앱 수명 내내 산다 — 로드가 실패하면 .task 가 다시 돌지
+        // 않아 앱을 껐다 켜야 복구된다. 다른 탭 루트 둘과 같이 당겨서 새로고침을 연다.
+        .refreshable { await viewModel.load() }
         .navigationTitle("매출")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $detailKey) { key in
@@ -440,7 +446,6 @@ struct RevenueView: View {
                 onChanged: { await viewModel.load() }
             )
         }
-        .task { await viewModel.load() }
     }
 
     /// 웹 `RevenueKpiGrid` — 5칸 모두 탭하면 근거 목록이 열린다.
