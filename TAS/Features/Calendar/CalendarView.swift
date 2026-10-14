@@ -62,7 +62,13 @@ struct CalendarView: View {
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                // 웹 헤더처럼 좌우 이동을 날짜 왼쪽에 둔다 — 뷰마다 따로 머리줄을 두면
+                // 같은 조작이 화면마다 다른 자리에 있고 세로도 그만큼 먹는다.
+                ToolbarItemGroup(placement: .topBarLeading) {
+                    Button { shiftPeriod(-1) } label: { Image(systemName: "chevron.left") }
+                        .accessibilityLabel("이전")
+                    Button { shiftPeriod(1) } label: { Image(systemName: "chevron.right") }
+                        .accessibilityLabel("다음")
                     DatePicker("", selection: $selectedDate, displayedComponents: .date)
                         .labelsHidden()
                 }
@@ -182,16 +188,8 @@ struct CalendarView: View {
         let daysInMonth = cal.range(of: .day, in: .month, for: firstOfMonth)?.count ?? 30
         let weekday = cal.component(.weekday, from: firstOfMonth)   // 1=일…7=토
         let leading = (weekday - cal.firstWeekday + 7) % 7           // 월요일 시작 오프셋
-        let monthTotal = summaries.values.reduce(into: (count: 0, total: 0)) { $0.count += $1.count; $0.total += $1.total }
 
         VStack(spacing: 8) {
-            periodHeader(
-                title: KST.monthLabel.string(from: firstOfMonth),
-                subtitle: monthTotal.count > 0 ? "\(monthTotal.count)건 · \(formatWon(monthTotal.total))" : "예약 없음",
-                onPrev: { shiftMonth(-1) },
-                onNext: { shiftMonth(1) }
-            )
-
             LazyVGrid(columns: gridColumns, spacing: 4) {
                 ForEach(Array(KST.weekdayLabels.enumerated()), id: \.offset) { i, s in
                     Text(s)
@@ -297,16 +295,8 @@ struct CalendarView: View {
         let selMonth = cal.component(.month, from: selectedDate)
         let yearPrefix = String(format: "%04d", year)
         let monthly = viewModel.monthlySummaries(yearPrefix: yearPrefix, assigneeId: selectedAssigneeId)
-        let yearTotal = monthly.values.reduce(into: (count: 0, total: 0)) { $0.count += $1.count; $0.total += $1.total }
 
         VStack(spacing: 8) {
-            periodHeader(
-                title: "\(year)년",
-                subtitle: yearTotal.count > 0 ? "\(yearTotal.count)건 · \(formatWon(yearTotal.total))" : "예약 없음",
-                onPrev: { shiftYear(-1) },
-                onNext: { shiftYear(1) }
-            )
-
             LazyVGrid(columns: yearColumns, spacing: 8) {
                 ForEach(1...12, id: \.self) { m in
                     let key = String(format: "%04d-%02d", year, m)
@@ -429,26 +419,18 @@ struct CalendarView: View {
 
     // MARK: - 기간 이동 헤더 (월/년 공용)
 
-    private func periodHeader(title: String, subtitle: String, onPrev: @escaping () -> Void, onNext: @escaping () -> Void) -> some View {
-        HStack {
-            Button(action: onPrev) { Image(systemName: "chevron.left") }
-            Spacer()
-            VStack(spacing: 2) {
-                Text(title).font(.headline)
-                Text(subtitle).font(.caption).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button(action: onNext) { Image(systemName: "chevron.right") }
+    /// 보고 있는 뷰의 한 칸만큼 움직인다 — 웹 헤더의 좌우 버튼과 같은 규칙.
+    private func shiftPeriod(_ step: Int) {
+        let cal = KST.calendar
+        let moved: Date?
+        switch mode {
+        case .day:   moved = cal.date(byAdding: .day, value: step, to: selectedDate)
+        case .three: moved = cal.date(byAdding: .day, value: 3 * step, to: selectedDate)
+        case .week:  moved = cal.date(byAdding: .weekOfYear, value: step, to: selectedDate)
+        case .month: moved = cal.date(byAdding: .month, value: step, to: selectedDate)
+        case .year:  moved = cal.date(byAdding: .year, value: step, to: selectedDate)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 4)
-    }
-
-    private func shiftMonth(_ delta: Int) {
-        if let d = KST.calendar.date(byAdding: .month, value: delta, to: selectedDate) { selectedDate = d }
-    }
-    private func shiftYear(_ delta: Int) {
-        if let d = KST.calendar.date(byAdding: .year, value: delta, to: selectedDate) { selectedDate = d }
+        if let moved { selectedDate = moved }
     }
 
     /// 예약 행 버튼 — 일/주 뷰 공용.
