@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1600"
+   LastUpgradeVersion = "1430"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
-      buildImplicitDependencies = "YES">
+      buildImplicitDependencies = "YES"
+      runPostActionsOnFailure = "NO">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -14,7 +15,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A500000000000000000000A5"
+               BlueprintIdentifier = "6810A29600FF9CEC65B417C8"
                BuildableName = "TAS.app"
                BlueprintName = "TAS"
                ReferencedContainer = "container:TAS.xcodeproj">
@@ -26,19 +27,32 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES">
+      shouldUseLaunchSchemeArgsEnv = "YES"
+      onlyGenerateCoverageForSpecifiedTargets = "NO">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "6810A29600FF9CEC65B417C8"
+            BuildableName = "TAS.app"
+            BlueprintName = "TAS"
+            ReferencedContainer = "container:TAS.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
       <Testables>
          <TestableReference
-            skipped = "NO">
+            skipped = "NO"
+            parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "D100000000000000000000D1"
+               BlueprintIdentifier = "56288D3716410233EA41D927"
                BuildableName = "TASTests.xctest"
                BlueprintName = "TASTests"
                ReferencedContainer = "container:TAS.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -54,12 +68,14 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A500000000000000000000A5"
+            BlueprintIdentifier = "6810A29600FF9CEC65B417C8"
             BuildableName = "TAS.app"
             BlueprintName = "TAS"
             ReferencedContainer = "container:TAS.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -71,7 +87,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A500000000000000000000A5"
+            BlueprintIdentifier = "6810A29600FF9CEC65B417C8"
             BuildableName = "TAS.app"
             BlueprintName = "TAS"
             ReferencedContainer = "container:TAS.xcodeproj">

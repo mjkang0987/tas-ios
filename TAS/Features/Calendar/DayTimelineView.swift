@@ -102,49 +102,17 @@ struct DayTimelineView: View {
         let colCount: Int
     }
 
-    /// 예약을 겹침 클러스터로 묶어 컬럼 배치.
+    /// 겹침 클러스터·레인 배치는 `TimelineLayout`이 한다(주 타임라인과 공용).
+    /// 여기서는 분 단위를 이 뷰의 pt 좌표로 옮기기만 한다.
     private var positioned: [Positioned] {
-        let events = reservations.compactMap { r -> (r: Reservation, s: Int, e: Int)? in
-            guard let s = ReservationOverlap.minutes(r.startTime),
-                  let e = ReservationOverlap.minutes(r.endTime), e > s else { return nil }
-            return (r, s, e)
-        }.sorted { $0.s < $1.s }
-
-        var result: [Positioned] = []
-        var i = 0
-        while i < events.count {
-            // 겹치는 것끼리 클러스터
-            var clusterEnd = events[i].e
-            var j = i + 1
-            while j < events.count && events[j].s < clusterEnd {
-                clusterEnd = max(clusterEnd, events[j].e)
-                j += 1
-            }
-            let cluster = Array(events[i..<j])
-            // 그리디 컬럼 배치: 끝난 컬럼 재사용
-            var colEnds: [Int] = []
-            var cols: [Int] = []
-            for ev in cluster {
-                if let c = colEnds.firstIndex(where: { $0 <= ev.s }) {
-                    colEnds[c] = ev.e
-                    cols.append(c)
-                } else {
-                    colEnds.append(ev.e)
-                    cols.append(colEnds.count - 1)
-                }
-            }
-            let colCount = max(1, colEnds.count)
-            for (idx, ev) in cluster.enumerated() {
-                result.append(Positioned(
-                    reservation: ev.r,
-                    top: CGFloat(ev.s - axisStartMin) * ptPerMin,
-                    height: max(minBlockHeight, CGFloat(ev.e - ev.s) * ptPerMin),
-                    colIndex: cols[idx],
-                    colCount: colCount
-                ))
-            }
-            i = j
+        TimelineLayout.place(reservations).map { p in
+            Positioned(
+                reservation: p.reservation,
+                top: CGFloat(p.startMin - axisStartMin) * ptPerMin,
+                height: max(minBlockHeight, CGFloat(p.endMin - p.startMin) * ptPerMin),
+                colIndex: p.laneIndex,
+                colCount: p.laneCount
+            )
         }
-        return result
     }
 }
