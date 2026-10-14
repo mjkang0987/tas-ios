@@ -345,6 +345,19 @@ struct CalendarView: View {
         .contentShape(Rectangle())
     }
 
+    /// 날짜별 묶음 — 웹 목록의 `grouped` 와 같은 규칙(날짜 오름차순, 그 안은 시작시간 순).
+    private struct DateGroup: Identifiable {
+        let date: String
+        let items: [Reservation]
+        var id: String { date }
+    }
+
+    private func groupedByDate(_ items: [Reservation]) -> [DateGroup] {
+        Dictionary(grouping: items, by: \.date)
+            .map { DateGroup(date: $0.key, items: $0.value.sorted { $0.startTime < $1.startTime }) }
+            .sorted { $0.date < $1.date }
+    }
+
     /// 년 뷰 하단: 선택한 월의 예약 리스트(날짜 포함).
     @ViewBuilder private func selectedMonthList(year: Int, month: Int) -> some View {
         let prefix = String(format: "%04d-%02d", year, month)
@@ -363,17 +376,30 @@ struct CalendarView: View {
                 Text("\(month)월 예약이 없습니다.").font(.footnote).foregroundStyle(.secondary)
                 Spacer()
             } else {
-                List(items) { r in
-                    monthReservationButton(r)
-                        // 카드가 테두리로 제 경계를 긋는다 — 행 구분선까지 두면 선이 두 겹이다.
-                        .listRowSeparator(.hidden)
-                        // 카드 간격은 웹(2px)에 맞추되, 좌우는 iOS 표준 16pt 를 지킨다 —
-                        // 8pt 까지 좁히면 카드 왼쪽에서 시작하는 스와이프가 시스템 뒤로가기와 겹친다.
-                        .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
+                // 한 달치를 한 줄로 쌓으면 스크롤 중 지금 보는 게 며칠 건인지 잃는다.
+                // 웹은 날짜 머리줄을 sticky 로 붙인다 — .plain 리스트의 Section 헤더가 같은 동작이다.
+                List {
+                    ForEach(groupedByDate(items), id: \.date) { group in
+                        Section {
+                            ForEach(group.items) { r in
+                                monthReservationButton(r)
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
+                            }
+                        } header: {
+                            // 붙어 있는 동안 밑으로 지나가는 카드가 글자에 비친다 — 바탕을 깔아 가린다.
+                            // (웹 StyledDateTitle 도 같은 이유로 배경을 둔다.)
+                            Text("\(group.date) (\(group.items.count))")
+                                .font(.caption.weight(.semibold))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 16)
+                                .background(Color(.systemBackground))
+                        }
+                        .listRowInsets(EdgeInsets())
+                    }
                 }
                 .listStyle(.plain)
-                // 머리줄(날짜·건수) 과 첫 카드가 붙어 보인다 — 콘텐츠 상단만 띄운다.
-                // 행 간격(listRowInsets)을 키우면 카드 사이까지 벌어진다.
                 .contentMargins(.top, 10, for: .scrollContent)
             }
         }
@@ -394,7 +420,7 @@ struct CalendarView: View {
                 isNewCustomer: viewModel.isNewCustomer(r),
                 assigneeName: assignee?.name,
                 assigneeColor: Color(hex: assignee?.color),
-                showDate: true,
+                // 날짜는 섹션 머리줄이 말한다 — 카드에 또 적으면 같은 말이 두 번이다.
                 showPrice: true
             )
         }
