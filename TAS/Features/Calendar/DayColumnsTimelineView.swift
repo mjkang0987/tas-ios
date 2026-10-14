@@ -1,14 +1,15 @@
 import SwiftUI
 
-/// 주(week) 타임라인 — 시간축 하나에 날짜 칼럼 7개. 웹 `/week`과 같은 정보구조.
+/// 날짜 칼럼 타임라인 — 시간축 하나에 날짜 칼럼 N개. 주(7일)·3일이 함께 쓴다.
+/// 웹 `/week`·`/three` 와 같은 정보구조다.
 ///
 /// **겹친 예약을 접지 않는다.** 웹은 칸 폭이 고정이라 `N건예약`으로 접지만, 여기선
 /// 가로 스크롤이 폭을 흡수하므로 그 날 칼럼만 겹친 수만큼 넓혀 전부 보여준다.
 /// 그래서 칼럼 폭이 날마다 다르다 — 바쁜 날이 넓다.
 ///
 /// 블록은 고객명만 쓴다. 시술·담당자는 색이 말하고, 좁은 칸에서는 누가 오는지만 읽히면 된다.
-struct WeekTimelineView: View {
-    let dayKeys: [String]                       // "YYYY-MM-DD" 7개(월~일)
+struct DayColumnsTimelineView: View {
+    let dayKeys: [String]                       // "YYYY-MM-DD" — 주는 7개(월~일), 3일은 기준일부터 3개
     let todayKey: String
     let startHour: Int
     let endHour: Int

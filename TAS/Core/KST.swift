@@ -8,6 +8,13 @@ enum KST {
     /// 화면마다 복붙하지 말고 여기서 가져다 쓴다.
     static let weekdayLabels = ["월", "화", "수", "목", "금", "토", "일"]
 
+    /// 날짜의 요일 라벨. 칼럼 순서(index)가 아니라 **날짜**에서 낸다 —
+    /// 3일 뷰는 기준일부터 시작해 index 와 요일이 어긋나기 때문이다.
+    static func weekdayLabel(for date: Date) -> String {
+        let weekday = calendar.component(.weekday, from: date)   // 1=일 … 7=토
+        return weekdayLabels[(weekday + 5) % 7]                  // 월요일 시작 배열로
+    }
+
     /// 월요일 시작(웹 WEEKDAY_LABELS) KST 캘린더.
     static var calendar: Calendar {
         var c = Calendar(identifier: .gregorian)
