@@ -86,12 +86,13 @@ struct ReservationInfoCard: View {
                     .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
             case .range:
+                // 웹은 시작·종료를 같은 굵기·색으로 쌓는다 — 줄바꿈 자체가 범위를 뜻한다.
+                // 종료만 흐리면 "언제 끝나는지"가 부가정보처럼 읽힌다.
                 Text(reservation.startTime)
                     .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
                 Text(reservation.endTime)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
             }
         }
@@ -107,15 +108,15 @@ struct ReservationInfoCard: View {
         VStack(alignment: .leading, spacing: 2) {
             if let customerName {
                 HStack(spacing: 6) {
-                    Text(customerName).font(.subheadline.weight(.semibold))
+                    // 웹과 같은 차례 — 배지가 이름 앞에 선다.
                     if isNewCustomer { NewCustomerBadge() }
+                    Text(customerName).font(.subheadline.weight(.semibold))
                 }
             }
-            HStack(spacing: 5) {
-                ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false)
-                if let assigneeName {
-                    Text("· \(assigneeName)").font(.caption2).foregroundStyle(.secondary)
-                }
+            ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false)
+            // 담당자는 다음 줄 — 좁은 칸에서 시술과 같은 줄에 두면 둘이 서로를 민다(웹과 같다).
+            if let assigneeName {
+                AssigneeBadge(name: assigneeName, color: assigneeColor)
             }
         }
     }
