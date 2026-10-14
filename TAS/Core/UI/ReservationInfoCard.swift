@@ -50,13 +50,17 @@ struct ReservationInfoCard: View {
     @ScaledMetric(relativeTo: .caption2) private var dateColumnWidth: CGFloat = 76
     @ScaledMetric(relativeTo: .subheadline) private var timeColumnWidth: CGFloat = 44
 
+    /// 취소·노쇼는 담당자 색을 버리고 무채색 + 빗금으로 간다(웹 `.inactive` 와 같다).
+    private var isInactive: Bool {
+        reservation.displayState == .cancelled || reservation.displayState == .noshow
+    }
+
+    private var accent: Color { assigneeColor ?? .secondary }
+
     var body: some View {
         HStack(spacing: 10) {
             if showDate || timeMode != .hidden {
                 leading
-            }
-            if accentBar {
-                ColorAccentBar(color: assigneeColor, height: 28)
             }
             main
             Spacer(minLength: 0)
@@ -64,8 +68,45 @@ struct ReservationInfoCard: View {
                 trailing
             }
         }
-        .padding(.vertical, 2)
+        .padding(6)
+        .padding(.leading, accentBar ? 4 : 0)   // 왼쪽 띠가 먹는 만큼
+        .background(cardBackground)
+        .overlay(alignment: .leading) {
+            // 웹은 border-left 를 4px 로 굵혀 카드 가장자리에 색을 둔다 — 안쪽 막대가 아니다.
+            if accentBar {
+                Rectangle()
+                    .fill(isInactive ? Color(.separator) : accent)
+                    .frame(width: 4)
+            }
+        }
+        .overlay(cardBorder)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .contentShape(Rectangle())
+    }
+
+    // MARK: - 카드 표면 (웹 StyledCard 이식)
+
+    /// 위는 거의 흰색, 아래로 갈수록 담당자 색이 비친다 — 웹과 같은 세로 그라데이션.
+    /// 색은 담당자 색에서 뽑으므로 다크 모드에서도 배경 대비가 유지된다.
+    @ViewBuilder private var cardBackground: some View {
+        if isInactive {
+            // 빗금 + 무채색. 끝난 예약은 색을 잃는다.
+            ZStack {
+                Color(.secondarySystemBackground)
+                HatchPattern()
+            }
+        } else {
+            LinearGradient(
+                colors: [Color(.systemBackground), accent.opacity(0.07)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .strokeBorder(isInactive ? Color(.separator) : accent.opacity(0.27), lineWidth: 1)
     }
 
     // MARK: - 좌측(날짜·시간)

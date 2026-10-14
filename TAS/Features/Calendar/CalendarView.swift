@@ -263,7 +263,15 @@ struct CalendarView: View {
                 Text("\(selectedDayLabel) 예약이 없습니다.").font(.footnote).foregroundStyle(.secondary)
                 Spacer()
             } else {
-                List(items) { reservationButton($0) }.listStyle(.plain)
+                List(items) { r in
+                    reservationButton(r)
+                        // 카드가 테두리로 제 경계를 긋는다 — 행 구분선까지 두면 선이 두 겹이다.
+                        .listRowSeparator(.hidden)
+                        // 카드 간격은 웹(2px)에 맞추되, 좌우는 iOS 표준 16pt 를 지킨다 —
+                        // 8pt 까지 좁히면 카드 왼쪽에서 시작하는 스와이프가 시스템 뒤로가기와 겹친다.
+                        .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
+                }
+                .listStyle(.plain)
             }
         }
     }
@@ -349,7 +357,15 @@ struct CalendarView: View {
                 Text("\(month)월 예약이 없습니다.").font(.footnote).foregroundStyle(.secondary)
                 Spacer()
             } else {
-                List(items) { monthReservationButton($0) }.listStyle(.plain)
+                List(items) { r in
+                    monthReservationButton(r)
+                        // 카드가 테두리로 제 경계를 긋는다 — 행 구분선까지 두면 선이 두 겹이다.
+                        .listRowSeparator(.hidden)
+                        // 카드 간격은 웹(2px)에 맞추되, 좌우는 iOS 표준 16pt 를 지킨다 —
+                        // 8pt 까지 좁히면 카드 왼쪽에서 시작하는 스와이프가 시스템 뒤로가기와 겹친다.
+                        .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
+                }
+                .listStyle(.plain)
             }
         }
     }
@@ -417,7 +433,9 @@ struct CalendarView: View {
                 customerName: viewModel.customerName(reservation.customerId),
                 isNewCustomer: viewModel.isNewCustomer(reservation),
                 assigneeName: assignee?.name,
-                assigneeColor: Color(hex: assignee?.color)
+                assigneeColor: Color(hex: assignee?.color),
+                // 웹 목록 카드는 금액까지 보여준다(ReservationListSection 의 showPrice).
+                showPrice: true
             )
         }
         .buttonStyle(.plain)
