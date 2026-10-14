@@ -57,7 +57,10 @@ struct CalendarView: View {
                     }
                 }
             }
-            .navigationTitle("캘린더")
+            // 큰 제목을 두지 않는다 — 하단 탭바가 이미 '캘린더'라고 말하고 있어 같은 말이
+            // 두 번이고, 달력이 세로를 많이 쓰는 화면이라 그 높이가 아깝다.
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     DatePicker("", selection: $selectedDate, displayedComponents: .date)
@@ -272,6 +275,9 @@ struct CalendarView: View {
                         .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
                 }
                 .listStyle(.plain)
+                // 머리줄(날짜·건수) 과 첫 카드가 붙어 보인다 — 콘텐츠 상단만 띄운다.
+                // 행 간격(listRowInsets)을 키우면 카드 사이까지 벌어진다.
+                .contentMargins(.top, 10, for: .scrollContent)
             }
         }
     }
@@ -366,35 +372,33 @@ struct CalendarView: View {
                         .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
                 }
                 .listStyle(.plain)
+                // 머리줄(날짜·건수) 과 첫 카드가 붙어 보인다 — 콘텐츠 상단만 띄운다.
+                // 행 간격(listRowInsets)을 키우면 카드 사이까지 벌어진다.
+                .contentMargins(.top, 10, for: .scrollContent)
             }
         }
     }
 
     /// 월 리스트용 행(날짜 포함) — 탭 시 상세.
     private func monthReservationButton(_ r: Reservation) -> some View {
-        Button {
+        let assignee = viewModel.assignee(r.assigneeId)
+        return Button {
             activeSheet = .detail(r)
         } label: {
-            HStack(spacing: 10) {
-                Text(shortDate(r.date)).font(.caption.weight(.semibold)).frame(width: 42, alignment: .leading).monospacedDigit()
-                Text(r.startTime).font(.caption2).foregroundStyle(.secondary).monospacedDigit()
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(viewModel.customerName(r.customerId)).font(.subheadline.weight(.medium))
-                    ServiceChipList(service: r.service, colorMap: viewModel.serviceColorMap, wraps: false)
-                }
-                Spacer()
-                StatusBadge(state: r.displayState)
-            }
-            .padding(.vertical, 2)
-            .contentShape(Rectangle())
+            // 손으로 그린 행이라 혼자 카드 디자인 밖에 있었다 — 공용 카드로 합친다.
+            // 연 목록은 한 달치를 한 줄에 섞어 보여주므로 날짜까지 켠다(웹 showDate).
+            ReservationInfoCard(
+                reservation: r,
+                serviceColorMap: viewModel.serviceColorMap,
+                customerName: viewModel.customerName(r.customerId),
+                isNewCustomer: viewModel.isNewCustomer(r),
+                assigneeName: assignee?.name,
+                assigneeColor: Color(hex: assignee?.color),
+                showDate: true,
+                showPrice: true
+            )
         }
         .buttonStyle(.plain)
-    }
-
-    /// "2026-07-23" → "07.23".
-    private func shortDate(_ dateKey: String) -> String {
-        let p = dateKey.split(separator: "-")
-        return p.count == 3 ? "\(p[1]).\(p[2])" : dateKey
     }
 
     // MARK: - 기간 이동 헤더 (월/년 공용)
