@@ -2,7 +2,7 @@ import SwiftUI
 
 /// 메인 캘린더 — 일/주/월/년 뷰. 웹의 `/day`·`/week`·`/month`·`/year`에 대응.
 struct CalendarView: View {
-    enum Mode: String, CaseIterable { case day = "일", week = "주", month = "월", year = "년" }
+    enum Mode: String, CaseIterable { case day = "일", three = "3일", week = "주", month = "월", year = "년" }
 
     @Environment(SessionStore.self) private var session
     @State private var viewModel = CalendarViewModel()
@@ -50,6 +50,7 @@ struct CalendarView: View {
                     assigneeFilterBar
                     switch mode {
                     case .day: dayList
+                    case .three: threeList
                     case .week: weekList
                     case .month: monthView
                     case .year: yearView
@@ -500,18 +501,30 @@ struct CalendarView: View {
         }
     }
 
-    private var weekList: some View {
-        let keys = weekDayKeys
+    /// 3일 뷰가 그리는 날짜 — 기준일부터 3일(웹 `weekDates.ts` 와 같은 규칙).
+    private var threeDayKeys: [String] {
+        let cal = KST.calendar
+        return (0..<3).compactMap { offset in
+            cal.date(byAdding: .day, value: offset, to: selectedDate)
+                .map { KST.dayKey.string(from: $0) }
+        }
+    }
+
+    private var weekList: some View { timelineList(weekDayKeys) }
+    private var threeList: some View { timelineList(threeDayKeys) }
+
+    /// 날짜 칼럼 타임라인. 주·3일이 일수만 다르고 나머지가 같아 한 곳으로 묶는다.
+    private func timelineList(_ keys: [String]) -> some View {
         let items = keys.flatMap { viewModel.reservations(on: $0, assigneeId: selectedAssigneeId) }
         // 시간축 범위는 주 전체로 한 번만 잡는다 — 날마다 다르면 칼럼끼리 눈금이 어긋난다.
         let range = timelineRange(for: items)
-        return WeekTimelineView(
+        return DayColumnsTimelineView(
             dayKeys: keys,
             todayKey: KST.dayKey.string(from: Date()),
             startHour: range.0,
             endHour: range.1,
             reservations: { viewModel.reservations(on: $0, assigneeId: selectedAssigneeId) },
-            header: { weekdayHeader($0, index: $1) },
+            header: { key, _ in weekdayHeader(key) },
             closedKind: { closedKind($0) },
             customerName: { viewModel.customerName($0) },
             color: { timelineColor($0) },
@@ -520,12 +533,12 @@ struct CalendarView: View {
         .refreshable { await viewModel.load() }
     }
 
-    /// "MM.dd 요일" 헤더.
-    private func weekdayHeader(_ key: String, index: Int) -> String {
+    /// "MM.dd 요일" 헤더. 요일은 칼럼 순서가 아니라 날짜에서 낸다 —
+    /// 3일 뷰는 기준일부터 시작해 index 와 요일이 어긋난다.
+    private func weekdayHeader(_ key: String) -> String {
         let parts = key.split(separator: "-")
-        let label = index < KST.weekdayLabels.count ? KST.weekdayLabels[index] : ""
-        guard parts.count == 3 else { return label }
-        return "\(parts[1]).\(parts[2]) \(label)"
+        guard parts.count == 3, let date = KST.dayKey.date(from: key) else { return "" }
+        return "\(parts[1]).\(parts[2]) \(KST.weekdayLabel(for: date))"
     }
 }
 
