@@ -13,16 +13,15 @@ final class NoticesViewModel {
         self.service = service
     }
 
-    /// 고정 우선 → 최신순.
+    /// 최신순(웹 목록·고객 페이지와 같은 순서).
     var sorted: [StoreNotice] {
-        (state.value ?? []).sorted { a, b in
-            if a.pinned != b.pinned { return a.pinned }
-            return a.createdAt > b.createdAt
-        }
+        (state.value ?? []).sorted { $0.createdAt > $1.createdAt }
     }
 
-    /// 현재 고정된 공지 수(고정 한도 검사용).
-    var pinnedCount: Int { (state.value ?? []).filter(\.pinned).count }
+    /// `id`를 뺀 노출 공지 수(노출 한도 검사용). 새 공지면 nil.
+    func otherVisibleCount(excluding id: String?) -> Int {
+        (state.value ?? []).filter { $0.visible && $0.id != id }.count
+    }
 
     func load() async {
         state = .loading
@@ -109,9 +108,9 @@ struct NoticesView: View {
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .create:
-                NoticeFormView(pinnedCount: viewModel.pinnedCount) { await viewModel.save($0, isNew: true) }
+                NoticeFormView(otherVisibleCount: viewModel.otherVisibleCount(excluding: nil)) { await viewModel.save($0, isNew: true) }
             case .edit(let notice):
-                NoticeFormView(editing: notice, pinnedCount: viewModel.pinnedCount) { await viewModel.save($0, isNew: false) }
+                NoticeFormView(editing: notice, otherVisibleCount: viewModel.otherVisibleCount(excluding: notice.id)) { await viewModel.save($0, isNew: false) }
             }
         }
         .task { await viewModel.load() }
@@ -124,9 +123,6 @@ private struct NoticeRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
-                if notice.pinned {
-                    Image(systemName: "pin.fill").font(.caption2).foregroundStyle(.orange)
-                }
                 Text(notice.category.label)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.tint)
