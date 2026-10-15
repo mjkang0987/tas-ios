@@ -94,13 +94,15 @@ struct TimelineBlockChrome: ViewModifier {
             // 딤도 배지도 터치를 먹지 않는다(`allowsHitTesting(false)`).
             .overlay {
                 if isPending {
-                    ZStack(alignment: .bottom) {
+                    ZStack {
                         Color(.systemBackground).opacity(0.72)
                         // 아주 짧은 블록에는 배지가 안 들어간다 — 딤만 남긴다.
+                        // 세로 가운데에 둔다. 내용은 위에 붙여 두므로(아래 frame alignment)
+                        // 짧은 블록에서도 이름과 겹치지 않는다.
                         if height >= 34 {
                             // 집에 있는 배지 부품을 쓴다 — 혼자 진한 배경 + 흰 글자로 만들었더니
                             // 다른 배지(연한 배경 + 진한 글자)들 사이에서 겉돌았다.
-                            ToneBadge(tone: .requested, text: "확정대기").padding(.bottom, 3)
+                            ToneBadge(tone: .requested, text: "확정대기")
                         }
                     }
                     .allowsHitTesting(false)
