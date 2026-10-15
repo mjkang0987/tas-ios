@@ -9,7 +9,7 @@
 
 ---
 
-## 🟡 진행 — 공지 '노출' 체크 하나로 (`claude/notice-single-visible`)
+## 🟡 PR 대기 — 공지 '노출' 체크 하나로 (`claude/notice-single-visible`)
 
 > 웹 같은 작업: `mjkang0987/tas` PR #272 (release/2026-10-batch 묶음). 웹이 '공개'·'상단 고정' 두 체크를
 > **'노출' 하나(= `visible`, 최대 3개)**로 합쳤다. 앱도 같은 규칙으로 맞춘다.
@@ -26,8 +26,12 @@
 - `NoticesView` — 정렬 고정 우선 제거(최신순, 웹 목록과 동일), 행의 핀 아이콘 제거(숨김 아이콘은 유지).
 - 테스트: `NoticeTests` — `canShow` 경계.
 
-### 검증
-- `xcodegen generate` → `xcodebuild build` · `xcodebuild test` · 시뮬레이터에서 공지 화면 조작.
+### 검증 (완료)
+- `xcodegen generate` → `xcodebuild test` **188 통과**(신규 `NoticeTests` 4).
+- 시뮬레이터(iPhone 17 Pro, **게스트 모드** — 앱 기본 API가 운영이라 서버에 쓰지 않으려고 게스트로 확인):
+  폼에 '노출' 토글 하나 + 안내 문구, 3개 추가 후 목록 최신순, **4번째 추가 폼은 토글이 꺼진 채 비활성 — 눌러도 안 켜짐.**
+- **배포 순서 무관**: 구 서버(웹 #272 배포 전)에도 앱은 `visible`·받은 `pinned`를 그대로 보내므로 깨지지 않는다.
+  한도 3은 앱이 먼저 막는다.
 
 ## ✅ 완료 — 예약 카드·타임라인을 웹에 맞춘다 (`claude/card-parity-with-web`)
 
