@@ -51,9 +51,7 @@ struct ReservationInfoCard: View {
     @ScaledMetric(relativeTo: .subheadline) private var timeColumnWidth: CGFloat = 44
 
     /// 취소·노쇼는 담당자 색을 버리고 무채색 + 빗금으로 간다(웹 `.inactive` 와 같다).
-    private var isInactive: Bool {
-        reservation.displayState == .cancelled || reservation.displayState == .noshow
-    }
+    private var isInactive: Bool { reservation.isInactive }
 
     private var accent: Color { assigneeColor ?? .secondary }
 
@@ -82,6 +80,9 @@ struct ReservationInfoCard: View {
         .overlay(cardBorder)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .contentShape(Rectangle())
+        // 카드는 통째로 눌리는 한 덩어리다. 묶지 않으면 VoiceOver 가 시간·배지·이름·
+        // 시술칩·담당자·상태·금액을 따로 세워, 예약 하나를 지나는 데 여덟 번 넘긴다.
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - 카드 표면 (웹 StyledCard 이식)
@@ -154,7 +155,7 @@ struct ReservationInfoCard: View {
                     Text(customerName).font(.subheadline.weight(.semibold))
                 }
             }
-            ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false)
+            ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false, inactive: isInactive)
             // 담당자는 다음 줄 — 좁은 칸에서 시술과 같은 줄에 두면 둘이 서로를 민다(웹과 같다).
             if let assigneeName {
                 AssigneeBadge(name: assigneeName, color: assigneeColor)
