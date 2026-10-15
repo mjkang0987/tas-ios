@@ -94,7 +94,7 @@ struct ReservationInfoCard: View {
             // 빗금 + 무채색. 끝난 예약은 색을 잃는다.
             ZStack {
                 Color(.secondarySystemBackground)
-                HatchPattern()
+                HatchPattern(crossed: reservation.displayState == .noshow)
             }
         } else {
             LinearGradient(

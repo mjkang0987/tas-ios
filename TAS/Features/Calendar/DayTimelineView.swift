@@ -93,6 +93,7 @@ struct DayTimelineView: View {
                 }
             }
             .timelineBlockChrome(color: c, isInactive: p.reservation.isInactive,
+                                 isNoshow: p.reservation.displayState == .noshow,
                                  width: laneW, height: p.height)
         }
         .buttonStyle(.plain)

@@ -25,21 +25,39 @@ struct ColorAccentBar: View {
 
 /// 취소·노쇼 카드의 빗금 — 웹 `repeating-linear-gradient(-45deg, …)` 대응.
 /// 색만 흐리게 하면 "조금 덜 중요한 예약"으로 읽혀, 끝난 건임을 무늬로 못박는다.
+///
+/// `crossed` 는 노쇼용 교차 빗금이다. 카드에서 상태 글자를 뺀 뒤로 취소와 노쇼를
+/// 가르는 건 이 무늬뿐이라, 각도만 다르면 나란히 두지 않는 한 구별되지 않는다.
+/// (노쇼가 더 촘촘한 쪽인 건 매출이 빈 자리라 눈에 걸려야 하기 때문이다. 웹과 같은 규칙.)
 struct HatchPattern: View {
+    var crossed: Bool = false
+
     var body: some View {
         GeometryReader { geo in
-            let step: CGFloat = 12
-            let span = geo.size.width + geo.size.height
-            Path { path in
-                var x = -geo.size.height
-                while x < span {
-                    path.move(to: CGPoint(x: x, y: geo.size.height))
-                    path.addLine(to: CGPoint(x: x + geo.size.height, y: 0))
-                    x += step
-                }
+            stripes(in: geo.size, rising: true)
+            if crossed {
+                stripes(in: geo.size, rising: false)
             }
-            .stroke(Color.primary.opacity(0.05), lineWidth: 6)
         }
+    }
+
+    private func stripes(in size: CGSize, rising: Bool) -> some View {
+        let step: CGFloat = 12
+        let span = size.width + size.height
+        return Path { path in
+            var x = -size.height
+            while x < span {
+                if rising {
+                    path.move(to: CGPoint(x: x, y: size.height))
+                    path.addLine(to: CGPoint(x: x + size.height, y: 0))
+                } else {
+                    path.move(to: CGPoint(x: x, y: 0))
+                    path.addLine(to: CGPoint(x: x + size.height, y: size.height))
+                }
+                x += step
+            }
+        }
+        .stroke(Color.primary.opacity(0.05), lineWidth: 6)
     }
 }
 
@@ -52,6 +70,8 @@ struct HatchPattern: View {
 struct TimelineBlockChrome: ViewModifier {
     let color: Color
     let isInactive: Bool
+    /// 노쇼만 교차 빗금 — 취소와 가르기 위해. `isInactive` 와 함께 켠다.
+    var isNoshow: Bool = false
     let width: CGFloat
     let height: CGFloat
 
@@ -68,7 +88,7 @@ struct TimelineBlockChrome: ViewModifier {
             .background {
                 ZStack {
                     color.opacity(0.16)
-                    if isInactive { HatchPattern() }
+                    if isInactive { HatchPattern(crossed: isNoshow) }
                 }
             }
             .overlay(alignment: .leading) { Rectangle().fill(color).frame(width: 3) }
@@ -77,7 +97,9 @@ struct TimelineBlockChrome: ViewModifier {
 }
 
 extension View {
-    func timelineBlockChrome(color: Color, isInactive: Bool, width: CGFloat, height: CGFloat) -> some View {
-        modifier(TimelineBlockChrome(color: color, isInactive: isInactive, width: width, height: height))
+    func timelineBlockChrome(color: Color, isInactive: Bool, isNoshow: Bool,
+                             width: CGFloat, height: CGFloat) -> some View {
+        modifier(TimelineBlockChrome(color: color, isInactive: isInactive, isNoshow: isNoshow,
+                                     width: width, height: height))
     }
 }
