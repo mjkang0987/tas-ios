@@ -81,11 +81,16 @@ struct DayTimelineView: View {
                         inactive: p.reservation.isInactive
                     )
                 }
-                Spacer(minLength: 0)
             }
             .padding(.vertical, 3)
-            .padding(.horizontal, 5)
-            .frame(width: laneW, height: p.height, alignment: .topLeading)
+            .padding(.horizontal, 6)
+            // 왼쪽 3pt 는 담당자 색 띠가 덮는다 — 그만큼 더 밀지 않으면 글자가 띠에
+            // 붙는다(카드도 같은 이유로 `.padding(.leading, accentBar ? 4 : 0)` 을 둔다).
+            .padding(.leading, 3)
+            // 짧은 블록은 위쪽만 차고 아래가 비어 쏠려 보인다 — 가운데로 놓는다.
+            // 긴 블록은 위에 붙인다(기준은 TimelineLayout.centerContentMaxHeight 주석 참고).
+            .frame(width: laneW, height: p.height,
+                   alignment: p.height <= TimelineLayout.centerContentMaxHeight ? .leading : .topLeading)
             // 취소·노쇼는 회색만으로는 "조금 덜 중요한 예약"으로 읽힌다. 카드와 같은
             // 빗금을 깔아 세 화면(일·주·3일)이 끝난 건을 같은 모양으로 말하게 한다.
             .background {

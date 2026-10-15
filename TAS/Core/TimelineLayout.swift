@@ -6,6 +6,12 @@ import Foundation
 /// 좌표(pt)는 계산하지 않는다 — 분 단위와 레인 번호만 내고, 높이·폭 환산은 각 뷰가 한다.
 /// 일 뷰는 폭을 화면에 맞춰 나누고, 주 뷰는 레인 수만큼 칼럼을 넓히기 때문이다.
 enum TimelineLayout {
+    /// 이 높이(pt) 이하의 블록은 내용을 세로 가운데에 놓는다.
+    /// 그보다 길면 위에 붙인다 — 가운데로 내리면 시작시간 글자가 제 눈금에서 멀어져,
+    /// 2시간짜리 블록에서는 "14:30" 이 15시 선 옆에 가 있는 것처럼 읽힌다.
+    /// 일·주·3일 뷰가 같은 기준을 써야 화면마다 다르게 보이지 않는다.
+    static let centerContentMaxHeight: CGFloat = 60
+
     struct Placed {
         let reservation: Reservation
         /// 자정 기준 분.
