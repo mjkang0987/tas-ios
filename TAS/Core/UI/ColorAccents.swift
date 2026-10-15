@@ -95,7 +95,7 @@ struct TimelineBlockChrome: ViewModifier {
             .overlay {
                 if isPending {
                     ZStack(alignment: .bottom) {
-                        Color(.systemBackground).opacity(0.55)
+                        Color(.systemBackground).opacity(0.72)
                         // 아주 짧은 블록에는 배지가 안 들어간다 — 딤만 남긴다.
                         if height >= 34 {
                             // 집에 있는 배지 부품을 쓴다 — 혼자 진한 배경 + 흰 글자로 만들었더니
