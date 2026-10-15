@@ -342,6 +342,14 @@ struct CalendarView: View {
         var id: String { date }
     }
 
+    /// "2026-07-23" → "7월 23일". 머리줄에 ISO 키를 그대로 보여주지 않는다
+    /// (화면의 다른 날짜 표기 `selectedDayLabel` 과 같은 모양).
+    private func dayLabel(_ dateKey: String) -> String {
+        let p = dateKey.split(separator: "-")
+        guard p.count == 3, let m = Int(p[1]), let d = Int(p[2]) else { return dateKey }
+        return "\(m)월 \(d)일"
+    }
+
     private func groupedByDate(_ items: [Reservation]) -> [DateGroup] {
         Dictionary(grouping: items, by: \.date)
             .map { DateGroup(date: $0.key, items: $0.value.sorted { $0.startTime < $1.startTime }) }
@@ -352,11 +360,15 @@ struct CalendarView: View {
     @ViewBuilder private func selectedMonthList(year: Int, month: Int) -> some View {
         let prefix = String(format: "%04d-%02d", year, month)
         let items = viewModel.reservations(inMonthPrefix: prefix, assigneeId: selectedAssigneeId)
+        let summary = viewModel.monthlySummaries(yearPrefix: String(format: "%04d", year), assigneeId: selectedAssigneeId)[prefix]
         VStack(spacing: 0) {
             HStack {
                 Text("\(month)월").font(.footnote.weight(.semibold))
                 Spacer()
-                Text("\(items.count)건").font(.caption).foregroundStyle(.secondary)
+                // 월 뷰의 같은 자리(선택일 머리줄)는 금액까지 보여준다 — 여기만 건수뿐이면 어긋난다.
+                if let summary, summary.count > 0 {
+                    Text("\(summary.count)건 · \(formatWon(summary.total))").font(.caption).foregroundStyle(.secondary)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
@@ -379,7 +391,7 @@ struct CalendarView: View {
                         } header: {
                             // 붙어 있는 동안 밑으로 지나가는 카드가 글자에 비친다 — 바탕을 깔아 가린다.
                             // (웹 StyledDateTitle 도 같은 이유로 배경을 둔다.)
-                            Text("\(group.date) (\(group.items.count))")
+                            Text("\(dayLabel(group.date)) · \(group.items.count)건")
                                 .font(.caption.weight(.semibold))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.vertical, 4)
@@ -402,7 +414,6 @@ struct CalendarView: View {
             activeSheet = .detail(r)
         } label: {
             // 손으로 그린 행이라 혼자 카드 디자인 밖에 있었다 — 공용 카드로 합친다.
-            // 연 목록은 한 달치를 한 줄에 섞어 보여주므로 날짜까지 켠다(웹 showDate).
             ReservationInfoCard(
                 reservation: r,
                 serviceColorMap: viewModel.serviceColorMap,
