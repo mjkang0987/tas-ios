@@ -122,7 +122,7 @@ struct DayColumnsTimelineView: View {
                 .font(.caption2)
                 .lineLimit(1)
                 .timelineBlockChrome(color: c, isInactive: p.reservation.isInactive,
-                                     isNoshow: p.reservation.displayState == .noshow,
+                                     isNoshow: p.reservation.isNoshow,
                                      width: w, height: height)
         }
         .buttonStyle(.plain)

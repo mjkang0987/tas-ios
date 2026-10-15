@@ -44,6 +44,12 @@ struct Reservation: Codable, Identifiable, Hashable {
         displayState == .cancelled || displayState == .noshow
     }
 
+    /// 끝난 예약 중에서도 노쇼 — 교차 빗금으로 취소와 가른다.
+    /// `isInactive` 와 마찬가지로 판정이 화면마다 갈리지 않게 여기 한 곳에 둔다.
+    var isNoshow: Bool {
+        displayState == .noshow
+    }
+
     var displayState: ReservationDisplayState {
         switch status {
         case .cancelled: return .cancelled
