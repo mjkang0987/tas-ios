@@ -85,8 +85,11 @@ struct TimelineBlockChrome: ViewModifier {
             .padding(.leading, 3)
             // 패딩이 프레임보다 먼저여야 한다. 순서가 뒤집히면 패딩이 칸 **밖에** 붙어
             // 블록이 제 레인보다 커지고 옆 레인을 침범한다.
+            // 확정대기는 배지가 아래를 차지하므로 내용을 위에 붙인다 — 가운데로 두면 좁은 칸에서
+            // 배지가 이름을 그대로 덮어, 정작 "누가" 가 사라진다.
             .frame(width: width, height: height,
-                   alignment: height <= TimelineLayout.centerContentMaxHeight ? .leading : .topLeading)
+                   alignment: !isPending && height <= TimelineLayout.centerContentMaxHeight
+                       ? .leading : .topLeading)
             .background {
                 ZStack {
                     color.opacity(0.16)
@@ -98,10 +101,12 @@ struct TimelineBlockChrome: ViewModifier {
             // 딤도 배지도 터치를 먹지 않는다(`allowsHitTesting(false)`).
             .overlay {
                 if isPending {
-                    ZStack {
+                    ZStack(alignment: .bottom) {
                         Color(.systemBackground).opacity(0.55)
                         // 아주 짧은 블록에는 배지가 안 들어간다 — 딤만 남긴다.
-                        if height >= 24 { PendingBadge() }
+                        if height >= 34 {
+                            PendingBadge().padding(.bottom, 3)
+                        }
                     }
                     .allowsHitTesting(false)
                 }
