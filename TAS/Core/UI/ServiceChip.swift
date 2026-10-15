@@ -58,7 +58,12 @@ struct ServiceChipList: View {
         if wraps {
             WrapLayout(spacing: 6) { chips }
         } else {
+            // 좁은 칸에서 HStack 은 칩들을 고르게 눌러 `여성…` `일…` 처럼 **둘 다** 읽을 수
+            // 없게 만든다. 제 크기를 지키게 두고 넘치는 쪽을 자르면, 적어도 첫 칩은 온전히
+            // 읽힌다(자르는 건 블록이 clipShape 로 한다).
             HStack(spacing: 6) { chips }
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

@@ -121,17 +121,8 @@ struct DayColumnsTimelineView: View {
             Text(customerName(p.reservation.customerId))
                 .font(.caption2)
                 .lineLimit(1)
-                .padding(.vertical, 2)
-                .padding(.horizontal, 5)
-                // 왼쪽 3pt 는 담당자 색 띠가 덮는다 — 그만큼 더 밀지 않으면 글자가 띠에 붙는다.
-                .padding(.leading, 3)
-                // 프레임이 패딩보다 먼저 있으면 패딩이 칸 **밖에** 붙어, 블록이 제 레인보다
-                // 가로 7pt·세로 4pt 커진다(옆 레인 침범·시간대 초과). 패딩을 안쪽으로 돌린다.
-                .frame(width: w, height: height,
-                       alignment: height <= TimelineLayout.centerContentMaxHeight ? .leading : .topLeading)
-                .background(c.opacity(0.16))
-                .overlay(alignment: .leading) { Rectangle().fill(c).frame(width: 3) }
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .timelineBlockChrome(color: c, isInactive: p.reservation.isInactive,
+                                     width: w, height: height)
         }
         .buttonStyle(.plain)
         .offset(x: x, y: top)
