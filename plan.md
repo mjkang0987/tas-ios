@@ -9,6 +9,26 @@
 
 ---
 
+## 🟡 진행 — 공지 '노출' 체크 하나로 (`claude/notice-single-visible`)
+
+> 웹 같은 작업: `mjkang0987/tas` PR #272 (release/2026-10-batch 묶음). 웹이 '공개'·'상단 고정' 두 체크를
+> **'노출' 하나(= `visible`, 최대 3개)**로 합쳤다. 앱도 같은 규칙으로 맞춘다.
+
+### 서버 규칙 (웹 #272)
+- '노출' = `visible`. 고객 예약 페이지는 `visible` 최신 3개만.
+- 한도 3은 **숨김 → 노출 전환 때만** 409 `visible_limit`(한도 도입 전 4개 이상 노출 중인 매장의 기존 공지 수정은 통과).
+- `pinned`는 웹 미사용. 서버는 앱 호환용으로 계속 받고 돌려준다 → 앱 모델의 `pinned` 필드는 **디코드 호환을 위해 남기고**
+  저장 시 기존 값을 그대로 돌려보낸다(새 공지는 false).
+
+### 구현
+- `Models/Notice.swift` — `maxPinned` → `maxVisible`, 순수 판정 `canShow(wasVisible:otherVisibleCount:)`(서버 규칙 이식).
+- `NoticeFormView` — 토글 2개 → '노출' 하나. 한도면 비활성 + 새 공지는 꺼진 채 시작. 저장 전 같은 판정.
+- `NoticesView` — 정렬 고정 우선 제거(최신순, 웹 목록과 동일), 행의 핀 아이콘 제거(숨김 아이콘은 유지).
+- 테스트: `NoticeTests` — `canShow` 경계.
+
+### 검증
+- `xcodegen generate` → `xcodebuild build` · `xcodebuild test` · 시뮬레이터에서 공지 화면 조작.
+
 ## ✅ 완료 — 예약 카드·타임라인을 웹에 맞춘다 (`claude/card-parity-with-web`)
 
 웹 시안에 맞춰 예약 카드를 박스로 바꾸고, 타임라인의 상태 표기·정렬을 정리했다.
