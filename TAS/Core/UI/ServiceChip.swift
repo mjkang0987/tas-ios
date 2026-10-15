@@ -8,15 +8,20 @@ struct ServiceChip: View {
     let name: String
     let color: Color
     var font: Font = .caption2
+    /// 끝난 예약(취소·노쇼)의 칩. 카드가 색을 잃는데 칩만 살아 있으면 거기로 눈이 간다
+    /// — 웹도 같은 이유로 칩 글자를 죽인다.
+    var inactive: Bool = false
+
+    private var tint: Color { inactive ? .secondary : color }
 
     var body: some View {
         Text(name)
             .font(font.weight(.semibold))
-            .foregroundStyle(color)
+            .foregroundStyle(tint)
             .lineLimit(1)
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
-            .background(color.opacity(0.094), in: Capsule())
+            .background(tint.opacity(0.094), in: Capsule())
     }
 }
 
@@ -31,6 +36,8 @@ struct ServiceChipList: View {
     /// 목록 행처럼 높이가 흔들리면 안 되는 자리는 `false`(한 줄, 넘치면 잘림).
     /// 웹도 목록에선 `nowrap` + ellipsis를 쓴다.
     var wraps: Bool = true
+    /// 끝난 예약이면 칩도 함께 죽인다.
+    var inactive: Bool = false
 
     /// 같은 시술이 두 번 들어간 문자열("커트+커트")도 있을 수 있어 순번으로 식별한다.
     private struct Item: Identifiable {
@@ -60,7 +67,8 @@ struct ServiceChipList: View {
             ServiceChip(
                 name: item.name,
                 color: ServiceColor.color(item.name, in: colorMap),
-                font: font
+                font: font,
+                inactive: inactive
             )
         }
     }

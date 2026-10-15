@@ -76,7 +76,9 @@ struct DayTimelineView: View {
                     ServiceChipList(
                         service: p.reservation.service,
                         colorMap: serviceColorMap,
-                        wraps: false
+                        wraps: false,
+                        // 블록이 색을 잃었는데 칩만 살아 있으면 거기로 눈이 간다(카드와 같은 규칙).
+                        inactive: p.reservation.isInactive
                     )
                 }
                 Spacer(minLength: 0)
@@ -84,7 +86,14 @@ struct DayTimelineView: View {
             .padding(.vertical, 3)
             .padding(.horizontal, 5)
             .frame(width: laneW, height: p.height, alignment: .topLeading)
-            .background(c.opacity(0.16))
+            // 취소·노쇼는 회색만으로는 "조금 덜 중요한 예약"으로 읽힌다. 카드와 같은
+            // 빗금을 깔아 세 화면(일·주·3일)이 끝난 건을 같은 모양으로 말하게 한다.
+            .background {
+                ZStack {
+                    c.opacity(0.16)
+                    if p.reservation.isInactive { HatchPattern() }
+                }
+            }
             .overlay(alignment: .leading) { Rectangle().fill(c).frame(width: 3) }
             .clipShape(RoundedRectangle(cornerRadius: 5))
         }

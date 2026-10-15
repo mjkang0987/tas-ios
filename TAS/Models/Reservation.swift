@@ -38,6 +38,12 @@ struct Reservation: Codable, Identifiable, Hashable {
 
     /// 뱃지 표시 상태 — 웹 `getReservationState`(ReservationInfoCard)와 동일 규칙.
     /// 결제 완료면 '결제완료', 아니면 '예약'으로 파생한다.
+    /// 끝난 예약 — 색을 잃고 빗금으로 간다(웹 `.inactive` 와 같은 규칙).
+    /// 카드·타임라인 블록이 같은 판정을 써야 세 화면이 어긋나지 않는다.
+    var isInactive: Bool {
+        displayState == .cancelled || displayState == .noshow
+    }
+
     var displayState: ReservationDisplayState {
         switch status {
         case .cancelled: return .cancelled
