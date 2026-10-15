@@ -121,13 +121,9 @@ struct DayColumnsTimelineView: View {
             Text(customerName(p.reservation.customerId))
                 .font(.caption2)
                 .lineLimit(1)
-                .frame(width: w, height: height, alignment: .topLeading)
-                .padding(.vertical, 2)
-                .padding(.leading, 5)
-                .padding(.trailing, 2)
-                .background(c.opacity(0.16))
-                .overlay(alignment: .leading) { Rectangle().fill(c).frame(width: 3) }
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .timelineBlockChrome(color: c, isInactive: p.reservation.isInactive,
+                                     isNoshow: p.reservation.isNoshow, isPending: p.reservation.isPending,
+                                     width: w, height: height)
         }
         .buttonStyle(.plain)
         .offset(x: x, y: top)

@@ -16,6 +16,10 @@ struct DayTimelineView: View {
     private let hourHeight: CGFloat = 56
     private let gutterWidth: CGFloat = 40
     private let laneSpacing: CGFloat = 3
+    /// 레인 하나가 가질 최소 폭. 겹침이 많아 이보다 좁아져야 할 상황이면 좁히지 않고
+    /// 가로로 스크롤한다 — 주·3일 뷰가 쓰는 방식과 같다. 좁히면 시술 칩이 `여…` 처럼
+    /// 아무 정보도 없는 말줄임이 되어, 한 줄을 먹으면서 읽히지는 않는다.
+    private let minLaneWidth: CGFloat = 104
     private let minBlockHeight: CGFloat = 26
     private var ptPerMin: CGFloat { hourHeight / 60 }
     private var axisStartMin: Int { startHour * 60 }
@@ -26,18 +30,24 @@ struct DayTimelineView: View {
             HStack(alignment: .top, spacing: 6) {
                 gutter
                 GeometryReader { geo in
-                    ZStack(alignment: .topLeading) {
-                        // 시간 구분선
-                        ForEach(0...(endHour - startHour), id: \.self) { i in
-                            Rectangle()
-                                .fill(Color(.separator).opacity(0.5))
-                                .frame(height: 0.5)
-                                .offset(y: CGFloat(i) * hourHeight)
+                    let width = contentWidth(available: geo.size.width)
+                    // 겹침이 많으면 레인을 좁히는 대신 가로로 스크롤한다(주·3일 뷰와 같은 방식).
+                    // 다 들어가는 날은 내용 폭 = 화면 폭이라 스크롤이 생기지 않는다.
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        ZStack(alignment: .topLeading) {
+                            // 시간 구분선
+                            ForEach(0...(endHour - startHour), id: \.self) { i in
+                                Rectangle()
+                                    .fill(Color(.separator).opacity(0.5))
+                                    .frame(width: width, height: 0.5)
+                                    .offset(y: CGFloat(i) * hourHeight)
+                            }
+                            // 예약 블록
+                            ForEach(positioned, id: \.reservation.id) { p in
+                                block(p, totalWidth: width)
+                            }
                         }
-                        // 예약 블록
-                        ForEach(positioned, id: \.reservation.id) { p in
-                            block(p, totalWidth: geo.size.width)
-                        }
+                        .frame(width: width, height: totalHeight, alignment: .topLeading)
                     }
                 }
                 .frame(height: totalHeight)
@@ -76,17 +86,15 @@ struct DayTimelineView: View {
                     ServiceChipList(
                         service: p.reservation.service,
                         colorMap: serviceColorMap,
-                        wraps: false
+                        wraps: false,
+                        // 블록이 색을 잃었는데 칩만 살아 있으면 거기로 눈이 간다(카드와 같은 규칙).
+                        inactive: p.reservation.isInactive
                     )
                 }
-                Spacer(minLength: 0)
             }
-            .padding(.vertical, 3)
-            .padding(.horizontal, 5)
-            .frame(width: laneW, height: p.height, alignment: .topLeading)
-            .background(c.opacity(0.16))
-            .overlay(alignment: .leading) { Rectangle().fill(c).frame(width: 3) }
-            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .timelineBlockChrome(color: c, isInactive: p.reservation.isInactive,
+                                 isNoshow: p.reservation.isNoshow, isPending: p.reservation.isPending,
+                                 width: laneW, height: p.height)
         }
         .buttonStyle(.plain)
         .offset(x: x, y: p.top)
@@ -100,6 +108,17 @@ struct DayTimelineView: View {
         let height: CGFloat
         let colIndex: Int
         let colCount: Int
+    }
+
+    /// 하루 안에서 가장 많이 겹친 수. 그 수만큼은 레인이 최소 폭을 갖도록 내용 폭을 잡는다.
+    private var maxLanes: Int {
+        max(1, positioned.map(\.colCount).max() ?? 1)
+    }
+
+    /// 화면에 다 들어가면 화면 폭, 아니면 레인들이 최소 폭을 갖는 만큼 넓힌 폭.
+    private func contentWidth(available: CGFloat) -> CGFloat {
+        let lanes = CGFloat(maxLanes)
+        return max(available, minLaneWidth * lanes + laneSpacing * (lanes - 1))
     }
 
     /// 겹침 클러스터·레인 배치는 `TimelineLayout`이 한다(주 타임라인과 공용).

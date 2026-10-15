@@ -50,13 +50,15 @@ struct ReservationInfoCard: View {
     @ScaledMetric(relativeTo: .caption2) private var dateColumnWidth: CGFloat = 76
     @ScaledMetric(relativeTo: .subheadline) private var timeColumnWidth: CGFloat = 44
 
+    /// 취소·노쇼는 담당자 색을 버리고 무채색 + 빗금으로 간다(웹 `.inactive` 와 같다).
+    private var isInactive: Bool { reservation.isInactive }
+
+    private var accent: Color { assigneeColor ?? .secondary }
+
     var body: some View {
         HStack(spacing: 10) {
             if showDate || timeMode != .hidden {
                 leading
-            }
-            if accentBar {
-                ColorAccentBar(color: assigneeColor, height: 28)
             }
             main
             Spacer(minLength: 0)
@@ -64,8 +66,48 @@ struct ReservationInfoCard: View {
                 trailing
             }
         }
-        .padding(.vertical, 2)
+        .padding(6)
+        .padding(.leading, accentBar ? 4 : 0)   // 왼쪽 띠가 먹는 만큼
+        .background(cardBackground)
+        .overlay(alignment: .leading) {
+            // 웹은 border-left 를 4px 로 굵혀 카드 가장자리에 색을 둔다 — 안쪽 막대가 아니다.
+            if accentBar {
+                Rectangle()
+                    .fill(isInactive ? Color(.separator) : accent)
+                    .frame(width: 4)
+            }
+        }
+        .overlay(cardBorder)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .contentShape(Rectangle())
+        // 카드는 통째로 눌리는 한 덩어리다. 묶지 않으면 VoiceOver 가 시간·배지·이름·
+        // 시술칩·담당자·상태·금액을 따로 세워, 예약 하나를 지나는 데 여덟 번 넘긴다.
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - 카드 표면 (웹 StyledCard 이식)
+
+    /// 위는 거의 흰색, 아래로 갈수록 담당자 색이 비친다 — 웹과 같은 세로 그라데이션.
+    /// 색은 담당자 색에서 뽑으므로 다크 모드에서도 배경 대비가 유지된다.
+    @ViewBuilder private var cardBackground: some View {
+        if isInactive {
+            // 빗금 + 무채색. 끝난 예약은 색을 잃는다.
+            ZStack {
+                Color(.secondarySystemBackground)
+                HatchPattern(noshow: reservation.isNoshow)
+            }
+        } else {
+            LinearGradient(
+                colors: [Color(.systemBackground), accent.opacity(0.07)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .strokeBorder(isInactive ? Color(.separator) : accent.opacity(0.27), lineWidth: 1)
     }
 
     // MARK: - 좌측(날짜·시간)
@@ -86,12 +128,13 @@ struct ReservationInfoCard: View {
                     .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
             case .range:
+                // 웹은 시작·종료를 같은 굵기·색으로 쌓는다 — 줄바꿈 자체가 범위를 뜻한다.
+                // 종료만 흐리면 "언제 끝나는지"가 부가정보처럼 읽힌다.
                 Text(reservation.startTime)
                     .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
                 Text(reservation.endTime)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
             }
         }
@@ -107,15 +150,15 @@ struct ReservationInfoCard: View {
         VStack(alignment: .leading, spacing: 2) {
             if let customerName {
                 HStack(spacing: 6) {
-                    Text(customerName).font(.subheadline.weight(.semibold))
+                    // 웹과 같은 차례 — 배지가 이름 앞에 선다.
                     if isNewCustomer { NewCustomerBadge() }
+                    Text(customerName).font(.subheadline.weight(.semibold))
                 }
             }
-            HStack(spacing: 5) {
-                ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false)
-                if let assigneeName {
-                    Text("· \(assigneeName)").font(.caption2).foregroundStyle(.secondary)
-                }
+            ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false, inactive: isInactive)
+            // 담당자는 다음 줄 — 좁은 칸에서 시술과 같은 줄에 두면 둘이 서로를 민다(웹과 같다).
+            if let assigneeName {
+                AssigneeBadge(name: assigneeName, color: assigneeColor)
             }
         }
     }

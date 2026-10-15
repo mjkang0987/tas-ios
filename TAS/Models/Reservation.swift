@@ -38,6 +38,24 @@ struct Reservation: Codable, Identifiable, Hashable {
 
     /// 뱃지 표시 상태 — 웹 `getReservationState`(ReservationInfoCard)와 동일 규칙.
     /// 결제 완료면 '결제완료', 아니면 '예약'으로 파생한다.
+    /// 끝난 예약 — 색을 잃고 빗금으로 간다(웹 `.inactive` 와 같은 규칙).
+    /// 카드·타임라인 블록이 같은 판정을 써야 세 화면이 어긋나지 않는다.
+    var isInactive: Bool {
+        displayState == .cancelled || displayState == .noshow
+    }
+
+    /// 아직 사장님이 수락하지 않은 온라인 신청. 확정된 예약과 같아 보이면 그 시간에
+    /// 다른 손님을 받거나 반대로 비워 두는 실수가 난다 — 딤 + 배지로 "있지만 정해지지 않았다"를 말한다.
+    var isPending: Bool {
+        displayState == .requested
+    }
+
+    /// 끝난 예약 중에서도 노쇼 — 교차 빗금으로 취소와 가른다.
+    /// `isInactive` 와 마찬가지로 판정이 화면마다 갈리지 않게 여기 한 곳에 둔다.
+    var isNoshow: Bool {
+        displayState == .noshow
+    }
+
     var displayState: ReservationDisplayState {
         switch status {
         case .cancelled: return .cancelled

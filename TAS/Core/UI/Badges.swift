@@ -97,6 +97,23 @@ struct StatusCountBadge: View {
     }
 }
 
+/// 담당자 뱃지 — 웹 `AssigneeLabel`(= `ColorTag`, 담당자 색 배경 + 흰 글자 알약) 이식.
+/// 점 하나로 두면 이름과 색의 연결이 약하고, 웹과 모양이 갈린다.
+struct AssigneeBadge: View {
+    let name: String
+    let color: Color?
+
+    var body: some View {
+        Text(name)
+            .font(.caption2.weight(.semibold))
+            .lineLimit(1)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 2)
+            .background(color ?? .secondary, in: Capsule())
+            .foregroundStyle(.white)
+    }
+}
+
 /// 신규 고객 뱃지 — 웹 `NewCustomerBadge` 대응(첫 방문 표시).
 struct NewCustomerBadge: View {
     var body: some View {

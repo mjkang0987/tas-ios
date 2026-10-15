@@ -57,9 +57,18 @@ struct CalendarView: View {
                     }
                 }
             }
-            .navigationTitle("캘린더")
+            // 큰 제목을 두지 않는다 — 하단 탭바가 이미 '캘린더'라고 말하고 있어 같은 말이
+            // 두 번이고, 달력이 세로를 많이 쓰는 화면이라 그 높이가 아깝다.
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                // 웹 헤더처럼 좌우 이동을 날짜 왼쪽에 둔다 — 뷰마다 따로 머리줄을 두면
+                // 같은 조작이 화면마다 다른 자리에 있고 세로도 그만큼 먹는다.
+                ToolbarItemGroup(placement: .topBarLeading) {
+                    Button { shiftPeriod(-1) } label: { Image(systemName: "chevron.left") }
+                        .accessibilityLabel("이전")
+                    Button { shiftPeriod(1) } label: { Image(systemName: "chevron.right") }
+                        .accessibilityLabel("다음")
                     DatePicker("", selection: $selectedDate, displayedComponents: .date)
                         .labelsHidden()
                 }
@@ -179,16 +188,8 @@ struct CalendarView: View {
         let daysInMonth = cal.range(of: .day, in: .month, for: firstOfMonth)?.count ?? 30
         let weekday = cal.component(.weekday, from: firstOfMonth)   // 1=일…7=토
         let leading = (weekday - cal.firstWeekday + 7) % 7           // 월요일 시작 오프셋
-        let monthTotal = summaries.values.reduce(into: (count: 0, total: 0)) { $0.count += $1.count; $0.total += $1.total }
 
         VStack(spacing: 8) {
-            periodHeader(
-                title: KST.monthLabel.string(from: firstOfMonth),
-                subtitle: monthTotal.count > 0 ? "\(monthTotal.count)건 · \(formatWon(monthTotal.total))" : "예약 없음",
-                onPrev: { shiftMonth(-1) },
-                onNext: { shiftMonth(1) }
-            )
-
             LazyVGrid(columns: gridColumns, spacing: 4) {
                 ForEach(Array(KST.weekdayLabels.enumerated()), id: \.offset) { i, s in
                     Text(s)
@@ -263,7 +264,18 @@ struct CalendarView: View {
                 Text("\(selectedDayLabel) 예약이 없습니다.").font(.footnote).foregroundStyle(.secondary)
                 Spacer()
             } else {
-                List(items) { reservationButton($0) }.listStyle(.plain)
+                List(items) { r in
+                    reservationButton(r)
+                        // 카드가 테두리로 제 경계를 긋는다 — 행 구분선까지 두면 선이 두 겹이다.
+                        .listRowSeparator(.hidden)
+                        // 카드 간격은 웹(2px)에 맞추되, 좌우는 iOS 표준 16pt 를 지킨다 —
+                        // 8pt 까지 좁히면 카드 왼쪽에서 시작하는 스와이프가 시스템 뒤로가기와 겹친다.
+                        .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
+                }
+                .listStyle(.plain)
+                // 머리줄(날짜·건수) 과 첫 카드가 붙어 보인다 — 콘텐츠 상단만 띄운다.
+                // 행 간격(listRowInsets)을 키우면 카드 사이까지 벌어진다.
+                .contentMargins(.top, 10, for: .scrollContent)
             }
         }
     }
@@ -283,16 +295,8 @@ struct CalendarView: View {
         let selMonth = cal.component(.month, from: selectedDate)
         let yearPrefix = String(format: "%04d", year)
         let monthly = viewModel.monthlySummaries(yearPrefix: yearPrefix, assigneeId: selectedAssigneeId)
-        let yearTotal = monthly.values.reduce(into: (count: 0, total: 0)) { $0.count += $1.count; $0.total += $1.total }
 
         VStack(spacing: 8) {
-            periodHeader(
-                title: "\(year)년",
-                subtitle: yearTotal.count > 0 ? "\(yearTotal.count)건 · \(formatWon(yearTotal.total))" : "예약 없음",
-                onPrev: { shiftYear(-1) },
-                onNext: { shiftYear(1) }
-            )
-
             LazyVGrid(columns: yearColumns, spacing: 8) {
                 ForEach(1...12, id: \.self) { m in
                     let key = String(format: "%04d-%02d", year, m)
@@ -331,15 +335,40 @@ struct CalendarView: View {
         .contentShape(Rectangle())
     }
 
+    /// 날짜별 묶음 — 웹 목록의 `grouped` 와 같은 규칙(날짜 오름차순, 그 안은 시작시간 순).
+    private struct DateGroup: Identifiable {
+        let date: String
+        let items: [Reservation]
+        var id: String { date }
+    }
+
+    /// "2026-07-23" → "7월 23일". 머리줄에 ISO 키를 그대로 보여주지 않는다
+    /// (화면의 다른 날짜 표기 `selectedDayLabel` 과 같은 모양).
+    private func dayLabel(_ dateKey: String) -> String {
+        let p = dateKey.split(separator: "-")
+        guard p.count == 3, let m = Int(p[1]), let d = Int(p[2]) else { return dateKey }
+        return "\(m)월 \(d)일"
+    }
+
+    private func groupedByDate(_ items: [Reservation]) -> [DateGroup] {
+        Dictionary(grouping: items, by: \.date)
+            .map { DateGroup(date: $0.key, items: $0.value.sorted { $0.startTime < $1.startTime }) }
+            .sorted { $0.date < $1.date }
+    }
+
     /// 년 뷰 하단: 선택한 월의 예약 리스트(날짜 포함).
     @ViewBuilder private func selectedMonthList(year: Int, month: Int) -> some View {
         let prefix = String(format: "%04d-%02d", year, month)
         let items = viewModel.reservations(inMonthPrefix: prefix, assigneeId: selectedAssigneeId)
+        let summary = viewModel.monthlySummaries(yearPrefix: String(format: "%04d", year), assigneeId: selectedAssigneeId)[prefix]
         VStack(spacing: 0) {
             HStack {
                 Text("\(month)월").font(.footnote.weight(.semibold))
                 Spacer()
-                Text("\(items.count)건").font(.caption).foregroundStyle(.secondary)
+                // 월 뷰의 같은 자리(선택일 머리줄)는 금액까지 보여준다 — 여기만 건수뿐이면 어긋난다.
+                if let summary, summary.count > 0 {
+                    Text("\(summary.count)건 · \(formatWon(summary.total))").font(.caption).foregroundStyle(.secondary)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
@@ -349,60 +378,70 @@ struct CalendarView: View {
                 Text("\(month)월 예약이 없습니다.").font(.footnote).foregroundStyle(.secondary)
                 Spacer()
             } else {
-                List(items) { monthReservationButton($0) }.listStyle(.plain)
+                // 한 달치를 한 줄로 쌓으면 스크롤 중 지금 보는 게 며칠 건인지 잃는다.
+                // 웹은 날짜 머리줄을 sticky 로 붙인다 — .plain 리스트의 Section 헤더가 같은 동작이다.
+                List {
+                    ForEach(groupedByDate(items), id: \.date) { group in
+                        Section {
+                            ForEach(group.items) { r in
+                                monthReservationButton(r)
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(top: 1, leading: 16, bottom: 1, trailing: 16))
+                            }
+                        } header: {
+                            // 붙어 있는 동안 밑으로 지나가는 카드가 글자에 비친다 — 바탕을 깔아 가린다.
+                            // (웹 StyledDateTitle 도 같은 이유로 배경을 둔다.)
+                            Text("\(dayLabel(group.date)) · \(group.items.count)건")
+                                .font(.caption.weight(.semibold))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 16)
+                                .background(Color(.systemBackground))
+                        }
+                        .listRowInsets(EdgeInsets())
+                    }
+                }
+                .listStyle(.plain)
+                .contentMargins(.top, 10, for: .scrollContent)
             }
         }
     }
 
     /// 월 리스트용 행(날짜 포함) — 탭 시 상세.
     private func monthReservationButton(_ r: Reservation) -> some View {
-        Button {
+        let assignee = viewModel.assignee(r.assigneeId)
+        return Button {
             activeSheet = .detail(r)
         } label: {
-            HStack(spacing: 10) {
-                Text(shortDate(r.date)).font(.caption.weight(.semibold)).frame(width: 42, alignment: .leading).monospacedDigit()
-                Text(r.startTime).font(.caption2).foregroundStyle(.secondary).monospacedDigit()
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(viewModel.customerName(r.customerId)).font(.subheadline.weight(.medium))
-                    ServiceChipList(service: r.service, colorMap: viewModel.serviceColorMap, wraps: false)
-                }
-                Spacer()
-                StatusBadge(state: r.displayState)
-            }
-            .padding(.vertical, 2)
-            .contentShape(Rectangle())
+            // 손으로 그린 행이라 혼자 카드 디자인 밖에 있었다 — 공용 카드로 합친다.
+            ReservationInfoCard(
+                reservation: r,
+                serviceColorMap: viewModel.serviceColorMap,
+                customerName: viewModel.customerName(r.customerId),
+                isNewCustomer: viewModel.isNewCustomer(r),
+                assigneeName: assignee?.name,
+                assigneeColor: Color(hex: assignee?.color),
+                // 날짜는 섹션 머리줄이 말한다 — 카드에 또 적으면 같은 말이 두 번이다.
+                showPrice: true
+            )
         }
         .buttonStyle(.plain)
     }
 
-    /// "2026-07-23" → "07.23".
-    private func shortDate(_ dateKey: String) -> String {
-        let p = dateKey.split(separator: "-")
-        return p.count == 3 ? "\(p[1]).\(p[2])" : dateKey
-    }
-
     // MARK: - 기간 이동 헤더 (월/년 공용)
 
-    private func periodHeader(title: String, subtitle: String, onPrev: @escaping () -> Void, onNext: @escaping () -> Void) -> some View {
-        HStack {
-            Button(action: onPrev) { Image(systemName: "chevron.left") }
-            Spacer()
-            VStack(spacing: 2) {
-                Text(title).font(.headline)
-                Text(subtitle).font(.caption).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button(action: onNext) { Image(systemName: "chevron.right") }
+    /// 보고 있는 뷰의 한 칸만큼 움직인다 — 웹 헤더의 좌우 버튼과 같은 규칙.
+    private func shiftPeriod(_ step: Int) {
+        let cal = KST.calendar
+        let moved: Date?
+        switch mode {
+        case .day:   moved = cal.date(byAdding: .day, value: step, to: selectedDate)
+        case .three: moved = cal.date(byAdding: .day, value: 3 * step, to: selectedDate)
+        case .week:  moved = cal.date(byAdding: .weekOfYear, value: step, to: selectedDate)
+        case .month: moved = cal.date(byAdding: .month, value: step, to: selectedDate)
+        case .year:  moved = cal.date(byAdding: .year, value: step, to: selectedDate)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 4)
-    }
-
-    private func shiftMonth(_ delta: Int) {
-        if let d = KST.calendar.date(byAdding: .month, value: delta, to: selectedDate) { selectedDate = d }
-    }
-    private func shiftYear(_ delta: Int) {
-        if let d = KST.calendar.date(byAdding: .year, value: delta, to: selectedDate) { selectedDate = d }
+        if let moved { selectedDate = moved }
     }
 
     /// 예약 행 버튼 — 일/주 뷰 공용.
@@ -417,7 +456,9 @@ struct CalendarView: View {
                 customerName: viewModel.customerName(reservation.customerId),
                 isNewCustomer: viewModel.isNewCustomer(reservation),
                 assigneeName: assignee?.name,
-                assigneeColor: Color(hex: assignee?.color)
+                assigneeColor: Color(hex: assignee?.color),
+                // 웹 목록 카드는 금액까지 보여준다(ReservationListSection 의 showPrice).
+                showPrice: true
             )
         }
         .buttonStyle(.plain)
