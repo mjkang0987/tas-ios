@@ -26,38 +26,31 @@ struct ColorAccentBar: View {
 /// 취소·노쇼 카드의 빗금 — 웹 `repeating-linear-gradient(-45deg, …)` 대응.
 /// 색만 흐리게 하면 "조금 덜 중요한 예약"으로 읽혀, 끝난 건임을 무늬로 못박는다.
 ///
-/// `crossed` 는 노쇼용 교차 빗금이다. 카드에서 상태 글자를 뺀 뒤로 취소와 노쇼를
-/// 가르는 건 이 무늬뿐이라, 각도만 다르면 나란히 두지 않는 한 구별되지 않는다.
-/// (노쇼가 더 촘촘한 쪽인 건 매출이 빈 자리라 눈에 걸려야 하기 때문이다. 웹과 같은 규칙.)
+/// 취소와 노쇼는 **색**으로 가른다 — 취소는 무채색, 노쇼는 붉은 기운(매출이 빈 자리라
+/// 눈에 걸려야 한다). 무늬를 교차로 바꾸는 방식도 써 봤으나 나란히 두지 않으면
+/// 구별이 어렵고 촘촘해져 글자를 가렸다.
 struct HatchPattern: View {
-    var crossed: Bool = false
+    /// 노쇼면 붉게. 상태 배지의 노쇼 색(#EA4335)과 같은 계열이다.
+    var noshow: Bool = false
+
+    private var tint: Color {
+        noshow ? BadgeTone.noshow.foreground.opacity(0.18) : Color.primary.opacity(0.05)
+    }
 
     var body: some View {
         GeometryReader { geo in
-            stripes(in: geo.size, rising: true)
-            if crossed {
-                stripes(in: geo.size, rising: false)
-            }
-        }
-    }
-
-    private func stripes(in size: CGSize, rising: Bool) -> some View {
-        let step: CGFloat = 12
-        let span = size.width + size.height
-        return Path { path in
-            var x = -size.height
-            while x < span {
-                if rising {
-                    path.move(to: CGPoint(x: x, y: size.height))
-                    path.addLine(to: CGPoint(x: x + size.height, y: 0))
-                } else {
-                    path.move(to: CGPoint(x: x, y: 0))
-                    path.addLine(to: CGPoint(x: x + size.height, y: size.height))
+            let step: CGFloat = 12
+            let span = geo.size.width + geo.size.height
+            Path { path in
+                var x = -geo.size.height
+                while x < span {
+                    path.move(to: CGPoint(x: x, y: geo.size.height))
+                    path.addLine(to: CGPoint(x: x + geo.size.height, y: 0))
+                    x += step
                 }
-                x += step
             }
+            .stroke(tint, lineWidth: 6)
         }
-        .stroke(Color.primary.opacity(0.05), lineWidth: 6)
     }
 }
 
@@ -93,7 +86,7 @@ struct TimelineBlockChrome: ViewModifier {
             .background {
                 ZStack {
                     color.opacity(0.16)
-                    if isInactive { HatchPattern(crossed: isNoshow) }
+                    if isInactive { HatchPattern(noshow: isNoshow) }
                 }
             }
             .overlay(alignment: .leading) { Rectangle().fill(color).frame(width: 3) }
@@ -105,7 +98,9 @@ struct TimelineBlockChrome: ViewModifier {
                         Color(.systemBackground).opacity(0.55)
                         // 아주 짧은 블록에는 배지가 안 들어간다 — 딤만 남긴다.
                         if height >= 34 {
-                            PendingBadge().padding(.bottom, 3)
+                            // 집에 있는 배지 부품을 쓴다 — 혼자 진한 배경 + 흰 글자로 만들었더니
+                            // 다른 배지(연한 배경 + 진한 글자)들 사이에서 겉돌았다.
+                            ToneBadge(tone: .requested, text: "확정대기").padding(.bottom, 3)
                         }
                     }
                     .allowsHitTesting(false)
