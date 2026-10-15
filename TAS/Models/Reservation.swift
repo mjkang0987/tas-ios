@@ -44,6 +44,12 @@ struct Reservation: Codable, Identifiable, Hashable {
         displayState == .cancelled || displayState == .noshow
     }
 
+    /// 아직 사장님이 수락하지 않은 온라인 신청. 확정된 예약과 같아 보이면 그 시간에
+    /// 다른 손님을 받거나 반대로 비워 두는 실수가 난다 — 딤 + 배지로 "있지만 정해지지 않았다"를 말한다.
+    var isPending: Bool {
+        displayState == .requested
+    }
+
     /// 끝난 예약 중에서도 노쇼 — 교차 빗금으로 취소와 가른다.
     /// `isInactive` 와 마찬가지로 판정이 화면마다 갈리지 않게 여기 한 곳에 둔다.
     var isNoshow: Bool {

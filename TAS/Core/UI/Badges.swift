@@ -114,6 +114,19 @@ struct AssigneeBadge: View {
     }
 }
 
+/// 확정대기 배지 — 웹 `.pending-badge` 대응. 딤 위에 얹혀 "아직 수락 전"을 말한다.
+struct PendingBadge: View {
+    var body: some View {
+        Text("확정대기")
+            .font(.caption2.weight(.semibold))
+            .lineLimit(1)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 1)
+            .background(BadgeTone.requested.foreground, in: Capsule())
+            .foregroundStyle(.white)
+    }
+}
+
 /// 신규 고객 뱃지 — 웹 `NewCustomerBadge` 대응(첫 방문 표시).
 struct NewCustomerBadge: View {
     var body: some View {

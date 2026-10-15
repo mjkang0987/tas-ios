@@ -72,6 +72,8 @@ struct TimelineBlockChrome: ViewModifier {
     let isInactive: Bool
     /// 노쇼만 교차 빗금 — 취소와 가르기 위해. `isInactive` 와 함께 켠다.
     var isNoshow: Bool = false
+    /// 확정대기(아직 수락 전인 온라인 신청) — 카드를 그대로 두고 그 위를 덮는다.
+    var isPending: Bool = false
     let width: CGFloat
     let height: CGFloat
 
@@ -92,14 +94,26 @@ struct TimelineBlockChrome: ViewModifier {
                 }
             }
             .overlay(alignment: .leading) { Rectangle().fill(color).frame(width: 3) }
+            // 확정대기는 "있지만 아직 정해지지 않았다". 눌러서 상세에서 수락·거절해야 하므로
+            // 딤도 배지도 터치를 먹지 않는다(`allowsHitTesting(false)`).
+            .overlay {
+                if isPending {
+                    ZStack {
+                        Color(.systemBackground).opacity(0.55)
+                        // 아주 짧은 블록에는 배지가 안 들어간다 — 딤만 남긴다.
+                        if height >= 24 { PendingBadge() }
+                    }
+                    .allowsHitTesting(false)
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: 5))
     }
 }
 
 extension View {
-    func timelineBlockChrome(color: Color, isInactive: Bool, isNoshow: Bool,
+    func timelineBlockChrome(color: Color, isInactive: Bool, isNoshow: Bool, isPending: Bool,
                              width: CGFloat, height: CGFloat) -> some View {
         modifier(TimelineBlockChrome(color: color, isInactive: isInactive, isNoshow: isNoshow,
-                                     width: width, height: height))
+                                     isPending: isPending, width: width, height: height))
     }
 }
