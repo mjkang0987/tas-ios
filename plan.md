@@ -9,6 +9,13 @@
 
 ---
 
+## ✅ 완료 — 담당자 뱃지 흰 글자 대비 (`claude/badge-contrast`, 웹·안드로이드 함께, 2026-10-19)
+- 담당자 색이 밝으면(노랑 #FBBC04 위 흰 글자 1.6:1) 같은 색을 진하게 깐다 — `HexColor.backgroundForWhiteText`(색상·채도 유지, 밝기만 내림,
+  웹 `features/colors/contrast.ts` 와 같은 값 — `BadgeContrastTests` 가 웹 결과와 맞춘다). 메모 태그는 iOS 가 색 점 + 글자라 해당 없음.
+- 웹 `--blue-color`·`--warning-color` 대비 수정은 iOS 가 그 토큰을 안 써서(시스템 색) 해당 없음.
+
+---
+
 ## ✅ 완료 — 예약 카드·타임라인을 웹에 맞춘다 (`claude/card-parity-with-web`)
 
 웹 시안에 맞춰 예약 카드를 박스로 바꾸고, 타임라인의 상태 표기·정렬을 정리했다.

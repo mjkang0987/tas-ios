@@ -111,7 +111,8 @@ struct AssigneeBadge: View {
             .lineLimit(1)
             .padding(.horizontal, 8)
             .padding(.vertical, 2)
-            .background(color ?? .secondary, in: Capsule())
+            // 밝은 담당자 색(노랑 등)은 흰 글자가 안 읽혀 같은 색을 진하게 깐다(웹·안드로이드와 같은 값).
+            .background((color ?? .secondary).forWhiteText, in: Capsule())
             .foregroundStyle(.white)
     }
 }

@@ -28,4 +28,23 @@ final class BadgeContrastTests: XCTestCase {
             XCTAssertGreaterThanOrEqual(ratio, 4.5, "\(tone) 대비 \(ratio)")
         }
     }
+
+    /// 웹 features/colors/contrast.ts backgroundForWhiteText 와 같은 결과(세 플랫폼이 같은 색을 낸다).
+    func testBackgroundForWhiteTextMatchesWeb() {
+        let expected: [String: String] = [
+            "#4285F4": "#206ff2", "#34A853": "#298542", "#EA4335": "#e42718", "#FBBC04": "#926d02",
+            "#FF6D01": "#c35300", "#46BDC6": "#2a8087", "#9334E6": "#9334e6", "#E91E8C": "#dd1682",
+            "#2D7FF9": "#0f6df8", "#E85D75": "#e12c4b", "#00A896": "#008476", "#FB8C00": "#ae6100",
+        ]
+        for (input, output) in expected {
+            let c = HexColor.components(input)!
+            let d = HexColor.backgroundForWhiteText(r: c.r, g: c.g, b: c.b)
+            XCTAssertEqual(HexColor.string(r: d.r, g: d.g, b: d.b), output, input)
+        }
+        for v in 0...255 {
+            let d = HexColor.backgroundForWhiteText(r: v, g: v, b: v)
+            let hex = HexColor.string(r: d.r, g: d.g, b: d.b)
+            XCTAssertGreaterThanOrEqual(1.05 / (luminance(hex) + 0.05), 4.5, "회색 \(v)")
+        }
+    }
 }
