@@ -40,6 +40,7 @@
 		4197DD6E25B6B268BB522086 /* ModelDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31E0172FFE064A98E102A455 /* ModelDecodingTests.swift */; };
 		4274E2B3F04D75A8892D4AB4 /* Chosung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B71C7A5CA9DB9CEBC6387C1 /* Chosung.swift */; };
 		43850F60BEC3DB844DB906FE /* GuestOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3BD43283F97B23CEEBBA93 /* GuestOnboardingView.swift */; };
+		48BEF0F6EC1B7EACFC6FE6DE /* BadgeContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EADF2B77E799B25EEC33A1D /* BadgeContrastTests.swift */; };
 		493DCB40605DBEAB21362FCD /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3DF5093A72A7E4625DB310 /* Store.swift */; };
 		4983FECF1BCCFEFC8CF1F7FE /* RevenueStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF91E10214D3A6C3D96DD306 /* RevenueStatsTests.swift */; };
 		4DE1A401C24FA83BAE1D26D1 /* ReservationOverlap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D5111A10AA59B3865CBEAF5 /* ReservationOverlap.swift */; };
@@ -184,6 +185,7 @@
 		7B60114B9CFF3934D85F501C /* guest-seed.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "guest-seed.json"; sourceTree = "<group>"; };
 		7B73C5BB1819BC03B3623483 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		7E3BD43283F97B23CEEBBA93 /* GuestOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestOnboardingView.swift; sourceTree = "<group>"; };
+		7EADF2B77E799B25EEC33A1D /* BadgeContrastTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgeContrastTests.swift; sourceTree = "<group>"; };
 		7EC7DE2820F9B8CCE8CA448D /* ServiceChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceChip.swift; sourceTree = "<group>"; };
 		811AE97D844DE7D95B3C4A4E /* CalendarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModel.swift; sourceTree = "<group>"; };
 		81ACDA8EFA9FB096F37B0912 /* PointAdjustView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointAdjustView.swift; sourceTree = "<group>"; };
@@ -416,6 +418,7 @@
 			isa = PBXGroup;
 			children = (
 				BE22BCB16342CDF48D500A49 /* AssigneeScheduleTests.swift */,
+				7EADF2B77E799B25EEC33A1D /* BadgeContrastTests.swift */,
 				D0BDE70C5C3ACBA48F331CFA /* BookingSettingsTests.swift */,
 				A6D1090403226F21B8208A0C /* ChosungTests.swift */,
 				6BA3D186ED7933CC3D3B0F66 /* CouponDecodingTests.swift */,
@@ -679,6 +682,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				72FD6A06AFCF994A21FDFDE7 /* AssigneeScheduleTests.swift in Sources */,
+				48BEF0F6EC1B7EACFC6FE6DE /* BadgeContrastTests.swift in Sources */,
 				090C395C290950FE1476962A /* BookingSettingsTests.swift in Sources */,
 				FF1B3C31A131EA725F126C8C /* ChosungTests.swift in Sources */,
 				2C8561EC8216772DDBFE9EE7 /* CouponDecodingTests.swift in Sources */,
