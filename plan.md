@@ -9,6 +9,13 @@
 
 ---
 
+## 🟡 PR 대기 — 방문 간격 라벨 주석을 웹에 맞춘다 (`claude/visit-gap-comment`)
+
+> 웹 `mjkang0987/tas` v0.64.10(PR #304)이 `formatVisitGap` 28~29일을 `Math.max(floor(days/30), 1)`로 고쳐
+> "0달전"이 사라졌다. 앱은 원래 최소 1달이라 동작은 같고, "웹과 다르다"는 주석만 낡았다.
+
+- `TAS/Core/RevenueStats.swift` `visitGapLabel` 문서 주석, `TASTests/RevenueStatsTests.swift` 28일 케이스 주석 — 주석만 수정, 코드 변경 없음.
+
 ## ✅ 완료 — 예약 카드·타임라인을 웹에 맞춘다 (`claude/card-parity-with-web`)
 
 웹 시안에 맞춰 예약 카드를 박스로 바꾸고, 타임라인의 상태 표기·정렬을 정리했다.
