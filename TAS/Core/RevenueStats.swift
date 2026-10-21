@@ -124,8 +124,7 @@ enum RevenueStats {
     /// 웹 `formatVisitGap` — 이전 방문과의 간격 라벨("12일전"·"3주전"·"5달전"·"2년전").
     /// 경계는 웹 그대로다(7일 미만=일, 28일 미만=주, 365일 미만=달).
     ///
-    /// **웹과 한 가지 다르다** — 웹은 28~29일에서 `floor(28/30)`이 0이라 "0달전"을 그린다.
-    /// 그 자리만 1로 올린다(365~370일의 "1년전"과 같은 취급).
+    /// 28~29일은 `28/30`이 0이라 최소 1달로 올린다 — 웹도 v0.64.10부터 `Math.max(floor(days/30), 1)`로 같다.
     static func visitGapLabel(from prevVisitDate: String, to visitDate: String) -> String? {
         guard let prev = KST.dayKey.date(from: prevVisitDate),
               let visit = KST.dayKey.date(from: visitDate) else { return nil }
