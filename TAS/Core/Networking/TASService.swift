@@ -421,6 +421,13 @@ struct TASService {
         return updated
     }
 
+    /// 지각 알림 기준 저장 — 서버엔 아직 칸이 없어 게스트만(로그인 매장은 설정 화면에서 막는다).
+    @discardableResult
+    func updateLateAlert(current: Store, minutes: Int) async throws -> Store {
+        guard guest.isActive else { throw APIError.server(status: 400, message: "로그인 매장의 지각 알림 설정은 아직 지원하지 않습니다.") }
+        return guest.updateLateAlert(minutes)
+    }
+
     /// 적립금 설정 저장 — PUT /api/store (body=`{pointSettings}`).
     @discardableResult
     func updatePointSettings(current: Store, pointSettings: PointSettings) async throws -> Store {

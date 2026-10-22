@@ -20,6 +20,9 @@ struct Store: Codable, Identifiable, Hashable {
     var pointSettings: PointSettings? = nil
     /// 공개 예약 규칙 — 응답 최상위(storeSettings와 분리). 온라인예약 설정 화면에서 편집.
     var bookingSettings: BookingSettings? = nil
+    /// 지각 알림 기준(분) — 예약 시작 뒤 이만큼 지나도 완료·노쇼 처리가 안 되면 알린다. 0 = 끔, nil = 기본 15분.
+    /// 앱에만 있는 매장 설정(지시자 2026-10-22). 서버엔 아직 없어 게스트에서만 바꿀 수 있다 — 서버 푸시 단계에서 같은 이름으로.
+    var lateAlertMinutes: Int? = nil
 
     // GET /api/store는 `name` 대신 `storeName`을 주고 `id`는 주지 않는다(웹 스키마).
     /// 결제 시 자동 적립에 실제로 쓰이는 적립률(%) — 적립 기능이나 적립률이 꺼져 있으면 0.
@@ -38,6 +41,7 @@ struct Store: Codable, Identifiable, Hashable {
         case usePointSystem, useMembershipSystem, useCouponSystem, useOnlineBooking
         case bookingSlug, categoryBaseColors
         case businessHours, closedDates, closedWeekdays, pointSettings, bookingSettings
+        case lateAlertMinutes
     }
 }
 

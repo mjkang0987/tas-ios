@@ -25,6 +25,8 @@ struct GuestSnapshot: Codable {
     var closedDates: [String] = []
     var closedWeekdays: [Int] = []
     var pointSettings: PointSettings?
+    /// 지각 알림 기준(분, `Store.lateAlertMinutes`). 웹 스냅샷엔 없는 앱 필드라 이관 땐 빠진다.
+    var lateAlertMinutes: Int?
     var notices: [StoreNotice] = []
     var couponProducts: [CouponProduct] = []
     var membershipProducts: [MembershipProduct] = []

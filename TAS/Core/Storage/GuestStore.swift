@@ -361,8 +361,16 @@ final class GuestStore {
             businessHours: snapshot.businessHours,
             closedDates: snapshot.closedDates,
             closedWeekdays: snapshot.closedWeekdays,
-            pointSettings: snapshot.pointSettings
+            pointSettings: snapshot.pointSettings,
+            lateAlertMinutes: snapshot.lateAlertMinutes
         )
+    }
+
+    /// 지각 알림 기준 저장.
+    @discardableResult
+    func updateLateAlert(_ minutes: Int) -> Store {
+        mutate { $0.lateAlertMinutes = minutes }
+        return syntheticStore
     }
 
     /// 영업시간·휴무 저장(웹 PUT /api/store storeSettings에 대응).
