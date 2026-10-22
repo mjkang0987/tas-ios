@@ -53,4 +53,29 @@ final class ReservationReminderTests: XCTestCase {
         XCTAssertEqual(ReservationReminder.upcoming(list, customerNames: names, leadMinutes: 30, now: now, limit: 1).map(\.reservationId), [4])
         XCTAssertEqual(ReservationReminder.upcoming(list, customerNames: names, leadMinutes: 0, now: now).count, 0)
     }
+
+    func testLateItem() {
+        let late = ReservationReminder.lateItem(for: r(1, "2026-10-22", "14:00"), customerNames: names, lateMinutes: 15)
+        XCTAssertEqual(late?.fireDate, kst("2026-10-22 14:15"))
+        XCTAssertEqual(late?.kind, .late)
+        XCTAssertEqual(late?.title, "손님이 아직 안 오셨나요?")
+        XCTAssertEqual(late?.body, "14:00 김민지 · 남성커트 — 예약 15분 지남")
+        for status in [ReservationStatus.cancelled, .noshow, .completed, .requested] {
+            XCTAssertNil(ReservationReminder.lateItem(for: r(1, "2026-10-22", "14:00", status: status), customerNames: names, lateMinutes: 15))
+        }
+        // 결제까지 끝났으면 손님은 온 것
+        var paid = r(1, "2026-10-22", "14:00")
+        paid.paymentCompleted = true
+        XCTAssertNil(ReservationReminder.lateItem(for: paid, customerNames: names, lateMinutes: 15))
+        XCTAssertNil(ReservationReminder.lateItem(for: r(1, "2026-10-22", "14:00"), customerNames: names, lateMinutes: 0))
+        XCTAssertEqual([0, 5, 30].map(ReservationReminder.lateLabel), ["끔", "5분 후", "30분 후"])
+    }
+
+    func testUpcomingIncludesLate() {
+        let now = kst("2026-10-22 09:00")
+        let list = [r(1, "2026-10-22", "09:40")] // 시작 전 09:10, 지각 09:55
+        XCTAssertEqual(ReservationReminder.upcoming(list, customerNames: names, leadMinutes: 30, now: now, lateMinutes: 15).map(\.kind), [.before, .late])
+        XCTAssertEqual(ReservationReminder.upcoming(list, customerNames: names, leadMinutes: 0, now: now, lateMinutes: 15).map(\.kind), [.late])
+        XCTAssertTrue(ReservationReminder.upcoming(list, customerNames: names, leadMinutes: 0, now: now, lateMinutes: 0).isEmpty)
+    }
 }

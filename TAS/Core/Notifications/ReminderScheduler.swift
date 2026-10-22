@@ -24,6 +24,15 @@ final class ReminderScheduler: NSObject {
     /// 설정의 알림 시점(분, 0 = 끔). 기기 설정이라 게스트 스냅샷·서버에는 넣지 않는다. 바꿀 땐 `setLeadMinutes`.
     private(set) var leadMinutes: Int = UserDefaults.standard.object(forKey: ReminderScheduler.leadKey) as? Int ?? ReservationReminder.defaultLead
 
+    /// 지각 알림 기준(분) — 매장 설정(`Store.lateAlertMinutes`)을 앱이 넘겨준다. 같으면 다시 걸지 않는다.
+    private(set) var lateMinutes: Int = ReservationReminder.defaultLate
+
+    func setLateMinutes(_ minutes: Int) {
+        guard minutes != lateMinutes else { return }
+        lateMinutes = minutes
+        Task { await resync() }
+    }
+
     /// 값은 바로 바꾸고(선택 칸이 곧장 새 값을 보이게) 알림은 뒤에서 다시 건다.
     func setLeadMinutes(_ minutes: Int) {
         leadMinutes = minutes
@@ -52,6 +61,12 @@ final class ReminderScheduler: NSObject {
     private var lastNames: [Int: String] = [:]
 
     private let center = UNUserNotificationCenter.current()
+
+    // 같은 예약의 시작 전·지각 알림이 서로 덮지 않게 종류를 넣는다. 둘 다 idPrefix 로 시작해 지우기·고르기가 한 번에 된다.
+    // 시작 전은 예전 식별자 그대로("reservation-reminder-16") — 이미 걸린 알림과 맞물리게.
+    private static func identifier(_ item: ReservationReminder.Item) -> String {
+        item.kind == .late ? idPrefix + "late-" + String(item.reservationId) : idPrefix + String(item.reservationId)
+    }
     // resync 는 중간에 기다리는 자리가 있어 겹칠 수 있다 — 나중에 시작한 것만 끝까지 쓰게 세대 번호로 가린다.
     private var generation = 0
 
@@ -80,8 +95,8 @@ final class ReminderScheduler: NSObject {
     private func resync() async {
         generation += 1
         let mine = generation
-        let items = ReservationReminder.upcoming(lastReservations, customerNames: lastNames, leadMinutes: leadMinutes, now: Date())
-        let keep = Set(items.map { Self.idPrefix + String($0.reservationId) })
+        let items = ReservationReminder.upcoming(lastReservations, customerNames: lastNames, leadMinutes: leadMinutes, now: Date(), lateMinutes: lateMinutes)
+        let keep = Set(items.map(Self.identifier))
         let pending = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(Self.idPrefix) }
         guard mine == generation else { return } // 그사이 더 새 resync(또는 clearAll)가 시작됐다
         center.removePendingNotificationRequests(withIdentifiers: pending.filter { !keep.contains($0) })
@@ -96,7 +111,7 @@ final class ReminderScheduler: NSObject {
             components.timeZone = KST.timeZone // 기기 시간대와 달라도 매장 시각에 울린다
             let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
             // 같은 식별자는 덮어쓴다 — 시각이 바뀐 예약도 새 시각으로 바뀐다
-            try? await center.add(UNNotificationRequest(identifier: Self.idPrefix + String(item.reservationId), content: content, trigger: trigger))
+            try? await center.add(UNNotificationRequest(identifier: Self.identifier(item), content: content, trigger: trigger))
         }
     }
 }

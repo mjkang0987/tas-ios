@@ -14,11 +14,21 @@ enum ReservationReminder {
         return "\(minutes)분 전"
     }
 
+    /// 매장 설정의 지각 알림 기준(분). 0 = 끔.
+    static let lateOptions = [0, 5, 10, 15, 20, 30]
+    static let defaultLate = 15
+
+    static func lateLabel(_ minutes: Int) -> String { minutes <= 0 ? "끔" : "\(minutes)분 후" }
+
+    /// 알림 종류 — 시작 전(설정의 시점) · 지각(매장 설정의 기준, 시작 뒤).
+    enum Kind: String { case before, late }
+
     struct Item: Equatable {
         var reservationId: Int
         var fireDate: Date
         var title: String
         var body: String
+        var kind: Kind = .before
     }
 
     /// 알릴 예약 — 진행 중(상태 없음·active)만. 취소·노쇼·완료는 끝났고, 확정대기는 아직 오는지 모른다.
@@ -33,18 +43,35 @@ enum ReservationReminder {
         return f
     }()
 
-    /// 한 예약의 알림 — 시각을 못 읽거나 알릴 예약이 아니면 nil.
-    static func item(for r: Reservation, customerNames: [Int: String], leadMinutes: Int) -> Item? {
-        guard leadMinutes > 0, isRemindable(r),
-              let start = startFormatter.date(from: "\(r.date) \(r.startTime)") else { return nil }
+    private static func summary(_ r: Reservation, _ customerNames: [Int: String]) -> String {
         // 못 찾으면 캘린더·상세와 같은 "고객 #id"
         let name = customerNames[r.customerId].flatMap { $0.trimmingCharacters(in: .whitespaces).isEmpty ? nil : $0 } ?? "고객 #\(r.customerId)"
         let what = r.service.isEmpty ? "" : " · \(r.service)"
+        return "\(r.startTime) \(name)\(what)"
+    }
+
+    /// 한 예약의 시작 전 알림 — 시각을 못 읽거나 알릴 예약이 아니면 nil.
+    static func item(for r: Reservation, customerNames: [Int: String], leadMinutes: Int) -> Item? {
+        guard leadMinutes > 0, isRemindable(r),
+              let start = startFormatter.date(from: "\(r.date) \(r.startTime)") else { return nil }
         return Item(
             reservationId: r.id,
             fireDate: start.addingTimeInterval(-Double(leadMinutes) * 60),
             title: "예약 \(leadLabel(leadMinutes))",
-            body: "\(r.startTime) \(name)\(what)"
+            body: summary(r, customerNames)
+        )
+    }
+
+    /// 한 예약의 지각 알림 — 시작 뒤 [lateMinutes] 가 지나도 진행 중이면. 결제까지 끝났으면 손님은 온 것이라 알리지 않는다.
+    static func lateItem(for r: Reservation, customerNames: [Int: String], lateMinutes: Int) -> Item? {
+        guard lateMinutes > 0, isRemindable(r), !r.hasCompletedPayment,
+              let start = startFormatter.date(from: "\(r.date) \(r.startTime)") else { return nil }
+        return Item(
+            reservationId: r.id,
+            fireDate: start.addingTimeInterval(Double(lateMinutes) * 60),
+            title: "손님이 아직 안 오셨나요?",
+            body: "\(summary(r, customerNames)) — 예약 \(lateMinutes)분 지남",
+            kind: .late
         )
     }
 
@@ -56,11 +83,14 @@ enum ReservationReminder {
         leadMinutes: Int,
         now: Date,
         horizonDays: Int = 30,
-        limit: Int = 60
+        limit: Int = 60,
+        lateMinutes: Int = 0
     ) -> [Item] {
-        guard leadMinutes > 0 else { return [] }
+        guard leadMinutes > 0 || lateMinutes > 0 else { return [] }
         let until = now.addingTimeInterval(Double(horizonDays) * 24 * 60 * 60)
-        let items: [Item] = reservations.compactMap { item(for: $0, customerNames: customerNames, leadMinutes: leadMinutes) }
+        let before: [Item] = reservations.compactMap { item(for: $0, customerNames: customerNames, leadMinutes: leadMinutes) }
+        let late: [Item] = reservations.compactMap { lateItem(for: $0, customerNames: customerNames, lateMinutes: lateMinutes) }
+        let items = before + late
         let inWindow = items.filter { $0.fireDate > now && $0.fireDate <= until }
         return Array(inWindow.sorted { $0.fireDate < $1.fireDate }.prefix(limit))
     }
