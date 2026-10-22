@@ -20,6 +20,7 @@
 		18C3297E19520DAE0FDC11BD /* NoticeFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11EA57AEE1D4E84B8C5B9F3 /* NoticeFormView.swift */; };
 		1941CE47F89887C75196C912 /* MembershipsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC2702CE04E330FED733B01C /* MembershipsView.swift */; };
 		19C0127009BBD22E5F90570D /* RevenueDetailListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC45A2ECF62F1467A9BB01B /* RevenueDetailListView.swift */; };
+		1B6DEDD5B3CBC045D86E8814 /* ReservationReminderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7172449E52DD28D2239F1F9E /* ReservationReminderTests.swift */; };
 		1C9E8938A41565EC531ECC84 /* CustomerFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9350C6C4B6ADD3047556F1D7 /* CustomerFormView.swift */; };
 		1D548C9EDE1A45747B953E69 /* ReservationInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4700BCC8AEE04DF358C279AC /* ReservationInfoCard.swift */; };
 		217109D7F0F38933E19FF834 /* RevenueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F669FC46E7A3354DA52710 /* RevenueView.swift */; };
@@ -40,11 +41,13 @@
 		4197DD6E25B6B268BB522086 /* ModelDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31E0172FFE064A98E102A455 /* ModelDecodingTests.swift */; };
 		4274E2B3F04D75A8892D4AB4 /* Chosung.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B71C7A5CA9DB9CEBC6387C1 /* Chosung.swift */; };
 		43850F60BEC3DB844DB906FE /* GuestOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3BD43283F97B23CEEBBA93 /* GuestOnboardingView.swift */; };
+		471915589129021F8D1C4F41 /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB092DCCA7A35FF10C3D498 /* ReminderScheduler.swift */; };
 		493DCB40605DBEAB21362FCD /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3DF5093A72A7E4625DB310 /* Store.swift */; };
 		4983FECF1BCCFEFC8CF1F7FE /* RevenueStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF91E10214D3A6C3D96DD306 /* RevenueStatsTests.swift */; };
 		4DE1A401C24FA83BAE1D26D1 /* ReservationOverlap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D5111A10AA59B3865CBEAF5 /* ReservationOverlap.swift */; };
 		4E3E07943311225E12744298 /* PointMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35B233C8966E45F530E48D9 /* PointMath.swift */; };
 		4EF5BA2D307F45D70F9F2790 /* TASApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73770FD2D24C7A0EABEFC3E /* TASApp.swift */; };
+		510547EACB112C3B7D76BD37 /* ReservationReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A619A7CC9188F9D0E1395A7 /* ReservationReminder.swift */; };
 		515053B7E86A8CBFC3CB9529 /* GoogleSignInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F82486F8ECE5C22233EA8BA /* GoogleSignInManager.swift */; };
 		52A4DC9CE16031CCCE28E1E9 /* Assignee.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0847DD986F4388D8E1E0BA1 /* Assignee.swift */; };
 		53EDAA6A23E45485F5E7B6F4 /* GuestStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE3032986950DC3F02D3691A /* GuestStoreTests.swift */; };
@@ -180,6 +183,7 @@
 		6E6A3CACE17ED28BF2DFE290 /* CustomersViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomersViewModel.swift; sourceTree = "<group>"; };
 		7116065DD27F67F4639D0F61 /* SearchHighlight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchHighlight.swift; sourceTree = "<group>"; };
 		7166A5CAD053D006FEFFCD79 /* GuestSeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestSeedTests.swift; sourceTree = "<group>"; };
+		7172449E52DD28D2239F1F9E /* ReservationReminderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationReminderTests.swift; sourceTree = "<group>"; };
 		79FED8EF6AEAA8E71BE59ADA /* StoreClosedKindTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreClosedKindTests.swift; sourceTree = "<group>"; };
 		7B60114B9CFF3934D85F501C /* guest-seed.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "guest-seed.json"; sourceTree = "<group>"; };
 		7B73C5BB1819BC03B3623483 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -189,6 +193,7 @@
 		81ACDA8EFA9FB096F37B0912 /* PointAdjustView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointAdjustView.swift; sourceTree = "<group>"; };
 		82D5EBE5EF5D294612FE15E4 /* GuestStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestStore.swift; sourceTree = "<group>"; };
 		85C14CFF1B8BF392EF0EA5D4 /* BookingRequestsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookingRequestsView.swift; sourceTree = "<group>"; };
+		8A619A7CC9188F9D0E1395A7 /* ReservationReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationReminder.swift; sourceTree = "<group>"; };
 		8FC21CB6C2888D62B0248663 /* FilterChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterChip.swift; sourceTree = "<group>"; };
 		91156A41378FEE2418108FF0 /* CustomerStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerStats.swift; sourceTree = "<group>"; };
 		92EA27B2FCB4DEC55CCE4337 /* Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service.swift; sourceTree = "<group>"; };
@@ -241,6 +246,7 @@
 		F73770FD2D24C7A0EABEFC3E /* TASApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TASApp.swift; sourceTree = "<group>"; };
 		F79019AC369D68AA13E1DF61 /* CustomerMergePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerMergePicker.swift; sourceTree = "<group>"; };
 		FC2702CE04E330FED733B01C /* MembershipsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MembershipsView.swift; sourceTree = "<group>"; };
+		FCB092DCCA7A35FF10C3D498 /* ReminderScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
 		FCF32B01D95A70742E22EA58 /* AuthDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthDeepLink.swift; sourceTree = "<group>"; };
 		FE2CD3F7B25215BC1C3A6F7A /* TimelineLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineLayout.swift; sourceTree = "<group>"; };
 		FE3032986950DC3F02D3691A /* GuestStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestStoreTests.swift; sourceTree = "<group>"; };
@@ -267,11 +273,13 @@
 				63A7021216C257BC7D810457 /* NameSort.swift */,
 				C35B233C8966E45F530E48D9 /* PointMath.swift */,
 				0D5111A10AA59B3865CBEAF5 /* ReservationOverlap.swift */,
+				8A619A7CC9188F9D0E1395A7 /* ReservationReminder.swift */,
 				BEEBFDC3378C1A15DCB295BE /* RevenueStats.swift */,
 				7116065DD27F67F4639D0F61 /* SearchHighlight.swift */,
 				FE2CD3F7B25215BC1C3A6F7A /* TimelineLayout.swift */,
 				0CE7A94BD3B2B86E7AE3437E /* Config */,
 				FABBB73CD4902177AECDCE6A /* Networking */,
+				62525286755D3BA4DBB07CE9 /* Notifications */,
 				4BE4A314F6B67325A5924BD2 /* Session */,
 				08B6502EA13FC9BE6F05DED4 /* Storage */,
 				85CFC9AD53B5B5FEF6E7FBF1 /* UI */,
@@ -430,6 +438,7 @@
 				340111E07CA667E86FB1FCDE /* PointLedgerTests.swift */,
 				56D04C70208D730C54D4914D /* PointMathTests.swift */,
 				5B1F15E1A1E8180A342C3566 /* ReservationOverlapTests.swift */,
+				7172449E52DD28D2239F1F9E /* ReservationReminderTests.swift */,
 				DF91E10214D3A6C3D96DD306 /* RevenueStatsTests.swift */,
 				F2AD1E18242D8C7F239FAD39 /* RevenueViewModelTests.swift */,
 				BEBCC36214021C976CFB572E /* SearchHighlightTests.swift */,
@@ -459,6 +468,14 @@
 				FC2702CE04E330FED733B01C /* MembershipsView.swift */,
 			);
 			path = Memberships;
+			sourceTree = "<group>";
+		};
+		62525286755D3BA4DBB07CE9 /* Notifications */ = {
+			isa = PBXGroup;
+			children = (
+				FCB092DCCA7A35FF10C3D498 /* ReminderScheduler.swift */,
+			);
+			path = Notifications;
 			sourceTree = "<group>";
 		};
 		68841CA0951C0F2DE464E785 /* TAS */ = {
@@ -693,6 +710,7 @@
 				F4647F5BF3A3FF884EA2122A /* PointLedgerTests.swift in Sources */,
 				0225CD49781CE424484FAEB6 /* PointMathTests.swift in Sources */,
 				D8959835934F4F15BC75F99D /* ReservationOverlapTests.swift in Sources */,
+				1B6DEDD5B3CBC045D86E8814 /* ReservationReminderTests.swift in Sources */,
 				4983FECF1BCCFEFC8CF1F7FE /* RevenueStatsTests.swift in Sources */,
 				8007874DAE4BBC7969BDA64F /* RevenueViewModelTests.swift in Sources */,
 				58C3E27DDFCFAF5240C2B224 /* SearchHighlightTests.swift in Sources */,
@@ -763,6 +781,7 @@
 				4E3E07943311225E12744298 /* PointMath.swift in Sources */,
 				B4D17F31CBC616F6AF76B5DF /* PointRechargeView.swift in Sources */,
 				EBEB839589247392AFCD122C /* PointSettingsEditView.swift in Sources */,
+				471915589129021F8D1C4F41 /* ReminderScheduler.swift in Sources */,
 				311977C4889E76FC21C1E8F5 /* Reservation.swift in Sources */,
 				AF217390F1559CA9F07C87C0 /* ReservationCreateView.swift in Sources */,
 				3723BE09CF0AA253B9E8955C /* ReservationDetailView.swift in Sources */,
@@ -770,6 +789,7 @@
 				1D548C9EDE1A45747B953E69 /* ReservationInfoCard.swift in Sources */,
 				4DE1A401C24FA83BAE1D26D1 /* ReservationOverlap.swift in Sources */,
 				DF467BAAEA663150143507E9 /* ReservationPaymentView.swift in Sources */,
+				510547EACB112C3B7D76BD37 /* ReservationReminder.swift in Sources */,
 				19C0127009BBD22E5F90570D /* RevenueDetailListView.swift in Sources */,
 				37CA7DC0EF65FF78CD3346AB /* RevenueStats.swift in Sources */,
 				217109D7F0F38933E19FF834 /* RevenueView.swift in Sources */,
