@@ -21,6 +21,8 @@ struct ReservationDetailView: View {
     var assigneeName: (Int?) -> String = { _ in "미지정" }
     /// 매장 적립률(%) — 결제 시 자동 적립용. 0이면 적립 없음.
     var pointRate: Int = 0
+    /// 고객명을 누르면 그 고객 상세(웹·안드로이드와 같은 링크). 없으면 글자만.
+    var onCustomerTap: ((Int) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
     @State private var confirming: Confirm?
@@ -49,12 +51,18 @@ struct ReservationDetailView: View {
                 Section("고객") {
                     LabeledContent("이름") {
                         HStack(spacing: 6) {
-                            Text(customer?.name ?? "고객 #\(reservation.customerId)")
+                            let name = customer?.name ?? "고객 #\(reservation.customerId)"
+                            if let onCustomerTap, customer != nil {
+                                Button(name) { onCustomerTap(reservation.customerId) }
+                                    .accessibilityHint("고객 상세 열기")
+                            } else {
+                                Text(name)
+                            }
                             if isNewCustomer { NewCustomerBadge() }
                         }
                     }
-                    if let tel = customer?.formattedTel, !tel.isEmpty {
-                        LabeledContent("연락처", value: tel)
+                    if let customer, !customer.formattedTel.isEmpty {
+                        LabeledContent("연락처") { TelLink(customer: customer) }
                     }
                     if let points = customer?.points, points > 0 {
                         LabeledContent("적립금", value: "\(points.formatted())P")

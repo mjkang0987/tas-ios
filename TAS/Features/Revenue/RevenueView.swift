@@ -324,20 +324,10 @@ final class RevenueViewModel {
     var assigneesById: [Int: Assignee] { state.value?.assigneesById ?? [:] }
     func customer(_ id: Int) -> Customer? { state.value?.customersById[id] }
     var serviceColorMap: [String: String] { state.value?.serviceColorMap ?? [:] }
+
+    /// 상세 레이어(`DetailSheet`)에 넘길 데이터 — 마지막으로 불러온 값(다시 불러오는 동안에도 남긴다).
+    private(set) var detailData: DetailData?
     var today: String { state.value?.today ?? KST.dayKey.string(from: Date()) }
-
-    /// 고객 상세로 내려갈 때 필요한 그 고객의 예약(상태 무관 — 고객 화면과 같은 기준).
-    func reservations(ofCustomer id: Int) -> [Reservation] {
-        (state.value?.reservations ?? []).filter { $0.customerId == id }
-    }
-
-    func customerStats(_ id: Int) -> CustomerStats.Summary {
-        CustomerStats.summarize(reservations(ofCustomer: id), today: today)
-    }
-
-    func customerGroups(_ id: Int) -> [CustomerStats.Group] {
-        CustomerStats.groups(reservations(ofCustomer: id), today: today)
-    }
 
     func load() async {
         state = .loading
@@ -364,6 +354,10 @@ final class RevenueViewModel {
                 ),
                 today: KST.dayKey.string(from: Date())
             ))
+            detailData = DetailData(reservations: res.reservations, customersById: customersById, assigneesById: assigneesById,
+                                    services: svc.services,
+                                    serviceColorMap: ServiceColor.buildServiceColorMap(catalog: svc.services, storeMap: svc.categoryBaseColors),
+                                    history: res.history ?? [])
         } catch {
             state = .failed((error as? APIError)?.errorDescription ?? error.localizedDescription)
         }
@@ -440,9 +434,6 @@ struct RevenueView: View {
             RevenueDetailListView(
                 key: key,
                 viewModel: viewModel,
-                pointRate: session.currentStore?.effectivePointRate ?? 0,
-                pointsEnabled: session.currentStore?.usePointSystem ?? false,
-                pointSettings: session.currentStore?.pointSettings,
                 onChanged: { await viewModel.load() }
             )
         }

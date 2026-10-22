@@ -64,30 +64,13 @@ final class CustomersViewModel {
     /// 다음 고객 정수 id(현재 최대 +1) — 신규 등록 폼용(웹 getNextNumericId).
     var nextCustomerId: Int { ((state.value?.customers.map(\.id).max()) ?? 0) + 1 }
 
-    /// 전체 고객(병합 후보 등).
-    var allCustomers: [Customer] { state.value?.customers ?? [] }
-
-    /// 고객 id → 예약 건수(병합 대상 판단 근거 등).
-    var reservationCounts: [Int: Int] {
-        (state.value?.reservationsByCustomer ?? [:]).mapValues(\.count)
-    }
-
     /// 고객별 집계(최근 시술 + 예약/취소/완료/노쇼) — 웹 `customerStats` 이식.
     var statsByCustomer: [Int: CustomerStats.Summary] { state.value?.statsByCustomer ?? [:] }
 
-    func stats(for id: Int) -> CustomerStats.Summary { statsByCustomer[id] ?? .empty }
-
-    /// 상세의 '최근 예약'을 웹처럼 예약/완료/취소/노쇼로 묶는다(비어 있는 그룹은 뺀다).
-    /// 상세를 열 때 한 번만 도므로 그때 계산한다.
-    func reservationGroups(for id: Int) -> [CustomerStats.Group] {
-        guard let data = state.value else { return [] }
-        return CustomerStats.groups(data.reservationsByCustomer[id] ?? [], today: data.today)
-    }
-
     var serviceColorMap: [String: String] { state.value?.serviceColorMap ?? [:] }
 
-    /// 담당자 id → 담당자 — 상세가 예약 이력 행의 이름·색을 그릴 때 쓴다.
-    var assigneesById: [Int: Assignee] { state.value?.assigneesById ?? [:] }
+    /// 상세 레이어(`DetailSheet`)에 넘길 데이터 — 마지막으로 불러온 값(다시 불러오는 동안에도 남긴다).
+    private(set) var detailData: DetailData?
 
     func load() async {
         state = .loading
@@ -107,16 +90,26 @@ final class CustomersViewModel {
             for r in res.reservations { byCustomer[r.customerId, default: []].append(r) }
 
             let today = KST.dayKey.string(from: Date())
+            let assigneesById = Dictionary(
+                (asg?.assignees ?? []).map { ($0.id, $0) },
+                uniquingKeysWith: { first, _ in first }
+            )
+            let serviceColorMap = svc.map {
+                ServiceColor.buildServiceColorMap(catalog: $0.services, storeMap: $0.categoryBaseColors)
+            } ?? [:]
+            detailData = DetailData(
+                reservations: res.reservations,
+                customersById: Dictionary(cus.customers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }),
+                assigneesById: assigneesById,
+                services: svc?.services ?? [],
+                serviceColorMap: serviceColorMap,
+                history: res.history ?? []
+            )
             state = .loaded(Data(
                 customers: cus.customers,
                 reservationsByCustomer: byCustomer,
-                assigneesById: Dictionary(
-                    (asg?.assignees ?? []).map { ($0.id, $0) },
-                    uniquingKeysWith: { first, _ in first }
-                ),
-                serviceColorMap: svc.map {
-                    ServiceColor.buildServiceColorMap(catalog: $0.services, storeMap: $0.categoryBaseColors)
-                } ?? [:],
+                assigneesById: assigneesById,
+                serviceColorMap: serviceColorMap,
                 statsByCustomer: CustomerStats.byCustomer(byCustomer, today: today),
                 today: today
             ))

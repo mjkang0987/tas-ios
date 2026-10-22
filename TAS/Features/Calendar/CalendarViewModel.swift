@@ -72,6 +72,10 @@ final class CalendarViewModel {
 
     func reload() async { await load() }
 
+    /// 상세 레이어(`DetailSheet`)에 넘길 데이터 — 마지막으로 불러온 값. 다시 불러오는 동안(`.loading`)에도 남겨 둬
+    /// 쌓인 상세가 빈 화면이 되지 않게 한다.
+    private(set) var detailData: DetailData?
+
     /// 기간 요약 — 건수(전체) + 매출(취소·노쇼 제외). 월/년 뷰 집계용.
     struct PeriodSummary: Equatable { var count: Int; var total: Int }
 
@@ -159,6 +163,8 @@ final class CalendarViewModel {
                 services: svc.services,
                 history: res.history ?? []
             ))
+            detailData = DetailData(reservations: res.reservations, customersById: customersById, assigneesById: assigneesById,
+                                    services: svc.services, serviceColorMap: serviceColorMap, history: res.history ?? [])
             // 예약 알림을 지금 예약에 맞춘다 — 추가·변경·취소 뒤 reload 도 여기를 지난다
             await ReminderScheduler.shared.sync(reservations: res.reservations, customerNames: customersById.mapValues(\.name))
         } catch {

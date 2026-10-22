@@ -21,24 +21,22 @@ struct CustomerDetailView: View {
     var mergeCandidates: [Customer] = []
     /// 고객 id → 예약 건수. 병합 대상 선택 시 판단 근거로 쓴다.
     var reservationCounts: [Int: Int] = [:]
-    /// 담당자 id → 담당자. 예약 이력 행의 이름·색, 예약 상세에 쓴다.
+    /// 담당자 id → 담당자. 예약 이력 행의 이름·색에 쓴다.
     var assigneesById: [Int: Assignee] = [:]
-    /// 매장 적립률(%) — 예약 상세에서 결제하면 자동 적립된다(`Store.effectivePointRate`).
-    var pointRate: Int = 0
+    /// 예약을 누르면 그 예약 상세 — 상세는 `DetailSheet` 가 위에 쌓는다(웹 `/address` 의 `onReservationClick`).
+    var onReservationTap: (Reservation) -> Void = { _ in }
 
     @Environment(\.dismiss) private var dismiss
     @State private var showPointAdjust = false
     @State private var showPointRecharge = false
     @State private var showMerge = false
-    /// 탭한 예약 — 웹 `/address`의 예약 카드 클릭(`onReservationClick`)과 같다.
-    @State private var selectedReservation: Reservation?
 
     var body: some View {
         NavigationStack {
             List {
                 Section("기본 정보") {
                     LabeledContent("이름", value: customer.name)
-                    LabeledContent("연락처", value: customer.formattedTel)
+                    LabeledContent("연락처") { TelLink(customer: customer) }
                     if let points = customer.points {
                         LabeledContent("적립금", value: "\(points.formatted())P")
                     }
@@ -87,7 +85,7 @@ struct CustomerDetailView: View {
                         ForEach(group.items.prefix(10)) { reservation in
                             let rowAssignee = assignee(reservation.assigneeId)
                             Button {
-                                selectedReservation = reservation
+                                onReservationTap(reservation)
                             } label: {
                                 ReservationInfoCard(
                                     reservation: reservation,
@@ -136,20 +134,6 @@ struct CustomerDetailView: View {
                     rules: pointSettings?.rechargeRules ?? [],
                     service: service,
                     onCompleted: { await onChanged(); dismiss() }
-                )
-            }
-            .sheet(item: $selectedReservation) { reservation in
-                ReservationDetailView(
-                    reservation: reservation,
-                    customer: customer,
-                    assignee: assignee(reservation.assigneeId),
-                    serviceColorMap: serviceColorMap,
-                    isNewCustomer: customer.isNewCustomerVisit(on: reservation.date),
-                    service: service,
-                    // 상태·결제가 바뀌면 상위를 다시 읽되 고객 상세는 닫지 않는다.
-                    onChanged: { await onChanged() },
-                    assigneeName: { [assigneesById] id in id.flatMap { assigneesById[$0] }?.name ?? "미지정" },
-                    pointRate: pointRate
                 )
             }
             .sheet(isPresented: $showMerge) {

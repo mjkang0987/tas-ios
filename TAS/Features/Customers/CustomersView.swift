@@ -6,16 +6,15 @@ struct CustomersView: View {
     @State private var viewModel = CustomersViewModel()
     @State private var activeSheet: ActiveSheet?
 
-    /// 상세/등록/수정 시트를 하나의 `.sheet(item:)`으로 통합(다중 sheet 충돌 회피).
+    /// 상세/등록 시트를 하나의 `.sheet(item:)`으로 통합(다중 sheet 충돌 회피).
+    /// 고객 수정·예약 상세는 상세 위에 쌓인다(`DetailSheet`).
     private enum ActiveSheet: Identifiable {
         case detail(Customer)
         case create
-        case edit(Customer)
         var id: String {
             switch self {
             case .detail(let c): return "detail-\(c.id)"
             case .create: return "create"
-            case .edit(let c): return "edit-\(c.id)"
             }
         }
     }
@@ -40,31 +39,13 @@ struct CustomersView: View {
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .detail(let customer):
-                    CustomerDetailView(
-                        customer: customer,
-                        stats: viewModel.stats(for: customer.id),
-                        reservationGroups: viewModel.reservationGroups(for: customer.id),
-                        serviceColorMap: viewModel.serviceColorMap,
-                        onEdit: { activeSheet = .edit($0) },
-                        pointsEnabled: session.currentStore?.usePointSystem ?? false,
-                        pointSettings: session.currentStore?.pointSettings,
-                        service: TASService(),
-                        onChanged: { await viewModel.load() },
-                        mergeCandidates: viewModel.allCustomers.filter { $0.id != customer.id },
-                        reservationCounts: viewModel.reservationCounts,
-                        assigneesById: viewModel.assigneesById,
-                        pointRate: session.currentStore?.effectivePointRate ?? 0
-                    )
+                    if let data = viewModel.detailData {
+                        DetailSheet(route: .customer(customer.id), data: data, reload: { await viewModel.load() })
+                    }
                 case .create:
                     CustomerFormView(
                         service: TASService(),
                         nextCustomerId: viewModel.nextCustomerId,
-                        onSaved: { await viewModel.load() }
-                    )
-                case .edit(let customer):
-                    CustomerFormView(
-                        service: TASService(),
-                        editing: customer,
                         onSaved: { await viewModel.load() }
                     )
                 }
