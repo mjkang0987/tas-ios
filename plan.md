@@ -9,6 +9,23 @@
 
 ---
 
+## 🟡 진행 — 손님 지각 알림 (`claude/late-alert`, #37 위)
+
+### 요구 (지시자 2026-10-22)
+- "예약시간 지나서 손님 안 올 때" 알림, **기준은 매장에서 설정**. 안드로이드(tas-android #27)와 같은 규칙.
+
+### 구현
+- `Store.lateAlertMinutes`(0 = 끔, nil = 15분) · `GuestSnapshot.lateAlertMinutes` — 게스트만 저장. 서버엔 아직 칸이 없어 로그인 매장은 15분 고정(설정 칸 잠김).
+- `ReservationReminder` 에 지각 종류(`Kind.late`): 시작 + 기준분, 진행 중이고 결제 안 된 예약만. 알림 식별자를 종류별로(`reservation-reminder-late-<id>`).
+- `ReminderScheduler.setLateMinutes` — 탭 루트가 매장 설정을 넘겨준다(매장이 바뀌거나 고치면 다시 건다).
+- 설정 › 매장 칸에 '지각 알림' Picker(끔·5·10·15·20·30분 후).
+
+### 검증
+- 유닛 +2, 전체 190 통과. 시뮬레이터: 13분 전 시작 예약 → 15:30:00 "손님이 아직 안 오셨나요? / 15:15 고객 #1 · 남성커트 — 예약 15분 지남". 설정 칸 확인.
+- `xcodebuild test` 가 또 앱 데이터 폴더를 새로 만들었다 — 미리 백업해 되돌림(cmp 일치).
+
+---
+
 ## 🟡 진행 — 예약 알림(기기 알림) (`claude/reservation-reminder`)
 
 ### 요구 (지시자 2026-10-22 — "iOS도 푸시알림 같이 만들어야해")

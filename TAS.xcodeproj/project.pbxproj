@@ -20,6 +20,7 @@
 		18C3297E19520DAE0FDC11BD /* NoticeFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D11EA57AEE1D4E84B8C5B9F3 /* NoticeFormView.swift */; };
 		1941CE47F89887C75196C912 /* MembershipsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC2702CE04E330FED733B01C /* MembershipsView.swift */; };
 		19C0127009BBD22E5F90570D /* RevenueDetailListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC45A2ECF62F1467A9BB01B /* RevenueDetailListView.swift */; };
+		19C27DBB1FD7AEEBCA9CB779 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB8ED07923E85CDB8D0FA161 /* GoogleService-Info.plist */; };
 		1B6DEDD5B3CBC045D86E8814 /* ReservationReminderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7172449E52DD28D2239F1F9E /* ReservationReminderTests.swift */; };
 		1C9E8938A41565EC531ECC84 /* CustomerFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9350C6C4B6ADD3047556F1D7 /* CustomerFormView.swift */; };
 		1D548C9EDE1A45747B953E69 /* ReservationInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4700BCC8AEE04DF358C279AC /* ReservationInfoCard.swift */; };
@@ -215,6 +216,7 @@
 		B331F6FA4115DF71589C5D3F /* WrapLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrapLayout.swift; sourceTree = "<group>"; };
 		BA3DF5093A72A7E4625DB310 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		BB1C6F0A9C0D34DBA598E6CA /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
+		BB8ED07923E85CDB8D0FA161 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		BBB05BDAA690E17246FA3E5B /* chair-purple.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "chair-purple.png"; sourceTree = "<group>"; };
 		BE22BCB16342CDF48D500A49 /* AssigneeScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssigneeScheduleTests.swift; sourceTree = "<group>"; };
 		BEBCC36214021C976CFB572E /* SearchHighlightTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchHighlightTests.swift; sourceTree = "<group>"; };
@@ -481,6 +483,7 @@
 		68841CA0951C0F2DE464E785 /* TAS */ = {
 			isa = PBXGroup;
 			children = (
+				BB8ED07923E85CDB8D0FA161 /* GoogleService-Info.plist */,
 				7B73C5BB1819BC03B3623483 /* Info.plist */,
 				6BE2845356E5FDDE48FA8857 /* App */,
 				04040B40F7F3017A981927BC /* Core */,
@@ -676,6 +679,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5BA9508725EB60DE9FBBE4CE /* Assets.xcassets in Resources */,
+				19C27DBB1FD7AEEBCA9CB779 /* GoogleService-Info.plist in Resources */,
 				27C23799DD44BFD5512ECD84 /* chair-purple.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
