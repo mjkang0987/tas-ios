@@ -9,6 +9,12 @@
 
 ---
 
+## 🟡 PR 대기 — 방문 간격 라벨 주석을 웹에 맞춘다 (`claude/visit-gap-comment`)
+
+> 웹 `mjkang0987/tas` v0.64.10(PR #304)이 `formatVisitGap` 28~29일을 `Math.max(floor(days/30), 1)`로 고쳐
+> "0달전"이 사라졌다. 앱은 원래 최소 1달이라 동작은 같고, "웹과 다르다"는 주석만 낡았다.
+
+- `TAS/Core/RevenueStats.swift` `visitGapLabel` 문서 주석, `TASTests/RevenueStatsTests.swift` 28일 케이스 주석 — 주석만 수정, 코드 변경 없음.
 ## ✅ 완료 — 담당자 뱃지 흰 글자 대비 (`claude/badge-contrast`, 웹·안드로이드 함께, 2026-10-19)
 - 담당자 색이 밝으면(노랑 #FBBC04 위 흰 글자 1.6:1) 같은 색을 진하게 깐다 — `HexColor.backgroundForWhiteText`(색상·채도 유지, 밝기만 내림,
   웹 `features/colors/contrast.ts` 와 같은 값 — `BadgeContrastTests` 가 웹 결과와 맞춘다). 메모 태그는 iOS 가 색 점 + 글자라 해당 없음.
