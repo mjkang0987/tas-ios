@@ -119,10 +119,8 @@ struct SettingsView: View {
                     Picker(selection: Binding(
                         get: { reminders.leadMinutes },
                         set: { minutes in
-                            Task {
-                                await reminders.setLeadMinutes(minutes)
-                                notificationsDenied = !(await reminders.requestAuthorizationIfNeeded())
-                            }
+                            reminders.setLeadMinutes(minutes)
+                            Task { notificationsDenied = !(await reminders.requestAuthorizationIfNeeded()) }
                         }
                     )) {
                         ForEach(ReservationReminder.leadOptions, id: \.self) { minutes in
