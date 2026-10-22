@@ -81,6 +81,7 @@ final class SessionStore {
     /// 게스트 로그아웃 — 로컬 데이터를 전부 삭제하고 로그인 화면으로.
     /// (게스트는 계정이 없어 데이터가 기기에만 있으므로 로그아웃 = 삭제)
     func logoutGuest() {
+        ReminderScheduler.shared.clearAll() // 지운 데이터의 예약 알림이 울리지 않게
         GuestStore.shared.reset()
         GuestStore.shared.deactivate()
         currentStore = nil
@@ -195,6 +196,7 @@ final class SessionStore {
     }
 
     func signOut() {
+        ReminderScheduler.shared.clearAll() // 이 기기에서 나간 계정의 예약 알림이 울리지 않게
         keychain.clear()
         currentStore = nil
         state = .signedOut

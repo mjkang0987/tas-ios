@@ -159,6 +159,8 @@ final class CalendarViewModel {
                 services: svc.services,
                 history: res.history ?? []
             ))
+            // 예약 알림을 지금 예약에 맞춘다 — 추가·변경·취소 뒤 reload 도 여기를 지난다
+            await ReminderScheduler.shared.sync(reservations: res.reservations, customerNames: customersById.mapValues(\.name))
         } catch {
             state = .failed((error as? APIError)?.errorDescription ?? error.localizedDescription)
         }

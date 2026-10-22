@@ -5,6 +5,7 @@ struct CalendarView: View {
     enum Mode: String, CaseIterable { case day = "일", three = "3일", week = "주", month = "월", year = "년" }
 
     @Environment(SessionStore.self) private var session
+    @Environment(ReminderScheduler.self) private var reminders
     @State private var viewModel = CalendarViewModel()
     @State private var selectedDate = Date()
     @State private var selectedAssigneeId: Int?
@@ -136,6 +137,18 @@ struct CalendarView: View {
             }
         }
         .task { await viewModel.load() }
+        // 예약 알림을 눌러 들어오면 그 예약 상세 — 아직 불러오는 중이면 다 불러온 뒤에 연다
+        .onChange(of: reminders.pendingReservationId, initial: true) { _, _ in openPendingReminder() }
+        .onChange(of: viewModel.state.value?.reservations.count) { _, _ in openPendingReminder() }
+    }
+
+    private func openPendingReminder() {
+        guard let id = reminders.pendingReservationId, let loaded = viewModel.state.value else { return }
+        reminders.pendingReservationId = nil
+        // 그사이 지워진 예약이면 아무것도 열지 않는다
+        guard let reservation = loaded.reservations.first(where: { $0.id == id }) else { return }
+        if let day = KST.dayKey.date(from: reservation.date) { selectedDate = day }
+        activeSheet = .detail(reservation)
     }
 
     // MARK: - 담당자 필터 바 (공용 FilterChip)

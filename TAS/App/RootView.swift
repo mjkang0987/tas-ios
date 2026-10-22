@@ -55,19 +55,33 @@ struct RootView: View {
 /// 웹 `MobileTabBar`와 항목·순서를 맞춘다 — 탭바에 올린 화면은 설정 목록에서 뺀다
 /// (웹 `pages/menu.tsx`의 `HIDDEN_IN_MENU`와 같은 규칙).
 struct MainTabView: View {
+    private enum Tab { case calendar, customers, revenue, settings }
+    @State private var tab: Tab = .calendar
+    @Environment(ReminderScheduler.self) private var reminders
+
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
             CalendarView()
                 .tabItem { Label("캘린더", systemImage: "calendar") }
+                .tag(Tab.calendar)
 
             CustomersView()
                 .tabItem { Label("고객", systemImage: "person.2") }
+                .tag(Tab.customers)
 
             RevenueView()
                 .tabItem { Label("매출", systemImage: "wonsign") }
+                .tag(Tab.revenue)
 
             SettingsView()
                 .tabItem { Label("설정", systemImage: "gearshape") }
+                .tag(Tab.settings)
+        }
+        // 예약 알림은 기본이 켜짐(30분 전)이라 처음 한 번 권한을 묻는다 — 안 물으면 조용히 안 울린다
+        .task { await reminders.requestAuthorizationIfNeeded() }
+        // 예약 알림을 눌러 들어오면 캘린더 탭으로 — 상세는 캘린더가 연다
+        .onChange(of: reminders.pendingReservationId) { _, id in
+            if id != nil { tab = .calendar }
         }
     }
 }
@@ -75,4 +89,5 @@ struct MainTabView: View {
 #Preview {
     MainTabView()
         .environment(SessionStore())
+        .environment(ReminderScheduler.shared)
 }

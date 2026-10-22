@@ -3,6 +3,8 @@ import SwiftUI
 /// 설정 — 매장 정보 및 로그아웃. 웹의 `/settings/*` 허브에 대응하는 스켈레톤.
 struct SettingsView: View {
     @Environment(SessionStore.self) private var session
+    @Environment(ReminderScheduler.self) private var reminders
+    @State private var notificationsDenied = false
     @State private var showStoreEdit = false
     @State private var showHoursEdit = false
     @State private var showPointSettings = false
@@ -112,6 +114,29 @@ struct SettingsView: View {
                     // (웹 `pages/menu.tsx`의 HIDDEN_IN_MENU와 같은 규칙).
                 }
 
+                // 웹에 없는 앱 기능(지시자 2026-10-22) — 예약 시각 전 휴대폰 알림. 안드로이드와 같은 선택지.
+                Section {
+                    Picker(selection: Binding(
+                        get: { reminders.leadMinutes },
+                        set: { minutes in
+                            reminders.setLeadMinutes(minutes)
+                            Task { notificationsDenied = !(await reminders.requestAuthorizationIfNeeded()) }
+                        }
+                    )) {
+                        ForEach(ReservationReminder.leadOptions, id: \.self) { minutes in
+                            Text(ReservationReminder.leadLabel(minutes)).tag(minutes)
+                        }
+                    } label: {
+                        Label("예약 알림", systemImage: "bell")
+                    }
+                } header: {
+                    Text("알림")
+                } footer: {
+                    if notificationsDenied {
+                        Text("알림이 꺼져 있어 보낼 수 없어요. 설정 앱 › TAS › 알림에서 켜 주세요.")
+                    }
+                }
+
                 Section {
                     if let user = session.user {
                         LabeledContent("권한", value: user.role.rawValue)
@@ -139,6 +164,7 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("설정")
+            .task { notificationsDenied = !(await reminders.requestAuthorizationIfNeeded()) }
             .sheet(isPresented: $showStoreEdit) {
                 StoreSettingsEditView().environment(session)
             }
@@ -158,4 +184,5 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .environment(SessionStore())
+        .environment(ReminderScheduler.shared)
 }
