@@ -58,6 +58,7 @@ struct MainTabView: View {
     private enum Tab { case calendar, customers, revenue, settings }
     @State private var tab: Tab = .calendar
     @Environment(ReminderScheduler.self) private var reminders
+    @Environment(SessionStore.self) private var session
 
     var body: some View {
         TabView(selection: $tab) {
@@ -76,6 +77,10 @@ struct MainTabView: View {
             SettingsView()
                 .tabItem { Label("설정", systemImage: "gearshape") }
                 .tag(Tab.settings)
+        }
+        // 지각 알림 기준은 매장 설정 — 매장이 바뀌거나 설정을 고치면 알림을 다시 건다
+        .onChange(of: session.currentStore?.lateAlertMinutes, initial: true) { _, minutes in
+            reminders.setLateMinutes(minutes ?? ReservationReminder.defaultLate)
         }
         // 예약 알림은 기본이 켜짐(30분 전)이라 처음 한 번 권한을 묻는다 — 안 물으면 조용히 안 울린다
         .task { await reminders.requestAuthorizationIfNeeded() }

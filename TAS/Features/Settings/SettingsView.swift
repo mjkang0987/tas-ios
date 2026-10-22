@@ -32,10 +32,17 @@ struct SettingsView: View {
             || store.useMembershipSystem == true || store.useOnlineBooking == true
     }
 
+    private func saveLateAlert(_ minutes: Int) async {
+        guard let current = session.currentStore else { return }
+        if let updated = try? await TASService().updateLateAlert(current: current, minutes: minutes) {
+            session.currentStore = updated
+        }
+    }
+
     var body: some View {
         NavigationStack {
             List {
-                Section("매장") {
+                Section {
                     LabeledContent("이름", value: session.currentStore?.name ?? "-")
                     if let label = ShopCatalog.shopTypeLabel(session.currentStore?.shopType) {
                         LabeledContent("업종", value: label)
@@ -49,6 +56,25 @@ struct SettingsView: View {
                         .disabled(session.currentStore == nil)
                     Button("영업시간·휴무 설정") { showHoursEdit = true }
                         .disabled(session.currentStore == nil)
+                    // 지각 알림 — 앱 기능(지시자 2026-10-22 "매장에서 설정"). 매장 설정이라 이 매장 폰이 모두 같은 기준을 쓴다.
+                    // 서버엔 아직 칸이 없어 로그인 매장은 기본(15분)으로 고정 — 서버 푸시 단계에서 연다.
+                    Picker(selection: Binding(
+                        get: { session.currentStore?.lateAlertMinutes ?? ReservationReminder.defaultLate },
+                        set: { minutes in Task { await saveLateAlert(minutes) } }
+                    )) {
+                        ForEach(ReservationReminder.lateOptions, id: \.self) { minutes in
+                            Text(minutes > 0 ? "예약 시간 \(ReservationReminder.lateLabel(minutes))" : ReservationReminder.lateLabel(minutes)).tag(minutes)
+                        }
+                    } label: {
+                        Label("지각 알림", systemImage: "clock.badge.exclamationmark")
+                    }
+                    .disabled(session.currentStore == nil || !session.isGuest)
+                } header: {
+                    Text("매장")
+                } footer: {
+                    Text(session.isGuest
+                         ? "예약 시간이 지나도 완료·노쇼 처리가 안 된 손님을 알려 드려요."
+                         : "예약 시간이 지나도 완료·노쇼 처리가 안 된 손님을 알려 드려요. 로그인 매장은 지금 15분 후로 정해져 있어요.")
                 }
 
                 // 매장 정보에서 켠 기능은 여기서 **바로 그 기능의 설정 화면으로** 들어간다.
