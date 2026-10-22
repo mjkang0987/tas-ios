@@ -139,7 +139,8 @@ TASTests/              유닛 테스트 (XCTest, @testable import TAS)
 고객 집계(`CustomerStats` — 지난 예약 완료 판정, 최근 시술, 상태 그룹) ·
 근무시간 요약(`DaySchedule.summarize` — 구간 묶기·결손 스케줄) · 이름 정렬(`NameSort`) ·
 한글 초성 검색(`Chosung`) · 검색 매치 하이라이트 구간(`SearchHighlight`) ·
-고객 검색 필터·매치된 메모 태그 산출(`CustomersViewModel.filterResult`).
+고객 검색 필터·매치된 메모 태그 산출(`CustomersViewModel.filterResult`) ·
+예약 알림 대상·시각·내용·한도(`ReservationReminder`).
 
 ```bash
 xcodebuild test -project TAS.xcodeproj -scheme TAS \
