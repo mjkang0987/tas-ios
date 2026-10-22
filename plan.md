@@ -9,6 +9,12 @@
 
 ---
 
+## ✅ 완료 — 담당자 뱃지 흰 글자 대비 (`claude/badge-contrast`, 웹·안드로이드 함께, 2026-10-19)
+- 담당자 색이 밝으면(노랑 #FBBC04 위 흰 글자 1.6:1) 같은 색을 진하게 깐다 — `HexColor.backgroundForWhiteText`(색상·채도 유지, 밝기만 내림,
+  웹 `features/colors/contrast.ts` 와 같은 값 — `BadgeContrastTests` 가 웹 결과와 맞춘다). 메모 태그는 iOS 가 색 점 + 글자라 해당 없음.
+- 웹 `--blue-color`·`--warning-color` 대비 수정은 iOS 가 그 토큰을 안 써서(시스템 색) 해당 없음.
+
+---
 ## 🟡 PR 대기 — 공지 '노출' 체크 하나로 (`claude/notice-single-visible`)
 
 > 웹 같은 작업: `mjkang0987/tas` PR #272 (release/2026-10-batch 묶음). 웹이 '공개'·'상단 고정' 두 체크를

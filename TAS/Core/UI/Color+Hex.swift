@@ -33,3 +33,54 @@ extension Color {
         self.init(red: Double(c.r) / 255, green: Double(c.g) / 255, blue: Double(c.b) / 255)
     }
 }
+
+extension HexColor {
+    /// 웹 `features/colors/contrast.ts` backgroundForWhiteText — 흰 글자를 얹는 색 바탕(담당자 뱃지)은
+    /// 흰 글자가 4.5:1 이 될 때까지 같은 색을 진하게(색상·채도 유지, 밝기만 0.01씩 내림). 이미 진하면 그대로.
+    /// 바탕은 사장님이 고른 색이라 다른 색으로 바꾸지 않는다(노랑 #FBBC04 → #926D02). 세 플랫폼이 같은 값을 낸다.
+    static func backgroundForWhiteText(r: Int, g: Int, b: Int) -> (r: Int, g: Int, b: Int) {
+        func luminance(_ r: Int, _ g: Int, _ b: Int) -> Double {
+            func f(_ v: Int) -> Double {
+                let x = Double(v) / 255
+                return x <= 0.03928 ? x / 12.92 : pow((x + 0.055) / 1.055, 2.4)
+            }
+            return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+        }
+        func whiteContrast(_ r: Int, _ g: Int, _ b: Int) -> Double { 1.05 / (luminance(r, g, b) + 0.05) }
+        if whiteContrast(r, g, b) >= 4.5 { return (r, g, b) }
+
+        let (rn, gn, bn) = (Double(r) / 255, Double(g) / 255, Double(b) / 255)
+        let maxV = max(rn, gn, bn), minV = min(rn, gn, bn)
+        let l0 = (maxV + minV) / 2
+        let d = maxV - minV
+        let s = d == 0 ? 0 : (l0 > 0.5 ? d / (2 - maxV - minV) : d / (maxV + minV))
+        let h: Double
+        if d == 0 { h = 0 }
+        else if maxV == rn { h = ((gn - bn) / d + (gn < bn ? 6 : 0)) * 60 }
+        else if maxV == gn { h = ((bn - rn) / d + 2) * 60 }
+        else { h = ((rn - gn) / d + 4) * 60 }
+
+        var l = l0
+        while l > 0 {
+            let a = s * min(l, 1 - l)
+            func f(_ n: Double) -> Int {
+                let k = (n + h / 30).truncatingRemainder(dividingBy: 12)
+                return Int((255 * (l - a * max(min(k - 3, 9 - k, 1), -1))).rounded())
+            }
+            let c = (f(0), f(8), f(4))
+            if whiteContrast(c.0, c.1, c.2) >= 4.5 { return c }
+            l -= 0.01
+        }
+        return (0, 0, 0)
+    }
+}
+
+extension Color {
+    /// 흰 글자를 얹을 바탕 — 밝은 색만 같은 색을 진하게(`HexColor.backgroundForWhiteText`).
+    var forWhiteText: Color {
+        var (r, g, b, a): (CGFloat, CGFloat, CGFloat, CGFloat) = (0, 0, 0, 0)
+        guard UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a) else { return self }
+        let c = HexColor.backgroundForWhiteText(r: Int((r * 255).rounded()), g: Int((g * 255).rounded()), b: Int((b * 255).rounded()))
+        return Color(red: Double(c.r) / 255, green: Double(c.g) / 255, blue: Double(c.b) / 255)
+    }
+}
