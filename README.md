@@ -56,6 +56,8 @@ TAS/
     Networking/        APIClient · TASService · Loadable · APIError
     Session/           SessionStore · KeychainTokenStore · MobileToken
     Storage/           GuestStore · GuestSnapshot · LocalStore (오프라인 로컬 DB)
+    Notifications/     ReminderScheduler — 예약 알림(로컬 알림 등록·알림 누르면 상세)
+    ReservationReminder 예약 알림 대상·시각·내용(웹에 없는 앱 기능, 안드로이드와 같은 규칙)
     UI/                LoadableView · Badges(BadgeTone·StatusBadge·StatusCountBadge) ·
                        ServiceChip(시술 배지) · FilterChip · ColorAccents ·
                        ReservationInfoCard(예약 목록 공용 행 — 캘린더·고객 상세·매출 드릴다운) ·
@@ -161,10 +163,10 @@ xcodebuild test -project TAS.xcodeproj -scheme TAS \
 
 ## Regenerating the project
 
-`TAS.xcodeproj` is committed and uses Xcode 16 synchronized folder groups, so
-new files under `TAS/`·`TASTests/` are picked up automatically. A `project.yml`
-([XcodeGen](https://github.com/yonaskolb/XcodeGen)) is also provided for
-reproducible regeneration:
+`TAS.xcodeproj` is committed and lists source files explicitly, so **new files
+must be added by regenerating** with the `project.yml`
+([XcodeGen](https://github.com/yonaskolb/XcodeGen)) — otherwise the build can't see them
+(2026-10-22 확인: 새 파일이 빌드에서 빠졌다 — 예전 설명의 "synchronized folder groups"는 지금 프로젝트와 다르다):
 
 ```bash
 brew install xcodegen && xcodegen generate
