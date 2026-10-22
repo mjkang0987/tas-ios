@@ -19,11 +19,11 @@ struct CalendarView: View {
     /// (같은 뷰에 `.sheet` 여러 개를 붙이면 SwiftUI에서 충돌해 안 뜨는 버그를 회피).
     /// 예약 변경·고객 상세는 상세 위에 쌓인다(`DetailSheet`).
     private enum ActiveSheet: Identifiable {
-        case detail(Reservation)
+        case detail(Int)          // 예약 id
         case create
         var id: String {
             switch self {
-            case .detail(let r): return "detail-\(r.id)"
+            case .detail(let id): return "detail-\(id)"
             case .create: return "create"
             }
         }
@@ -89,9 +89,9 @@ struct CalendarView: View {
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
-                case .detail(let reservation):
+                case .detail(let id):
                     if let data = viewModel.detailData {
-                        DetailSheet(route: .reservation(reservation.id), data: data, reload: { await viewModel.reload() })
+                        DetailSheet(route: .reservation(id), data: data, reload: { await viewModel.reload() })
                     }
                 case .create:
                     ReservationCreateView(
@@ -122,7 +122,7 @@ struct CalendarView: View {
         // 그사이 지워진 예약이면 아무것도 열지 않는다
         guard let reservation = loaded.reservations.first(where: { $0.id == id }) else { return }
         if let day = KST.dayKey.date(from: reservation.date) { selectedDate = day }
-        activeSheet = .detail(reservation)
+        activeSheet = .detail(reservation.id)
     }
 
     // MARK: - 담당자 필터 바 (공용 FilterChip)
@@ -398,7 +398,7 @@ struct CalendarView: View {
     private func monthReservationButton(_ r: Reservation) -> some View {
         let assignee = viewModel.assignee(r.assigneeId)
         return Button {
-            activeSheet = .detail(r)
+            activeSheet = .detail(r.id)
         } label: {
             // 손으로 그린 행이라 혼자 카드 디자인 밖에 있었다 — 공용 카드로 합친다.
             ReservationInfoCard(
@@ -435,7 +435,7 @@ struct CalendarView: View {
     private func reservationButton(_ reservation: Reservation) -> some View {
         let assignee = viewModel.assignee(reservation.assigneeId)
         return Button {
-            activeSheet = .detail(reservation)
+            activeSheet = .detail(reservation.id)
         } label: {
             ReservationInfoCard(
                 reservation: reservation,
@@ -482,7 +482,7 @@ struct CalendarView: View {
                     customerName: { viewModel.customerName($0) },
                     color: { timelineColor($0) },
                     serviceColorMap: viewModel.serviceColorMap,
-                    onTap: { activeSheet = .detail($0) }
+                    onTap: { activeSheet = .detail($0.id) }
                 )
             }
         }
@@ -556,7 +556,7 @@ struct CalendarView: View {
             closedKind: { closedKind($0) },
             customerName: { viewModel.customerName($0) },
             color: { timelineColor($0) },
-            onTap: { activeSheet = .detail($0) }
+            onTap: { activeSheet = .detail($0.id) }
         )
         .refreshable { await viewModel.load() }
     }

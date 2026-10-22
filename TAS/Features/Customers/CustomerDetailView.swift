@@ -142,7 +142,8 @@ struct CustomerDetailView: View {
                     candidates: mergeCandidates,
                     reservationCounts: reservationCounts,
                     service: service,
-                    onCompleted: { await onChanged(); dismiss() }
+                    // 합치면 이 고객이 사라진다 — 먼저 닫아 '삭제된 고객입니다'가 비치지 않게
+                    onCompleted: { dismiss(); await onChanged() }
                 )
             }
         }

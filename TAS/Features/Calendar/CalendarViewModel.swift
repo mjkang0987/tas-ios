@@ -14,13 +14,6 @@ final class CalendarViewModel {
         var history: [ReservationHistoryEntry]
     }
 
-    /// 해당 예약의 변경 이력(최신순).
-    func history(forReservation id: Int) -> [ReservationHistoryEntry] {
-        (state.value?.history ?? [])
-            .filter { $0.reservationId == id }
-            .sorted { $0.timestamp > $1.timestamp }
-    }
-
     var state: Loadable<Data> = .idle
 
     private let service: TASService

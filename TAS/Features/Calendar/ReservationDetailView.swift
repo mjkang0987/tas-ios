@@ -248,8 +248,10 @@ struct ReservationDetailView: View {
             case .reject: try await service.setReservationStatus(id: reservation.id, status: .cancelled)
             case .delete: try await service.deleteReservation(id: reservation.id)
             }
-            await onChanged()
+            // 먼저 닫고 다시 읽는다 — 다시 읽은 뒤 닫으면 지운·바뀐 예약이 빠진 데이터로 한 번 그려져
+            // 닫히는 동안 '삭제된 예약입니다'가 비친다(상세 쌓기는 id 로 그린다).
             dismiss()
+            await onChanged()
         } catch {
             actionError = (error as? APIError)?.errorDescription ?? error.localizedDescription
         }

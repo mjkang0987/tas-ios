@@ -342,22 +342,18 @@ final class RevenueViewModel {
             let customersById = Dictionary(cus.customers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             var prices: [String: Int] = [:]
             for item in svc.services { prices[item.name] = item.price }
+            let serviceColorMap = ServiceColor.buildServiceColorMap(catalog: svc.services, storeMap: svc.categoryBaseColors)
 
             state = .loaded(Data(
                 reservations: res.reservations,
                 assigneesById: assigneesById,
                 customersById: customersById,
                 servicePriceByName: prices,
-                serviceColorMap: ServiceColor.buildServiceColorMap(
-                    catalog: svc.services,
-                    storeMap: svc.categoryBaseColors
-                ),
+                serviceColorMap: serviceColorMap,
                 today: KST.dayKey.string(from: Date())
             ))
             detailData = DetailData(reservations: res.reservations, customersById: customersById, assigneesById: assigneesById,
-                                    services: svc.services,
-                                    serviceColorMap: ServiceColor.buildServiceColorMap(catalog: svc.services, storeMap: svc.categoryBaseColors),
-                                    history: res.history ?? [])
+                                    services: svc.services, serviceColorMap: serviceColorMap, history: res.history ?? [])
         } catch {
             state = .failed((error as? APIError)?.errorDescription ?? error.localizedDescription)
         }
