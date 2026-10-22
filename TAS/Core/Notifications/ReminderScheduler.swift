@@ -5,6 +5,10 @@ import UserNotifications
 /// 예약 알림 등록 — 알릴 예약(`ReservationReminder`)마다 로컬 알림을 걸고, 빠진 것은 지운다.
 /// 로컬 알림은 OS 가 정한 시각에 정확히 울린다(안드로이드처럼 따로 정확한 알람 권한이 없다).
 /// 알림을 누르면 `pendingReservationId` 에 담아 캘린더가 그 예약 상세를 연다.
+///
+/// 한계: 로컬 알림은 등록할 때 내용·시각이 정해지고, 울릴 때 다시 확인할 수 없다(안드로이드는 울릴 때 다시 본다).
+/// 그래서 로그인 모드에서 다른 기기·웹으로 취소·변경한 예약은 이 기기에서 캘린더를 다시 불러올 때까지 옛 알림이 남는다.
+/// 서버 푸시(다음 단계)가 붙으면 변경을 바로 받아 고칠 수 있다.
 @MainActor
 @Observable
 final class ReminderScheduler: NSObject {
@@ -18,12 +22,26 @@ final class ReminderScheduler: NSObject {
     var pendingReservationId: Int?
 
     /// 설정의 알림 시점(분, 0 = 끔). 기기 설정이라 게스트 스냅샷·서버에는 넣지 않는다. 바꿀 땐 `setLeadMinutes`.
-    private(set) var leadMinutes: Int = UserDefaults.standard.object(forKey: "reminderLeadMinutes") as? Int ?? ReservationReminder.defaultLead
+    private(set) var leadMinutes: Int = UserDefaults.standard.object(forKey: ReminderScheduler.leadKey) as? Int ?? ReservationReminder.defaultLead
 
-    func setLeadMinutes(_ minutes: Int) async {
+    /// 값은 바로 바꾸고(선택 칸이 곧장 새 값을 보이게) 알림은 뒤에서 다시 건다.
+    func setLeadMinutes(_ minutes: Int) {
         leadMinutes = minutes
         UserDefaults.standard.set(minutes, forKey: Self.leadKey)
-        await resync()
+        Task { await resync() }
+    }
+
+    /// 로그아웃·게스트 데이터 삭제 — 없어진 예약의 알림이 울리지 않게 모두 지운다.
+    func clearAll() {
+        lastReservations = []
+        lastNames = [:]
+        generation += 1 // 진행 중인 resync 가 지운 뒤에 다시 걸지 않게
+        let mine = generation
+        Task {
+            let ids = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(Self.idPrefix) }
+            guard mine == generation else { return } // 그사이 새 로그인의 resync 가 걸었으면 건드리지 않는다
+            center.removePendingNotificationRequests(withIdentifiers: ids)
+        }
     }
 
     // 설정을 바꿨을 때 다시 맞추려고 마지막으로 받은 예약을 들고 있는다(캘린더가 불러올 때마다 갱신).
@@ -31,6 +49,8 @@ final class ReminderScheduler: NSObject {
     private var lastNames: [Int: String] = [:]
 
     private let center = UNUserNotificationCenter.current()
+    // resync 는 중간에 기다리는 자리가 있어 겹칠 수 있다 — 나중에 시작한 것만 끝까지 쓰게 세대 번호로 가린다.
+    private var generation = 0
 
     /// 켜져 있는데 아직 묻지 않았으면 권한을 묻는다. 거절 상태면 false.
     @discardableResult
@@ -55,11 +75,15 @@ final class ReminderScheduler: NSObject {
     }
 
     private func resync() async {
+        generation += 1
+        let mine = generation
         let items = ReservationReminder.upcoming(lastReservations, customerNames: lastNames, leadMinutes: leadMinutes, now: Date())
         let keep = Set(items.map { Self.idPrefix + String($0.reservationId) })
         let pending = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(Self.idPrefix) }
+        guard mine == generation else { return } // 그사이 더 새 resync(또는 clearAll)가 시작됐다
         center.removePendingNotificationRequests(withIdentifiers: pending.filter { !keep.contains($0) })
         for item in items {
+            guard mine == generation else { return }
             let content = UNMutableNotificationContent()
             content.title = item.title
             content.body = item.body
