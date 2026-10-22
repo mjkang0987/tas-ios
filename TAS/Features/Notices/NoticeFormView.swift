@@ -1,11 +1,11 @@
 import SwiftUI
 
 /// 공지 추가/수정 폼 — 웹 NoticeManageSection 이식.
-/// 분류·제목·내용 + 노출 여부 + 고정(최대 3개). 저장은 create/update(게스트=로컬).
+/// 분류·제목·내용 + '노출'(최대 3개). 저장은 create/update(게스트=로컬).
 struct NoticeFormView: View {
     var editing: StoreNotice? = nil
-    /// 현재 고정된 공지 수(고정 한도 검사).
-    var pinnedCount: Int = 0
+    /// 이 공지를 뺀 노출 공지 수(노출 한도 검사).
+    var otherVisibleCount: Int = 0
     let onSave: (StoreNotice) async -> Bool
 
     @Environment(\.dismiss) private var dismiss
@@ -14,7 +14,6 @@ struct NoticeFormView: View {
     @State private var title = ""
     @State private var bodyText = ""
     @State private var visible = true
-    @State private var pinned = false
     @State private var errorMessage: String?
     @State private var isSaving = false
 
@@ -31,10 +30,10 @@ struct NoticeFormView: View {
                 }
 
                 Section {
-                    Toggle("공개 예약 페이지 노출", isOn: $visible)
-                    Toggle("상단 고정", isOn: $pinned)
+                    Toggle("노출", isOn: $visible)
+                        .disabled(!visible && !canShow)
                 } footer: {
-                    Text("고정 공지는 최대 \(StoreNotice.maxPinned)개까지 가능합니다.")
+                    Text("노출을 켠 공지만 고객 예약 페이지에 보입니다 (최대 \(StoreNotice.maxVisible)개).")
                 }
 
                 if let errorMessage {
@@ -56,13 +55,20 @@ struct NoticeFormView: View {
         }
     }
 
+    private var canShow: Bool {
+        StoreNotice.canShow(wasVisible: editing?.visible ?? false, otherVisibleCount: otherVisibleCount)
+    }
+
     private func setup() {
-        guard let editing else { return }
+        guard let editing else {
+            // 이미 한도만큼 노출 중이면 새 공지는 꺼진 채로 시작(토글도 비활성).
+            visible = canShow
+            return
+        }
         category = editing.category
         title = editing.title
         bodyText = editing.body
         visible = editing.visible
-        pinned = editing.pinned
     }
 
     private func save() async {
@@ -70,10 +76,8 @@ struct NoticeFormView: View {
         let trimmedBody = bodyText.trimmingCharacters(in: .whitespaces)
         if trimmedTitle.isEmpty { errorMessage = "제목을 입력해주세요."; return }
         if trimmedBody.isEmpty { errorMessage = "내용을 입력해주세요."; return }
-        // 새로 고정하는 경우 한도 검사(편집 중 기존에 고정이던 건 제외).
-        let alreadyPinned = editing?.pinned ?? false
-        if pinned && !alreadyPinned && pinnedCount >= StoreNotice.maxPinned {
-            errorMessage = "고정 공지는 최대 \(StoreNotice.maxPinned)개입니다."
+        if visible && !canShow {
+            errorMessage = "노출은 최대 \(StoreNotice.maxVisible)개까지 가능합니다."
             return
         }
         isSaving = true
@@ -84,7 +88,7 @@ struct NoticeFormView: View {
             title: trimmedTitle,
             body: trimmedBody,
             visible: visible,
-            pinned: pinned,
+            pinned: editing?.pinned ?? false,
             createdAt: editing?.createdAt ?? ISO8601DateFormatter().string(from: Date())
         )
         if await onSave(notice) {

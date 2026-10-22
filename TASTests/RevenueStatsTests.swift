@@ -146,7 +146,7 @@ final class RevenueStatsTests: XCTestCase {
         XCTAssertEqual(RevenueStats.visitGapLabel(from: "2026-07-01", to: "2026-07-04"), "3일전")
         XCTAssertEqual(RevenueStats.visitGapLabel(from: "2026-07-01", to: "2026-07-08"), "1주전")   // 7일
         XCTAssertEqual(RevenueStats.visitGapLabel(from: "2026-07-01", to: "2026-07-25"), "3주전")   // 24일
-        // 28일은 웹이라면 "0달전" — 여기서는 1로 올린다.
+        // 28일은 28/30이 0이라 최소 1달 — 웹(v0.64.10~)과 같다.
         XCTAssertEqual(RevenueStats.visitGapLabel(from: "2026-07-01", to: "2026-07-29"), "1달전")
         XCTAssertEqual(RevenueStats.visitGapLabel(from: "2026-01-01", to: "2026-07-01"), "6달전")   // 181일 → 181/30
         XCTAssertEqual(RevenueStats.visitGapLabel(from: "2024-07-01", to: "2026-07-01"), "2년전")
