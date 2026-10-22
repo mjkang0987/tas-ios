@@ -68,6 +68,7 @@
 		7C8E0F51717C64CA0077A14B /* CustomersViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA8515899316850D4F446B73 /* CustomersViewModelTests.swift */; };
 		8007874DAE4BBC7969BDA64F /* RevenueViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2AD1E18242D8C7F239FAD39 /* RevenueViewModelTests.swift */; };
 		88B959F268D03AEB2000679A /* GuestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D5EBE5EF5D294612FE15E4 /* GuestStore.swift */; };
+		8C0132640D8E321F1CC9334D /* NoticeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26934AF8F7CB34F5FE2C508E /* NoticeTests.swift */; };
 		8E34F199703A8243036A0005 /* StoreSettingsEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D95164D10CF2DB55D0357C3F /* StoreSettingsEditView.swift */; };
 		911E4F62F8ECAD25D0B7B83F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97CCFF3BC11879CFF36EA585 /* SettingsView.swift */; };
 		9628E95DFC090B9E59449D5C /* NoticesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57DE55BC32AC382DF8BAD5E /* NoticesView.swift */; };
@@ -146,6 +147,7 @@
 		1A1E6E96BC207F687A481FF1 /* ReservationHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationHistoryView.swift; sourceTree = "<group>"; };
 		262FBC19C4518208D2B68F96 /* LoadableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadableView.swift; sourceTree = "<group>"; };
 		267C2F226B6F19AB9547C8A6 /* TAS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TAS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		26934AF8F7CB34F5FE2C508E /* NoticeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoticeTests.swift; sourceTree = "<group>"; };
 		2741E286FBD4183F6124ECF5 /* ServiceColorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceColorTests.swift; sourceTree = "<group>"; };
 		29808F01307A6B34D129D3B8 /* CustomersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomersView.swift; sourceTree = "<group>"; };
 		2AF56333C9FA477A5D20D4E1 /* BookingSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookingSettings.swift; sourceTree = "<group>"; };
@@ -427,6 +429,7 @@
 				4B57BCAA45089C727E9C4E99 /* MigrateLocalBodyTests.swift */,
 				31E0172FFE064A98E102A455 /* ModelDecodingTests.swift */,
 				93EE5F6FCD8758D6355E9E30 /* NameSortTests.swift */,
+				26934AF8F7CB34F5FE2C508E /* NoticeTests.swift */,
 				340111E07CA667E86FB1FCDE /* PointLedgerTests.swift */,
 				56D04C70208D730C54D4914D /* PointMathTests.swift */,
 				5B1F15E1A1E8180A342C3566 /* ReservationOverlapTests.swift */,
@@ -690,6 +693,7 @@
 				7A48996DC8CC211E4F24E542 /* MigrateLocalBodyTests.swift in Sources */,
 				4197DD6E25B6B268BB522086 /* ModelDecodingTests.swift in Sources */,
 				6CE7531247DC2E77D4E138A6 /* NameSortTests.swift in Sources */,
+				8C0132640D8E321F1CC9334D /* NoticeTests.swift in Sources */,
 				F4647F5BF3A3FF884EA2122A /* PointLedgerTests.swift in Sources */,
 				0225CD49781CE424484FAEB6 /* PointMathTests.swift in Sources */,
 				D8959835934F4F15BC75F99D /* ReservationOverlapTests.swift in Sources */,
@@ -853,7 +857,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.7.0;
+				MARKETING_VERSION = 0.8.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -935,7 +939,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.7.0;
+				MARKETING_VERSION = 0.8.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
