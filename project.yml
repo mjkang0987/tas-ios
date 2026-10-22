@@ -23,7 +23,11 @@ targets:
     type: application
     platform: iOS
     sources:
-      - TAS
+      # GoogleService-Info.plist(Firebase 설정)는 git 에 없는 로컬 파일이라 프로젝트에 넣으면 CI 빌드가 깨진다.
+      # 푸시 알림(Firebase)을 붙일 때 CI 에서 시크릿으로 만들어 넣는 단계와 함께 다시 넣는다.
+      - path: TAS
+        excludes:
+          - GoogleService-Info.plist
     dependencies:
       - package: GoogleSignIn
         product: GoogleSignIn
