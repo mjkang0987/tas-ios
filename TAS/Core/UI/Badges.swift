@@ -9,15 +9,17 @@ import SwiftUI
 enum BadgeTone {
     case booked, cancelled, completed, noshow, paid, unpaid, requested
 
+    /// 글자색은 배경 위 대비 4.5:1 이상(WCAG AA, 작은 글자) — 2026-10-19 웹·안드로이드와 함께 진하게 바꿈.
+    /// 예전 값(대비): booked #4285F4(3.1) · cancelled #999(2.5) · completed #34A853(2.7) · noshow #EA4335(3.3) · requested #A88417(3.3).
     var foregroundHex: String {
         switch self {
-        case .booked: return "#4285F4"
-        case .cancelled: return "#999"
-        case .completed: return "#34A853"
-        case .noshow: return "#EA4335"
+        case .booked: return "#1967D2"
+        case .cancelled: return "#666666"
+        case .completed: return "#137333"
+        case .noshow: return "#C5221F"
         case .paid: return "#6526D9"
         case .unpaid: return "#92400E"
-        case .requested: return "#A88417"
+        case .requested: return "#806600"
         }
     }
 
@@ -109,7 +111,8 @@ struct AssigneeBadge: View {
             .lineLimit(1)
             .padding(.horizontal, 8)
             .padding(.vertical, 2)
-            .background(color ?? .secondary, in: Capsule())
+            // 밝은 담당자 색(노랑 등)은 흰 글자가 안 읽혀 같은 색을 진하게 깐다(웹·안드로이드와 같은 값).
+            .background((color ?? .secondary).forWhiteText, in: Capsule())
             .foregroundStyle(.white)
     }
 }

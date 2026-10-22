@@ -210,9 +210,10 @@ private struct BookingRequestKindBadge: View {
 
     private var tint: Color {
         switch kind {
-        case .new: return Color(hex: "A88417") ?? .orange
+        // 연한 같은 색 바탕 위 글자 — 상태 배지와 같은 진한 값(대비 4.5 이상)
+        case .new: return Color(hex: "806600") ?? .orange
         case .change: return Color(hex: "6526D9") ?? .purple
-        case .cancel: return Color(hex: "EA4335") ?? .red
+        case .cancel: return Color(hex: "C5221F") ?? .red
         }
     }
 }

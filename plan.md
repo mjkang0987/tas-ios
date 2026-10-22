@@ -15,6 +15,35 @@
 > "0달전"이 사라졌다. 앱은 원래 최소 1달이라 동작은 같고, "웹과 다르다"는 주석만 낡았다.
 
 - `TAS/Core/RevenueStats.swift` `visitGapLabel` 문서 주석, `TASTests/RevenueStatsTests.swift` 28일 케이스 주석 — 주석만 수정, 코드 변경 없음.
+## ✅ 완료 — 담당자 뱃지 흰 글자 대비 (`claude/badge-contrast`, 웹·안드로이드 함께, 2026-10-19)
+- 담당자 색이 밝으면(노랑 #FBBC04 위 흰 글자 1.6:1) 같은 색을 진하게 깐다 — `HexColor.backgroundForWhiteText`(색상·채도 유지, 밝기만 내림,
+  웹 `features/colors/contrast.ts` 와 같은 값 — `BadgeContrastTests` 가 웹 결과와 맞춘다). 메모 태그는 iOS 가 색 점 + 글자라 해당 없음.
+- 웹 `--blue-color`·`--warning-color` 대비 수정은 iOS 가 그 토큰을 안 써서(시스템 색) 해당 없음.
+
+---
+## 🟡 PR 대기 — 공지 '노출' 체크 하나로 (`claude/notice-single-visible`)
+
+> 웹 같은 작업: `mjkang0987/tas` PR #272 (release/2026-10-batch 묶음). 웹이 '공개'·'상단 고정' 두 체크를
+> **'노출' 하나(= `visible`, 최대 3개)**로 합쳤다. 앱도 같은 규칙으로 맞춘다.
+
+### 서버 규칙 (웹 #272)
+- '노출' = `visible`. 고객 예약 페이지는 `visible` 최신 3개만.
+- 한도 3은 **숨김 → 노출 전환 때만** 409 `visible_limit`(한도 도입 전 4개 이상 노출 중인 매장의 기존 공지 수정은 통과).
+- `pinned`는 웹 미사용. 서버는 앱 호환용으로 계속 받고 돌려준다 → 앱 모델의 `pinned` 필드는 **디코드 호환을 위해 남기고**
+  저장 시 기존 값을 그대로 돌려보낸다(새 공지는 false).
+
+### 구현
+- `Models/Notice.swift` — `maxPinned` → `maxVisible`, 순수 판정 `canShow(wasVisible:otherVisibleCount:)`(서버 규칙 이식).
+- `NoticeFormView` — 토글 2개 → '노출' 하나. 한도면 비활성 + 새 공지는 꺼진 채 시작. 저장 전 같은 판정.
+- `NoticesView` — 정렬 고정 우선 제거(최신순, 웹 목록과 동일), 행의 핀 아이콘 제거(숨김 아이콘은 유지).
+- 테스트: `NoticeTests` — `canShow` 경계.
+
+### 검증 (완료)
+- `xcodegen generate` → `xcodebuild test` **188 통과**(신규 `NoticeTests` 4).
+- 시뮬레이터(iPhone 17 Pro, **게스트 모드** — 앱 기본 API가 운영이라 서버에 쓰지 않으려고 게스트로 확인):
+  폼에 '노출' 토글 하나 + 안내 문구, 3개 추가 후 목록 최신순, **4번째 추가 폼은 토글이 꺼진 채 비활성 — 눌러도 안 켜짐.**
+- **배포 순서 무관**: 구 서버(웹 #272 배포 전)에도 앱은 `visible`·받은 `pinned`를 그대로 보내므로 깨지지 않는다.
+  한도 3은 앱이 먼저 막는다.
 
 ## ✅ 완료 — 예약 카드·타임라인을 웹에 맞춘다 (`claude/card-parity-with-web`)
 
