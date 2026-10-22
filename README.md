@@ -61,6 +61,7 @@ TAS/
     UI/                LoadableView · Badges(BadgeTone·StatusBadge·StatusCountBadge) ·
                        ServiceChip(시술 배지) · FilterChip · ColorAccents ·
                        ReservationInfoCard(예약 목록 공용 행 — 캘린더·고객 상세·매출 드릴다운) ·
+                       TelLink(연락처 → 전화) ·
                        ServiceColor(서비스별 색) · Formatting · StoreClosedStyle
     KST.swift          매장 기준(Asia/Seoul) 날짜 유틸 · 요일 라벨(weekdayLabels)
     ReservationOverlap 담당자 중복 예약(겹침) 판정 공용 유틸
@@ -74,6 +75,8 @@ TAS/
   Features/
     Login/             소셜 로그인(웹 위임 + 네이티브 Google) · 게스트 시작
     Guest/             약관 동의 · 온보딩
+    Detail/            DetailStack — 상세 끝없이 쌓기(예약 ↔ 고객, 안드로이드 DetailStack 과 같은 동선).
+                       캘린더·고객·매출 탭이 같은 DetailSheet 로 예약·고객 상세(변경·수정 포함)를 연다
     Calendar/          일(타임라인)/주/월/년 · 예약 생성·수정·결제·이력 · 온라인 예약 요청함
     Customers/         고객 CRUD · 병합 · 적립금 조정
     Assignees/         담당자 CRUD · 병합 · 근무시간
