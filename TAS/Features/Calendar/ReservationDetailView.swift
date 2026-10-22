@@ -152,7 +152,8 @@ struct ReservationDetailView: View {
                     customer: customer,
                     pointRate: pointRate,
                     service: service,
-                    onCompleted: { await onChanged(); dismiss() }
+                    // 상세는 닫지 않는다 — 상세 쌓기가 다시 읽은 값으로 다시 그린다(안드로이드처럼 결제 뒤에도 그 자리)
+                    onCompleted: { await onChanged() }
                 )
             }
         }

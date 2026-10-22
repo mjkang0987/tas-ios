@@ -125,7 +125,8 @@ struct CustomerDetailView: View {
                 PointAdjustView(
                     customer: customer,
                     service: service,
-                    onCompleted: { await onChanged(); dismiss() }
+                    // 상세는 닫지 않는다 — 다시 읽은 잔액으로 다시 그린다
+                    onCompleted: { await onChanged() }
                 )
             }
             .sheet(isPresented: $showPointRecharge) {
@@ -133,7 +134,8 @@ struct CustomerDetailView: View {
                     customer: customer,
                     rules: pointSettings?.rechargeRules ?? [],
                     service: service,
-                    onCompleted: { await onChanged(); dismiss() }
+                    // 상세는 닫지 않는다 — 다시 읽은 잔액으로 다시 그린다
+                    onCompleted: { await onChanged() }
                 )
             }
             .sheet(isPresented: $showMerge) {
