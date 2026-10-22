@@ -41,6 +41,9 @@ final class ReminderScheduler: NSObject {
             let ids = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(Self.idPrefix) }
             guard mine == generation else { return } // 그사이 새 로그인의 resync 가 걸었으면 건드리지 않는다
             center.removePendingNotificationRequests(withIdentifiers: ids)
+            // 이미 울려 알림 센터에 남은 것도 — 나간 계정의 고객 이름이 잠금 화면에 남지 않게
+            let shown = await center.deliveredNotifications().map(\.request.identifier).filter { $0.hasPrefix(Self.idPrefix) }
+            center.removeDeliveredNotifications(withIdentifiers: shown)
         }
     }
 
