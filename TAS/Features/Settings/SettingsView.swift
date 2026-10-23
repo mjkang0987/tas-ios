@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var showStoreEdit = false
     @State private var showHoursEdit = false
     @State private var showBookingSettings = false
+    @State private var toast: Toast?
 
     /// 쿠폰·회원권·온라인예약은 서버(발급/차감 API·공개 예약 페이지)가 있어야 동작한다.
     /// 게스트에겐 매장 정보 편집에서 토글도 감추므로 설정 목록에서도 함께 감춘다.
@@ -159,6 +160,14 @@ struct SettingsView: View {
                     }
                 }
 
+                // 웹·안드로이드 설정 맨 아래 약관 링크 — 웹 페이지를 브라우저로 연다
+                Section {
+                    Link("이용약관", destination: AppConfig.apiBaseURL.appending(path: "terms"))
+                        .accessibilityHint("웹 페이지 열기")
+                    Link("개인정보처리방침", destination: AppConfig.apiBaseURL.appending(path: "privacy"))
+                        .accessibilityHint("웹 페이지 열기")
+                }
+
                 Section {
                     LabeledContent("API", value: AppConfig.apiBaseURL.absoluteString)
                         .font(.footnote)
@@ -166,12 +175,13 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("설정")
+            .toast($toast)
             .task { notificationsDenied = !(await reminders.requestAuthorizationIfNeeded()) }
             .sheet(isPresented: $showStoreEdit) {
-                StoreSettingsEditView().environment(session)
+                StoreSettingsEditView(onSaved: { toast = Toast(text: $0) }).environment(session)
             }
             .sheet(isPresented: $showHoursEdit) {
-                StoreHoursEditView().environment(session)
+                StoreHoursEditView(onSaved: { toast = Toast(text: $0) }).environment(session)
             }
             .sheet(isPresented: $showBookingSettings) {
                 BookingSettingsEditView().environment(session)

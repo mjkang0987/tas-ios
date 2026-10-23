@@ -9,6 +9,8 @@ struct StoreHoursEditView: View {
     @Environment(\.dismiss) private var dismiss
 
     var service = TASService()
+    /// 저장 뒤 결과 문구(토스트) — 설정 화면이 띄운다.
+    var onSaved: (String) -> Void = { _ in }
 
     @State private var start = Date()
     @State private var end = Date()
@@ -75,12 +77,13 @@ struct StoreHoursEditView: View {
         }
     }
 
+    /// 웹·안드로이드 `addClosedDate` — 같은 날은 막고 알린다(조용히 무시하면 눌렀는데 안 된 줄 안다).
     private func addClosedDate() {
         let key = KST.dayKey.string(from: newClosedDate)
-        if !closedDates.contains(key) {
-            closedDates.append(key)
-            closedDates.sort()
-        }
+        guard !closedDates.contains(key) else { errorMessage = "이미 등록된 휴업일입니다."; return }
+        closedDates.append(key)
+        closedDates.sort()
+        errorMessage = nil
     }
 
     private func setup() {
@@ -120,6 +123,7 @@ struct StoreHoursEditView: View {
                 closedWeekdays: closedWeekdays.sorted()
             )
             session.currentStore = updated
+            onSaved("영업시간·휴무가 저장되었습니다.")
             dismiss()
         } catch {
             errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
