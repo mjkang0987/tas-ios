@@ -59,7 +59,7 @@
    ✅ 덤(발견) **적립금 이력 순서** (`claude/point-history-order`, v0.13.1) — 웹(`appendPointHistories`)·안드로이드는 이력을 **끝에** 붙이고
    화면에서 뒤집는데, iOS 는 충전·조정·취소 환원·결제 적립/사용을 **앞에** 넣어 서버 이력 순서가 웹과 섞였다(5단계부터 상세가 웹처럼 뒤집어
    보여 iOS 가 쓴 이력이 가장 오래된 것처럼 보였다). 다섯 곳 모두 끝에 붙이게. 이미 앞에 들어간 옛 이력은 그대로(순서만, 금액·잔액 영향 없음).
-   🟡 5c **펼친 행에서 바로 고치기** (`claude/customer-row-inline-edit`, PR 대기, 지시자 승인 2026-10-23) — 웹 `AddressCustomerTags`·`AddressCustomerRecharge`:
+   ✅ 5c **펼친 행에서 바로 고치기** (`claude/customer-row-inline-edit`, PR #46 머지 v0.14.0, 지시자 승인 2026-10-23) — 웹 `AddressCustomerTags`·`AddressCustomerRecharge`:
    메모 '추가/수정' → 그 자리에서 태그 ✕ 삭제·색 8개·입력 + 추가(엔터)·완료, 바꿀 때마다 바로 저장. 적립금·충전 켠 매장은 충전 칸
    (규칙 '기준 + 보너스'/직접입력 · 결제수단 · 충전) + 최근 적립금 이력 1건(예약 이력은 누르면 예약 상세; 전체는 고객 상세).
    새 공용: `MemoTagEditor`(고객 수정 폼도 이걸로 — 색 고르기가 낭독기로 안 골라지던 것 같이 고침) · `PointRecharge`(충전 화면과 공용 산식).
