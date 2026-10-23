@@ -63,7 +63,7 @@ TAS/
                        ReservationInfoCard(예약 목록 공용 행 — 캘린더·고객 상세·매출 드릴다운) ·
                        TelLink(연락처 → 전화) ·
                        ServiceColor(서비스별 색) · Formatting · StoreClosedStyle
-    KST.swift          매장 기준(Asia/Seoul) 날짜 유틸 · 요일 라벨(weekdayLabels)
+    KST.swift          매장 기준(Asia/Seoul) 날짜 유틸(주는 일요일 시작) · 요일 라벨(weekdayLabels 월~일 데이터 순서 · calendarWeekdayLabels 일~토 달력 머리)
     ReservationOverlap 담당자 중복 예약(겹침) 판정 공용 유틸
     PointMath          적립금 산식(적립/사용·취소 환원) 공용 유틸
     NameSort           이름 정렬 규칙(고객 가나다순 · 담당자 영문→한글→기타)
