@@ -84,6 +84,8 @@ final class AssigneesViewModel {
 
 /// 담당자(디자이너) 관리 — 웹 설정 > `designer` 탭 이식(추가/수정/삭제). 설정에서 push.
 struct AssigneesView: View {
+    @Environment(SessionStore.self) private var session
+    private var labels: StoreLabels { session.labels }
     @State private var viewModel = AssigneesViewModel()
     @State private var activeSheet: ActiveSheet?
     @State private var mergeSource: Assignee?
@@ -100,7 +102,7 @@ struct AssigneesView: View {
     }
 
     var body: some View {
-        LoadableView(state: viewModel.state, loadingText: "담당자 불러오는 중…") { _ in
+        LoadableView(state: viewModel.state, loadingText: "\(labels.assignee) 불러오는 중…") { _ in
             List {
                 ForEach(viewModel.sorted) { assignee in
                     Button {
@@ -119,7 +121,7 @@ struct AssigneesView: View {
                 }
             }
         }
-        .navigationTitle("담당자")
+        .navigationTitle("\(labels.assignee)")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

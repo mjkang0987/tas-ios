@@ -51,7 +51,7 @@ final class ServicesViewModel {
 
     /// 서비스 추가/수정 — 수정이면 `originalName` 자리를 바꾼다(이름도 바꿀 수 있다).
     /// 이름·가격·시간이 바뀌면 앞으로의 미결제 예약에도 반영하고(웹 `updateService`), 결과 문구를 돌려준다. 실패면 nil.
-    func save(_ item: ServiceItem, originalName: String?) async -> String? {
+    func save(_ item: ServiceItem, originalName: String?, labels: StoreLabels = .default) async -> String? {
         let prevCatalog = services
         var list = prevCatalog
         if let originalName, let i = list.firstIndex(where: { $0.name == originalName }) {
@@ -70,7 +70,8 @@ final class ServicesViewModel {
             actionError = (error as? APIError)?.errorDescription ?? error.localizedDescription
             return nil
         }
-        guard let originalName else { return "서비스가 추가되었습니다." }
+        let saved = "\(labels.service.josa(.iGa)) 저장되었습니다."
+        guard let originalName else { return "\(labels.service.josa(.iGa)) 추가되었습니다." }
         // 카탈로그는 저장됐다 — 예약 반영이 실패해도 서비스 저장은 성공으로 두고 따로 알린다(웹과 같다).
         do {
             let reservations = try await service.fetchReservations().reservations
@@ -78,10 +79,10 @@ final class ServicesViewModel {
                 reservations, originalName: originalName, updatedName: item.name,
                 prevCatalog: prevCatalog, nextCatalog: list, today: KST.dayKey.string(from: Date()))
             try await service.updateReservations(updates)
-            return updates.isEmpty ? "서비스가 저장되었습니다." : "서비스가 저장되었습니다. 예정된 예약 \(updates.count)건에 반영했습니다."
+            return updates.isEmpty ? saved : "\(saved) 예정된 예약 \(updates.count)건에 반영했습니다."
         } catch {
-            actionError = "서비스 변경을 예약에 반영하지 못했습니다. 새로고침 후 다시 확인해 주세요."
-            return "서비스가 저장되었습니다."
+            actionError = "\(labels.service) 변경을 예약에 반영하지 못했습니다. 새로고침 후 다시 확인해 주세요."
+            return saved
         }
     }
 
@@ -126,6 +127,8 @@ final class ServicesViewModel {
 
 /// 서비스(시술) 관리 — 웹 설정 > `ServiceManageSection` 이식(추가/수정/삭제). 설정에서 push.
 struct ServicesView: View {
+    @Environment(SessionStore.self) private var session
+    private var labels: StoreLabels { session.labels }
     @State private var viewModel = ServicesViewModel()
     @State private var activeSheet: ActiveSheet?
     @State private var toast: Toast?
@@ -145,12 +148,12 @@ struct ServicesView: View {
 
     // 설정에서 NavigationLink로 push되므로 자체 NavigationStack 없이 상위 스택을 상속.
     var body: some View {
-        LoadableView(state: viewModel.state, loadingText: "서비스 불러오는 중…") { _ in
+        LoadableView(state: viewModel.state, loadingText: "\(labels.service) 불러오는 중…") { _ in
             if viewModel.services.isEmpty {
                 ContentUnavailableView {
-                    Label("서비스 없음", systemImage: "menucard")
+                    Label("\(labels.service) 없음", systemImage: "menucard")
                 } description: {
-                    Text("우측 상단 + 로 서비스를 추가하세요.\n예약 등록 시 여기서 만든 서비스를 선택합니다.")
+                    Text("우측 상단 + 로 \(labels.service.josa(.eulReul)) 추가하세요.\n예약 등록 시 여기서 만든 \(labels.service.josa(.eulReul)) 선택합니다.")
                 }
             } else {
                 List {
@@ -167,7 +170,7 @@ struct ServicesView: View {
                                 Button("삭제", role: .destructive) {
                                     Task {
                                         if await viewModel.delete(item.name) {
-                                            toast = Toast(text: "\"\(item.name)\" 서비스가 삭제되었습니다.", kind: .info)
+                                            toast = Toast(text: "\"\(item.name)\" \(labels.service.josa(.iGa)) 삭제되었습니다.", kind: .info)
                                         }
                                     }
                                 }
@@ -189,7 +192,7 @@ struct ServicesView: View {
                 }
             }
         }
-        .navigationTitle("서비스")
+        .navigationTitle(labels.service)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -205,11 +208,11 @@ struct ServicesView: View {
             switch sheet {
             case .create:
                 ServiceFormView(existingCategories: viewModel.categories, existingNames: viewModel.services.map(\.name)) { item in
-                    await finishSave(viewModel.save(item, originalName: nil))
+                    await finishSave(viewModel.save(item, originalName: nil, labels: labels))
                 }
             case .edit(let item):
                 ServiceFormView(editing: item, existingCategories: viewModel.categories, existingNames: viewModel.services.map(\.name)) { updated in
-                    await finishSave(viewModel.save(updated, originalName: item.name))
+                    await finishSave(viewModel.save(updated, originalName: item.name, labels: labels))
                 }
             case .category(let name):
                 CategoryEditView(name: name, color: viewModel.hex(name)) { newName, color in

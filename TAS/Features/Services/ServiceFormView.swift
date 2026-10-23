@@ -6,6 +6,8 @@ import SwiftUI
 /// 이름도 바꿀 수 있다 — 바꾸면 상위가 앞으로의 미결제 예약에도 반영한다(웹 `updateService`).
 /// 저장은 상위 목록에서 고친 뒤 전체 PUT(웹 일괄 저장 모델).
 struct ServiceFormView: View {
+    @Environment(SessionStore.self) private var session
+    private var labels: StoreLabels { session.labels }
     var editing: ServiceItem? = nil
     let existingCategories: [String]
     /// 이미 있는 서비스 이름 — 같은 이름 중복 등록을 막는다(수정 중인 자기 이름은 괜찮다).
@@ -29,8 +31,8 @@ struct ServiceFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("서비스") {
-                    TextField("서비스명", text: $name)
+                Section("\(labels.service)") {
+                    TextField("\(labels.service)명", text: $name)
                 }
 
                 Section("카테고리") {
@@ -64,7 +66,7 @@ struct ServiceFormView: View {
                     Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
                 }
             }
-            .navigationTitle(isEditing ? "서비스 수정" : "서비스 추가")
+            .navigationTitle(isEditing ? "\(labels.service) 수정" : "\(labels.service) 추가")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -109,9 +111,9 @@ struct ServiceFormView: View {
 
     private func save() async {
         let trimmedName = name.trimmingCharacters(in: .whitespaces)
-        if trimmedName.isEmpty { errorMessage = "서비스명을 입력해주세요."; return }
+        if trimmedName.isEmpty { errorMessage = "\(labels.service)명을 입력해주세요."; return }
         if trimmedName != editing?.name, existingNames.contains(trimmedName) {
-            errorMessage = "\"\(trimmedName)\" 서비스는 이미 등록되어 있습니다."; return
+            errorMessage = "\"\(trimmedName)\" \(labels.service.josa(.eunNeun)) 이미 등록되어 있습니다."; return
         }
         let resolvedCategory = (useNewCategory || existingCategories.isEmpty)
             ? newCategory.trimmingCharacters(in: .whitespaces)

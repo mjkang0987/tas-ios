@@ -9,6 +9,8 @@ import SwiftUI
 /// 담당자 가용성(중복 예약)은 `ReservationOverlap`로 겹침을 감지해 경고·확인한다.
 /// 신규 예약은 선택적으로 "결제완료로 등록"(단일 결제수단 + 적립률 자동 적립)할 수 있다.
 struct ReservationCreateView: View {
+    @Environment(SessionStore.self) private var session
+    private var labels: StoreLabels { session.labels }
     let service: TASService
     let customers: [Customer]
     let assignees: [Assignee]            // 재직 중
@@ -112,11 +114,11 @@ struct ReservationCreateView: View {
                 }
             }
             .onAppear(perform: setupInitial)
-            .alert("담당자 겹침", isPresented: $showConflictConfirm) {
+            .alert("\(labels.assignee) 겹침", isPresented: $showConflictConfirm) {
                 Button("취소", role: .cancel) {}
                 Button("그래도 저장", role: .destructive) { Task { await save() } }
             } message: {
-                Text("선택한 담당자에게 시간이 겹치는 예약이 \(currentConflicts.count)건 있습니다. 그래도 저장하시겠어요?")
+                Text("선택한 \(labels.assignee)에게 시간이 겹치는 예약이 \(currentConflicts.count)건 있습니다. 그래도 저장하시겠어요?")
             }
         }
     }
@@ -154,9 +156,9 @@ struct ReservationCreateView: View {
                     }
                 }
             } header: {
-                Text("담당자 겹침 경고")
+                Text("\(labels.assignee) 겹침 경고")
             } footer: {
-                Text("선택한 담당자에게 시간이 겹치는 예약이 \(conflicts.count)건 있습니다. 확인 후 저장하세요.")
+                Text("선택한 \(labels.assignee)에게 시간이 겹치는 예약이 \(conflicts.count)건 있습니다. 확인 후 저장하세요.")
             }
         }
     }
@@ -237,7 +239,7 @@ struct ReservationCreateView: View {
     private var serviceSection: some View {
         Section {
             if catalog.isEmpty {
-                Text("등록된 서비스가 없습니다. 설정에서 먼저 추가해주세요.")
+                Text("등록된 \(labels.service.josa(.iGa)) 없습니다. 설정에서 먼저 추가해주세요.")
                     .font(.footnote).foregroundStyle(.secondary)
             } else {
                 ForEach(serviceRows) { row in
@@ -253,7 +255,7 @@ struct ReservationCreateView: View {
             }
         } header: {
             HStack {
-                Text("서비스")
+                Text("\(labels.service)")
                 Spacer()
                 if !selectedServices.isEmpty {
                     Text("\(totalDuration)분 · \(formatWon(totalPrice))")
@@ -313,8 +315,8 @@ struct ReservationCreateView: View {
 
     @ViewBuilder private var assigneeSection: some View {
         if !assignees.isEmpty {
-            Section("담당자") {
-                Picker("담당자", selection: $assigneeId) {
+            Section("\(labels.assignee)") {
+                Picker("\(labels.assignee)", selection: $assigneeId) {
                     ForEach(assignees) { a in Text(a.name).tag(a.id) }
                 }
                 .onChange(of: assigneeId) { _, _ in errorMessage = nil }
@@ -464,7 +466,7 @@ struct ReservationCreateView: View {
     private static let mobilePattern = "^01[016789]\\d{7,8}$"
 
     private func validate() -> String? {
-        if !assignees.isEmpty && assigneeId == 0 { return "담당자를 선택해주세요." }
+        if !assignees.isEmpty && assigneeId == 0 { return "\(labels.assignee.josa(.eulReul)) 선택해주세요." }
         if customerName.trimmingCharacters(in: .whitespaces).isEmpty { return "고객명을 입력해주세요." }
         let isNew = customerId == 0
         let tel = normalizeTel(customerTel)
@@ -472,7 +474,7 @@ struct ReservationCreateView: View {
         if isNew && tel.range(of: Self.mobilePattern, options: .regularExpression) == nil {
             return "연락처 형식을 확인해주세요."
         }
-        if selectedServices.isEmpty { return "서비스를 선택해주세요." }
+        if selectedServices.isEmpty { return "\(labels.service.josa(.eulReul)) 선택해주세요." }
         if timeString(startTime) >= timeString(endTime) { return "시작 시간은 종료 시간보다 앞서야 합니다." }
         return nil
     }

@@ -538,7 +538,7 @@ struct RevenueView: View {
 
                 let byAssignee = viewModel.byAssignee
                 if !byAssignee.isEmpty {
-                    Section("담당자별") {
+                    Section("\(session.labels.assignee)별") {
                         ForEach(Array(byAssignee.enumerated()), id: \.offset) { item in
                             Button {
                                 detailKey = .assignee(item.element.assignee?.id)

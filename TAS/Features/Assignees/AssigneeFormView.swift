@@ -6,6 +6,8 @@ import SwiftUI
 /// 근무시간은 월~일 7행(요일별 사용 여부 + 시작/종료). 저장은 상위 목록에 upsert 후
 /// 전체 목록을 PUT(웹 일괄 저장 모델). 성공 시에만 닫힌다.
 struct AssigneeFormView: View {
+    @Environment(SessionStore.self) private var session
+    private var labels: StoreLabels { session.labels }
     var editing: Assignee? = nil
     var nextId: Int = 0
     /// 편집한 담당자를 넘기고, 저장 성공 여부(Bool)를 돌려받는다.
@@ -29,7 +31,7 @@ struct AssigneeFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("담당자") {
+                Section("\(labels.assignee)") {
                     TextField("이름", text: $name)
                     Picker("상태", selection: $status) {
                         Text("재직").tag(AssigneeStatus.active)
@@ -68,7 +70,7 @@ struct AssigneeFormView: View {
                     Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
                 }
             }
-            .navigationTitle(editing == nil ? "담당자 추가" : "담당자 수정")
+            .navigationTitle(editing == nil ? "\(labels.assignee) 추가" : "\(labels.assignee) 수정")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -179,7 +181,7 @@ struct AssigneeFormView: View {
 
     private func save() async {
         let trimmedName = name.trimmingCharacters(in: .whitespaces)
-        if trimmedName.isEmpty { errorMessage = "담당자 이름을 입력해주세요."; return }
+        if trimmedName.isEmpty { errorMessage = "\(labels.assignee) 이름을 입력해주세요."; return }
         isSaving = true
         defer { isSaving = false }
 
