@@ -61,7 +61,8 @@ TAS/
     UI/                LoadableView · Badges(BadgeTone·StatusBadge·StatusCountBadge) ·
                        ServiceChip(시술 배지) · FilterChip · ColorAccents ·
                        ReservationInfoCard(예약 목록 공용 행 — 캘린더·고객 상세·매출 드릴다운) ·
-                       TelLink(연락처 → 전화) ·
+                       TelLink(연락처 → 전화) · ActionButtonStyle(레이어 아래 버튼 줄 — 주·위험 테두리·보통) ·
+                       MemoTagPill(고객 메모 태그) · Color+Hex(adaptive · dangerText · linkText · brandFill=흰 글자 채움) ·
                        ServiceColor(서비스별 색) · Formatting · StoreClosedStyle
     KST.swift          매장 기준(Asia/Seoul) 날짜 유틸(주는 일요일 시작) · 요일 라벨(weekdayLabels 월~일 데이터 순서 · calendarWeekdayLabels 일~토 달력 머리)
     ReservationOverlap 담당자 중복 예약(겹침) 판정 공용 유틸

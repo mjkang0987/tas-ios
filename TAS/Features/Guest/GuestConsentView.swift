@@ -76,6 +76,7 @@ struct GuestConsentView: View {
                     .padding(.vertical, 14)
             }
             .buttonStyle(.borderedProminent)
+            .tint(.brandFill) // 흰 글자 채움 — 어두운 모드 accent(밝은 보라) 위 흰 글자는 대비 부족
             .disabled(!allAgreed)
 
             Button("동의 안 함") { showDecline = true }

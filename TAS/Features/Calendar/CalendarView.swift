@@ -217,7 +217,7 @@ struct CalendarView: View {
             Text("\(day)")
                 .font(.subheadline.weight(isSelected ? .bold : .regular))
                 .frame(width: 28, height: 28)
-                .background(isSelected ? Color.accentColor : (isToday ? Color.accentColor.opacity(0.18) : Color.clear))
+                .background(isSelected ? Color.brandFill : (isToday ? Color.accentColor.opacity(0.18) : Color.clear))
                 .foregroundStyle(isSelected ? Color.white : Color.primary)
                 .clipShape(Circle())
             if let count = summary?.count, count > 0 {

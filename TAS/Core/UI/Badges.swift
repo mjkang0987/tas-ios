@@ -128,3 +128,19 @@ struct NewCustomerBadge: View {
             .foregroundStyle(Color(hex: "00A896") ?? .teal)
     }
 }
+
+/// 고객 메모 태그 — 웹 `StyledMemoTag`(태그 색 알약 + 흰 글자) 이식. 예약 상세·고객 상세가 같이 쓴다.
+struct MemoTagPill: View {
+    let tag: CustomerMemoTag
+
+    var body: some View {
+        Text(tag.text)
+            .font(.caption.weight(.semibold))
+            .lineLimit(1)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            // 밝은 태그 색은 흰 글자가 안 읽혀 같은 색을 진하게 깐다(웹 backgroundForWhiteText 와 같은 값).
+            .background((Color(hex: tag.color) ?? .secondary).forWhiteText, in: Capsule())
+            .foregroundStyle(.white)
+    }
+}

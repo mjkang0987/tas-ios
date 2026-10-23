@@ -166,6 +166,7 @@ private struct BookingRequestRow: View {
                     .tint(.red)
                 Button("수락") { onDecide(.approve) }
                     .buttonStyle(.borderedProminent)
+                    .tint(.brandFill) // 흰 글자 채움 — 어두운 모드의 밝은 accent 위 흰 글자는 대비가 모자란다
             }
             .font(.subheadline)
             .disabled(isBusy)
