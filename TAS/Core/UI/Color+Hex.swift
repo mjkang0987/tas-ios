@@ -84,3 +84,20 @@ extension Color {
         return Color(red: Double(c.r) / 255, green: Double(c.g) / 255, blue: Double(c.b) / 255)
     }
 }
+
+extension Color {
+    /// 밝은·어두운 모드에 다른 색 — 웹 색(밝은 바탕 기준 4.5:1)이 어두운 바탕에선 대비가 모자라는 자리(위험 글자·링크)에 쓴다.
+    static func adaptive(light: String, dark: String) -> Color {
+        let l = UIColor(Color(hex: light) ?? .primary)
+        let d = UIColor(Color(hex: dark) ?? .primary)
+        return Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? d : l })
+    }
+
+    /// 위험(취소·노쇼·삭제) 글자 — 밝은 모드는 웹 `#C5221F`, 어두운 모드는 밝힌 빨강.
+    static let dangerText = adaptive(light: "#C5221F", dark: "#FF6B6B")
+    /// 흰 글자를 얹는 브랜드 채움(주 버튼·선택한 날) — 모드와 상관없이 웹 `--brand-color` #6526D9(흰 글자 7:1).
+    /// AccentColor 는 어두운 모드에서 글자가 읽히게 밝은 보라(#A57BFF)로 바뀌는데, 그 위 흰 글자는 3:1 이라 채움엔 따로 쓴다.
+    static let brandFill = Color(hex: "#6526D9") ?? .purple
+    /// 링크(고객명) — 밝은 모드는 웹 `#1967D2`(흰 바탕 5.3:1), 어두운 모드는 밝힌 파랑.
+    static let linkText = adaptive(light: "#1967D2", dark: "#6CA8FF")
+}

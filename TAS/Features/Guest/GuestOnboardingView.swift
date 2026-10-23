@@ -151,6 +151,7 @@ struct GuestOnboardingView: View {
                     .frame(height: 52)
             }
             .buttonStyle(.borderedProminent)
+            .tint(.brandFill) // 흰 글자 채움 — 어두운 모드 accent(밝은 보라) 위 흰 글자는 대비 부족
 
             Button("설정 없이 둘러보기") { skip() }
                 .font(.subheadline)
