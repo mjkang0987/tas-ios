@@ -10,18 +10,12 @@ struct RevenueDetailListView: View {
     /// 예약을 취소·삭제하고 돌아왔을 때 그 행이 남아 있으면 안 된다.
     let key: RevenueViewModel.DetailKey
     let viewModel: RevenueViewModel
-    /// 매장 적립률(%) — 예약 상세에서 결제하면 자동 적립된다.
-    var pointRate: Int = 0
-    /// 고객 상세의 적립금 조정·충전 노출 조건(웹 매장 기능 토글).
-    var pointsEnabled: Bool = false
-    var pointSettings: PointSettings? = nil
-    var service: TASService = TASService()
     /// 상세에서 상태·결제가 바뀌면 매출을 다시 읽는다.
     var onChanged: () async -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedReservation: Reservation?
-    @State private var selectedCustomer: Customer?
+    /// 누른 예약·고객 — 상세는 `DetailSheet` 가 위로 끝없이 쌓는다(예약 → 고객 → 예약 …).
+    @State private var route: DetailRoute?
 
     /// 웹 `EMPTY_TEXT`.
     private static let emptyText = "등록된 데이터가 없습니다"
@@ -48,33 +42,10 @@ struct RevenueDetailListView: View {
                     Button("닫기") { dismiss() }
                 }
             }
-            .sheet(item: $selectedReservation) { reservation in
-                let customer = viewModel.customer(reservation.customerId)
-                ReservationDetailView(
-                    reservation: reservation,
-                    customer: customer,
-                    assignee: viewModel.assignee(reservation.assigneeId),
-                    serviceColorMap: viewModel.serviceColorMap,
-                    isNewCustomer: customer?.isNewCustomerVisit(on: reservation.date) ?? false,
-                    service: service,
-                    onChanged: { await onChanged() },
-                    assigneeName: { viewModel.assignee($0)?.name ?? "미지정" },
-                    pointRate: pointRate
-                )
-            }
-            .sheet(item: $selectedCustomer) { customer in
-                CustomerDetailView(
-                    customer: customer,
-                    stats: viewModel.customerStats(customer.id),
-                    reservationGroups: viewModel.customerGroups(customer.id),
-                    serviceColorMap: viewModel.serviceColorMap,
-                    pointsEnabled: pointsEnabled,
-                    pointSettings: pointSettings,
-                    service: service,
-                    onChanged: { await onChanged() },
-                    assigneesById: viewModel.assigneesById,
-                    pointRate: pointRate
-                )
+            .sheet(item: $route) { route in
+                if let data = viewModel.detailData {
+                    DetailSheet(route: route, data: data, reload: onChanged)
+                }
             }
         }
     }
@@ -89,7 +60,7 @@ struct RevenueDetailListView: View {
                     let customer = viewModel.customer(reservation.customerId)
                     let assignee = viewModel.assignee(reservation.assigneeId)
                     Button {
-                        selectedReservation = reservation
+                        route = .reservation(reservation.id)
                     } label: {
                         ReservationInfoCard(
                             reservation: reservation,
@@ -115,7 +86,7 @@ struct RevenueDetailListView: View {
                 ForEach(visits) { visit in
                     let customer = viewModel.customer(visit.customerId)
                     Button {
-                        selectedCustomer = customer
+                        route = .customer(visit.customerId)
                     } label: {
                         CustomerVisitRow(visit: visit, customer: customer)
                     }

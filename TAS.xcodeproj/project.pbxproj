@@ -62,6 +62,7 @@
 		648AA73983370B5BA9726FC0 /* CustomerStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF6DA9456A6095443D5C4D36 /* CustomerStatsTests.swift */; };
 		6770D62031D521ADACEDD113 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38BD50E7ED486AE0EF89388F /* RootView.swift */; };
 		6CE7531247DC2E77D4E138A6 /* NameSortTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93EE5F6FCD8758D6355E9E30 /* NameSortTests.swift */; };
+		6D24C8F083ABC2D9A5E0B930 /* TelLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DFC031F031A2C7743D8AA0E /* TelLink.swift */; };
 		70E7862450AEBD9CAC67DFF5 /* Customer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415459BE4E986E005BAB578B /* Customer.swift */; };
 		720CF37DC5121EF5FEE35EE1 /* ServiceColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2741E286FBD4183F6124ECF5 /* ServiceColorTests.swift */; };
 		72FD6A06AFCF994A21FDFDE7 /* AssigneeScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE22BCB16342CDF48D500A49 /* AssigneeScheduleTests.swift */; };
@@ -70,6 +71,7 @@
 		7BE48AD3CFC4FD2F85B53E51 /* BookingSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AF56333C9FA477A5D20D4E1 /* BookingSettings.swift */; };
 		7C302C1928E1D35A4A2F171C /* AssigneesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A90A59320E939D9B195812 /* AssigneesView.swift */; };
 		7C8E0F51717C64CA0077A14B /* CustomersViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA8515899316850D4F446B73 /* CustomersViewModelTests.swift */; };
+		7C9FD023D3A7B561D6091239 /* DetailStackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 136BA0E72CEE1E8E34A7443C /* DetailStackTests.swift */; };
 		8007874DAE4BBC7969BDA64F /* RevenueViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2AD1E18242D8C7F239FAD39 /* RevenueViewModelTests.swift */; };
 		88B959F268D03AEB2000679A /* GuestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D5EBE5EF5D294612FE15E4 /* GuestStore.swift */; };
 		8C0132640D8E321F1CC9334D /* NoticeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26934AF8F7CB34F5FE2C508E /* NoticeTests.swift */; };
@@ -81,6 +83,7 @@
 		A2DCD72D0648803EE2923E4A /* Membership.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB02DF73BBC91A3E1FC9C24 /* Membership.swift */; };
 		A32777A533326AE37D9AE09E /* CustomersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29808F01307A6B34D129D3B8 /* CustomersView.swift */; };
 		A6960996C90B985830CD821E /* CustomersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E6A3CACE17ED28BF2DFE290 /* CustomersViewModel.swift */; };
+		A7305A1779BDAE4C3AE95305 /* DetailStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1E1E98E6C020DCFCB31A920 /* DetailStack.swift */; };
 		A8535371AD003926CD36CBDA /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = D746F7DFD63340B7179AE3BA /* AppConfig.swift */; };
 		AAFE2E14ECABA89290E06D8A /* GuestSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123F28534A5A014DF55B772B /* GuestSnapshot.swift */; };
 		AF217390F1559CA9F07C87C0 /* ReservationCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AC837C1A5663DE0346A608D /* ReservationCreateView.swift */; };
@@ -144,6 +147,7 @@
 		0E70948A9623C035F04F625E /* Reservation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reservation.swift; sourceTree = "<group>"; };
 		0F2817DFDCDCDA67A6A0D3D1 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
 		123F28534A5A014DF55B772B /* GuestSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestSnapshot.swift; sourceTree = "<group>"; };
+		136BA0E72CEE1E8E34A7443C /* DetailStackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailStackTests.swift; sourceTree = "<group>"; };
 		13F5BEA61DD380BA72ABE012 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		14F49762175D09C599D52678 /* TASTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TASTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1614F9F7CD06DED9BDA9417A /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
@@ -199,6 +203,7 @@
 		82D5EBE5EF5D294612FE15E4 /* GuestStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestStore.swift; sourceTree = "<group>"; };
 		85C14CFF1B8BF392EF0EA5D4 /* BookingRequestsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookingRequestsView.swift; sourceTree = "<group>"; };
 		8A619A7CC9188F9D0E1395A7 /* ReservationReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationReminder.swift; sourceTree = "<group>"; };
+		8DFC031F031A2C7743D8AA0E /* TelLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelLink.swift; sourceTree = "<group>"; };
 		8FC21CB6C2888D62B0248663 /* FilterChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterChip.swift; sourceTree = "<group>"; };
 		91156A41378FEE2418108FF0 /* CustomerStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerStats.swift; sourceTree = "<group>"; };
 		92EA27B2FCB4DEC55CCE4337 /* Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service.swift; sourceTree = "<group>"; };
@@ -241,6 +246,7 @@
 		DC40D55853F507001EB761E8 /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
 		DF91E10214D3A6C3D96DD306 /* RevenueStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueStatsTests.swift; sourceTree = "<group>"; };
 		E0847DD986F4388D8E1E0BA1 /* Assignee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assignee.swift; sourceTree = "<group>"; };
+		E1E1E98E6C020DCFCB31A920 /* DetailStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailStack.swift; sourceTree = "<group>"; };
 		E38019E83E6C3726FD54DBB6 /* Common.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Common.swift; sourceTree = "<group>"; };
 		E51BBDE4C4999C42A0D18652 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		E57DE55BC32AC382DF8BAD5E /* NoticesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoticesView.swift; sourceTree = "<group>"; };
@@ -437,6 +443,7 @@
 				EE1FC3B13F3CDB07E35F7E04 /* CustomerSaveTests.swift */,
 				BF6DA9456A6095443D5C4D36 /* CustomerStatsTests.swift */,
 				CA8515899316850D4F446B73 /* CustomersViewModelTests.swift */,
+				136BA0E72CEE1E8E34A7443C /* DetailStackTests.swift */,
 				7166A5CAD053D006FEFFCD79 /* GuestSeedTests.swift */,
 				FE3032986950DC3F02D3691A /* GuestStoreTests.swift */,
 				41B6725465CCDF4C2B5FF161 /* MembershipDecodingTests.swift */,
@@ -533,6 +540,7 @@
 				7EC7DE2820F9B8CCE8CA448D /* ServiceChip.swift */,
 				4CB6FE22CCA04D8D615D63AD /* ServiceColor.swift */,
 				0512EA40D355CBDEB8419763 /* StoreClosedStyle.swift */,
+				8DFC031F031A2C7743D8AA0E /* TelLink.swift */,
 				B331F6FA4115DF71589C5D3F /* WrapLayout.swift */,
 			);
 			path = UI;
@@ -563,6 +571,7 @@
 				44E1AAE56343691A2A39F703 /* Calendar */,
 				50B8C204C311CB8CB92B121D /* Coupons */,
 				2BFE71915A60E7185B69680A /* Customers */,
+				E8B37EA041F67C7E1AFFF269 /* Detail */,
 				CCF897D1DC5A60BB5229D5FA /* Guest */,
 				84EBD287B54F3C3ED2C0E2DF /* Login */,
 				57A096B0506ED04F1709D5DF /* Memberships */,
@@ -572,6 +581,14 @@
 				4A5A5844573A7AEDF33080E8 /* Settings */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		E8B37EA041F67C7E1AFFF269 /* Detail */ = {
+			isa = PBXGroup;
+			children = (
+				E1E1E98E6C020DCFCB31A920 /* DetailStack.swift */,
+			);
+			path = Detail;
 			sourceTree = "<group>";
 		};
 		ED6EBFF2957E62AE29744C52 /* Services */ = {
@@ -712,6 +729,7 @@
 				BCA3CD1C8F254C12E32678AB /* CustomerSaveTests.swift in Sources */,
 				648AA73983370B5BA9726FC0 /* CustomerStatsTests.swift in Sources */,
 				7C8E0F51717C64CA0077A14B /* CustomersViewModelTests.swift in Sources */,
+				7C9FD023D3A7B561D6091239 /* DetailStackTests.swift in Sources */,
 				14B7F4643E3EF4EECD6027A2 /* GuestSeedTests.swift in Sources */,
 				53EDAA6A23E45485F5E7B6F4 /* GuestStoreTests.swift in Sources */,
 				C4DA301CABC2EF9488A76AED /* MembershipDecodingTests.swift in Sources */,
@@ -768,6 +786,7 @@
 				A6960996C90B985830CD821E /* CustomersViewModel.swift in Sources */,
 				D46ACC22416AC00F584DC457 /* DayColumnsTimelineView.swift in Sources */,
 				134148B797D05D51D946EB04 /* DayTimelineView.swift in Sources */,
+				A7305A1779BDAE4C3AE95305 /* DetailStack.swift in Sources */,
 				259F64C4805F0AD9DC9621CE /* FilterChip.swift in Sources */,
 				0C61A4F0920A725EC3DA2130 /* Formatting.swift in Sources */,
 				515053B7E86A8CBFC3CB9529 /* GoogleSignInManager.swift in Sources */,
@@ -821,6 +840,7 @@
 				8E34F199703A8243036A0005 /* StoreSettingsEditView.swift in Sources */,
 				4EF5BA2D307F45D70F9F2790 /* TASApp.swift in Sources */,
 				BAB0F434DD2A586082D48263 /* TASService.swift in Sources */,
+				6D24C8F083ABC2D9A5E0B930 /* TelLink.swift in Sources */,
 				C90824AC42EF1ECB66E7501F /* TimelineLayout.swift in Sources */,
 				FFF600EE2856527CF23557C7 /* WebAuthSession.swift in Sources */,
 				EE72E34EC6AA21EBD86C0045 /* WrapLayout.swift in Sources */,
@@ -885,7 +905,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.10.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -967,7 +987,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.9.0;
+				MARKETING_VERSION = 0.10.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
