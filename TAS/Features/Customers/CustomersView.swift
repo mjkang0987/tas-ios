@@ -11,13 +11,11 @@ struct CustomersView: View {
     /// 상세/등록 시트를 하나의 `.sheet(item:)`으로 통합(다중 sheet 충돌 회피).
     /// 고객 수정·예약 상세는 상세 위에 쌓인다(`DetailSheet`).
     private enum ActiveSheet: Identifiable {
-        case detail(DetailRoute)  // 고객 상세 · 펼친 행의 예약 상세 · 메모 '수정'(고객 수정 폼)
-        case recharge(Int)        // 고객 id — 펼친 행의 '적립금 충전'
+        case detail(DetailRoute)  // 고객 상세 · 펼친 행의 예약 상세
         case create
         var id: String {
             switch self {
             case .detail(let route): return "detail-\(route)"
-            case .recharge(let id): return "recharge-\(id)"
             case .create: return "create"
             }
         }
@@ -45,14 +43,6 @@ struct CustomersView: View {
                 case .detail(let route):
                     if let data = viewModel.detailData {
                         DetailSheet(route: route, data: data, reload: { await viewModel.load() })
-                    }
-                case .recharge(let id):
-                    if let customer = viewModel.state.value?.customers.first(where: { $0.id == id }) {
-                        PointRechargeView(
-                            customer: customer,
-                            rules: session.currentStore?.pointSettings?.rechargeRules ?? [],
-                            onCompleted: { await viewModel.load() }
-                        )
                     }
                 case .create:
                     CustomerFormView(
@@ -101,8 +91,11 @@ struct CustomersView: View {
                                 serviceColorMap: viewModel.serviceColorMap,
                                 assigneesById: data?.assigneesById ?? [:],
                                 canRecharge: canRecharge,
-                                onEditTags: { activeSheet = .detail(.editCustomer(customer.id)) },
-                                onRecharge: { activeSheet = .recharge(customer.id) },
+                                rechargeRules: session.currentStore?.pointSettings?.rechargeRules ?? [],
+                                onSave: { updated in
+                                    try await TASService().updateCustomer(updated)
+                                    await viewModel.load()
+                                },
                                 onReservationTap: { activeSheet = .detail(.reservation($0.id)) }
                             )
                         }
@@ -212,68 +205,186 @@ private struct CustomerRow: View {
     }
 }
 
-/// 펼친 행 — 웹 `AddressCustomerTags`(메모 태그) · `AddressCustomerRecharge`(충전) · `AddressCustomerReservations`(상태별 예약).
-/// 메모 태그 바로 추가·삭제와 충전 칸은 아직 — '수정'·'적립금 충전'이 기존 화면을 연다.
+/// 펼친 행 — 웹 `AddressCustomerTags`(메모 태그 바로 추가·삭제) · `AddressCustomerRecharge`(충전 + 최근 적립금 이력) ·
+/// `AddressCustomerReservations`(상태별 예약). 바꾸면 바로 저장하고 목록을 다시 읽는다(웹과 같다).
 private struct CustomerExpandedContent: View {
     let customer: Customer
     let groups: [CustomerStats.Group]
     let serviceColorMap: [String: String]
     let assigneesById: [Int: Assignee]
     let canRecharge: Bool
-    let onEditTags: () -> Void
-    let onRecharge: () -> Void
+    let rechargeRules: [RechargeRule]
+    let onSave: (Customer) async throws -> Void
     let onReservationTap: (Reservation) -> Void
+
+    /// 편집 중인 태그 — 저장 뒤 다시 읽기 전에 또 더해도 앞의 것이 사라지지 않게 화면 쪽 사본으로 고친다. nil 이면 보기.
+    @State private var draftTags: [CustomerMemoTag]?
+    @State private var tagText = ""
+    @State private var tagColor = MemoTagEditor.colors[0].hex
+    /// 충전 금액 — 규칙 번호, nil 이면 직접 입력.
+    @State private var ruleIndex: Int? = 0
+    @State private var customAmount = 0
+    @State private var paymentMethod: PaymentMethod = .card
+    @State private var isSaving = false
+    @State private var error: String?
+
+    private var histories: [PointHistoryEntry] { (customer.pointHistories ?? []).reversed() }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 8) {
-                if let tags = customer.memoTags, !tags.isEmpty {
-                    WrapLayout(spacing: 6) { ForEach(Array(tags.enumerated()), id: \.offset) { MemoTagPill(tag: $0.element) } }
-                } else {
-                    Text("메모 없음").font(.footnote).foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-                Button(customer.memoTags?.isEmpty == false ? "수정" : "추가", action: onEditTags)
-                    .buttonStyle(.action())
-                    .accessibilityLabel(customer.memoTags?.isEmpty == false ? "메모 태그 수정" : "메모 태그 추가")
-            }
-
-            if canRecharge {
-                HStack {
-                    Text("현재 잔액 \(formatWon(customer.points ?? 0))").font(.footnote).foregroundStyle(.secondary)
-                    Spacer(minLength: 0)
-                    Button("적립금 충전", action: onRecharge).buttonStyle(.action())
-                }
-            }
-
-            if groups.isEmpty {
-                Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity).padding(.vertical, 8)
-            }
-            ForEach(groups) { group in
+            memoTags
+            if canRecharge { recharge }
+            if let latest = histories.first {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("\(group.status.label) (\(group.items.count))")
-                        .font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
-                        .accessibilityAddTraits(.isHeader)
-                    ForEach(group.items) { reservation in
-                        let assignee = reservation.assigneeId.flatMap { assigneesById[$0] }
-                        Button { onReservationTap(reservation) } label: {
-                            ReservationInfoCard(
-                                reservation: reservation,
-                                serviceColorMap: serviceColorMap,
-                                assigneeName: assignee?.name,
-                                assigneeColor: Color(hex: assignee?.color),
-                                showDate: true,
-                                showPrice: true,
-                                statusOverride: group.status
-                            )
-                        }
-                        .buttonStyle(.plain)
+                    sectionTitle("적립금 이력 (\(histories.count))")
+                    if let id = latest.relatedReservationId, let reservation = groups.flatMap(\.items).first(where: { $0.id == id }) {
+                        Button { onReservationTap(reservation) } label: { PointHistoryRow(entry: latest) }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("예약 상세 열기")
+                    } else {
+                        PointHistoryRow(entry: latest)
                     }
                 }
             }
+            if let error, draftTags == nil {
+                Text(error).font(.footnote).foregroundStyle(Color.dangerText)
+            }
+            reservations
         }
+        .disabled(isSaving)
         .padding(.bottom, 4)
+    }
+
+    private func sectionTitle(_ text: String) -> some View {
+        Text(text).font(.footnote.weight(.semibold)).foregroundStyle(.secondary).accessibilityAddTraits(.isHeader)
+    }
+
+    // MARK: 메모 태그
+
+    @ViewBuilder private var memoTags: some View {
+        if let draft = draftTags {
+            MemoTagEditor(
+                tags: draft,
+                text: $tagText,
+                color: $tagColor,
+                error: error,
+                onAdd: {
+                    let result = MemoTagEditor.adding(tagText, color: tagColor, to: draft)
+                    error = result.error
+                    guard result.error == nil, result.tags.count != draft.count else { return }
+                    tagText = ""
+                    saveTags(result.tags)
+                },
+                onRemove: { tag in saveTags(draft.filter { $0.text != tag.text }) },
+                onDone: { draftTags = nil; tagText = ""; error = nil }
+            )
+        } else {
+            let tags = customer.memoTags ?? []
+            HStack(alignment: .top, spacing: 8) {
+                if tags.isEmpty {
+                    Text("메모 없음").font(.footnote).foregroundStyle(.secondary)
+                } else {
+                    WrapLayout(spacing: 6) { ForEach(Array(tags.enumerated()), id: \.offset) { MemoTagPill(tag: $0.element) } }
+                }
+                Spacer(minLength: 0)
+                Button(tags.isEmpty ? "추가" : "수정") { draftTags = tags; error = nil }
+                    .buttonStyle(.action())
+                    .accessibilityLabel(tags.isEmpty ? "메모 태그 추가" : "메모 태그 수정")
+            }
+        }
+    }
+
+    private func saveTags(_ tags: [CustomerMemoTag]) {
+        draftTags = tags
+        var updated = customer
+        updated.memoTags = tags
+        save(updated)
+    }
+
+    // MARK: 충전
+
+    private var recharge: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                sectionTitle("적립금 충전")
+                Spacer(minLength: 0)
+                Text("현재 잔액 \(formatWon(customer.points ?? 0))").font(.caption).foregroundStyle(.secondary)
+            }
+            HStack(spacing: 8) {
+                Picker("충전 금액 선택", selection: $ruleIndex) {
+                    ForEach(Array(rechargeRules.enumerated()), id: \.offset) { index, rule in
+                        Text("\(formatWon(rule.baseAmount)) + \(formatWon(rule.bonusAmount))").tag(Optional(index))
+                    }
+                    Text("직접입력").tag(Int?.none)
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
+                Picker("충전 결제수단", selection: $paymentMethod) {
+                    ForEach(PaymentMethod.received, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.menu)
+                .labelsHidden() // 이름은 낭독기만 — 화면엔 고른 값만(웹 select 와 같다)
+                Spacer(minLength: 0)
+                Button("충전", action: charge).buttonStyle(.action(.primary))
+            }
+            if ruleIndex == nil {
+                TextField("충전금액", value: $customAmount, format: .number)
+                    .keyboardType(.numberPad)
+                    .textFieldStyle(.roundedBorder)
+                    .accessibilityLabel("직접 입력 충전금액")
+            }
+        }
+        // 매장 규칙이 줄어 고른 번호가 없어지면 첫 규칙(없으면 직접입력)으로
+        .onAppear { if let i = ruleIndex, !rechargeRules.indices.contains(i) { ruleIndex = rechargeRules.isEmpty ? nil : 0 } }
+    }
+
+    private func charge() {
+        let rule = ruleIndex.flatMap { rechargeRules.indices.contains($0) ? rechargeRules[$0] : nil }
+        guard let updated = PointRecharge.charged(customer, rule: rule, custom: customAmount, method: paymentMethod,
+                                                  now: ISO8601DateFormatter().string(from: Date()), id: UUID().uuidString) else {
+            error = "충전 금액을 입력해주세요."; return
+        }
+        customAmount = 0
+        save(updated)
+    }
+
+    private func save(_ updated: Customer) {
+        isSaving = true
+        Task {
+            do { try await onSave(updated); error = nil } catch {
+                self.error = (error as? APIError)?.errorDescription ?? error.localizedDescription
+            }
+            isSaving = false
+        }
+    }
+
+    // MARK: 예약
+
+    @ViewBuilder private var reservations: some View {
+        if groups.isEmpty {
+            Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity).padding(.vertical, 8)
+        }
+        ForEach(groups) { group in
+            VStack(alignment: .leading, spacing: 6) {
+                sectionTitle("\(group.status.label) (\(group.items.count))")
+                ForEach(group.items) { reservation in
+                    let assignee = reservation.assigneeId.flatMap { assigneesById[$0] }
+                    Button { onReservationTap(reservation) } label: {
+                        ReservationInfoCard(
+                            reservation: reservation,
+                            serviceColorMap: serviceColorMap,
+                            assigneeName: assignee?.name,
+                            assigneeColor: Color(hex: assignee?.color),
+                            showDate: true,
+                            showPrice: true,
+                            statusOverride: group.status
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 }
 
