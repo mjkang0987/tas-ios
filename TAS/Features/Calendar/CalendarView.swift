@@ -85,14 +85,6 @@ struct CalendarView: View {
                         BookingRequestsButton(onApplied: { await viewModel.reload() }, onOpenReservation: { activeSheet = .detail($0) })
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        activeSheet = .create
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .disabled(viewModel.state.value == nil)
-                }
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
@@ -141,28 +133,34 @@ struct CalendarView: View {
 
     // MARK: - 담당자 필터 바 (공용 FilterChip)
 
-    @ViewBuilder private var assigneeFilterBar: some View {
+    /// 웹 헤더 둘째 줄 — '전체보기' 고르기(네이티브 select) · '+ 예약'(보라 채움).
+    /// '+ 예약'은 웹에선 첫 줄이지만 휴대폰 툴바엔 오늘·이전·다음·날짜로 자리가 없어 ⋯ 안으로 숨는다 — 이 줄 오른쪽에 둔다.
+    private var assigneeFilterBar: some View {
         let assignees = viewModel.assignees
-        if !assignees.isEmpty {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    FilterChip(label: "전체", isSelected: selectedAssigneeId == nil) {
-                        selectedAssigneeId = nil
-                    }
+        return HStack {
+            if !assignees.isEmpty {
+                Picker(session.labels.assignee, selection: $selectedAssigneeId) {
+                    Text("전체보기").tag(Int?.none)
                     ForEach(assignees) { assignee in
-                        FilterChip(
-                            label: assignee.name,
-                            color: Color(hex: assignee.color),
-                            isSelected: selectedAssigneeId == assignee.id
-                        ) {
-                            selectedAssigneeId = assignee.id
-                        }
+                        Text(assignee.name).tag(Int?.some(assignee.id))
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 6)
+                .pickerStyle(.menu)
+                .tint(Color.textPrimary)
             }
+            Spacer(minLength: 0)
+            Button {
+                activeSheet = .create
+            } label: {
+                Label("예약", systemImage: "plus").font(.tasBody.weight(.semibold))
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.brandFill)
+            .disabled(viewModel.state.value == nil)
         }
+        .padding(.horizontal, 8)
+        .padding(.trailing, 8)
+        .padding(.vertical, 4)
     }
 
     // MARK: - 뷰 모드 선택 (일/주/월/년)
@@ -568,6 +566,7 @@ struct CalendarView: View {
                     color: { timelineColor($0) },
                     serviceColorMap: viewModel.serviceColorMap,
                     onTap: { activeSheet = .detail($0.id) },
+                    isNewCustomer: { viewModel.isNewCustomer($0) },
                     isToday: dateKey == KST.dayKey.string(from: Date())
                 )
             }

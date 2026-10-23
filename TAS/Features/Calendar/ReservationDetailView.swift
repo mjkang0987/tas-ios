@@ -119,7 +119,7 @@ struct ReservationDetailView: View {
     // 고객 메모 · 요청사항 · 적립금 · 담당자 · 예약경로)
 
     private var detailRows: some View {
-        Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 12) {
+        Grid(alignment: .topLeading, horizontalSpacing: 12, verticalSpacing: 8) { // 웹 dl gap 8px 12px
             if reservation.status == .cancelled { row("상태") { ToneBadge(tone: .cancelled, text: "취소") } }
             if reservation.status == .noshow { row("상태") { ToneBadge(tone: .noshow, text: "노쇼") } }
             if reservation.status == .completed { row("상태") { ToneBadge(tone: .completed, text: "완료") } }
