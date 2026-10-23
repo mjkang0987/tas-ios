@@ -106,7 +106,7 @@ struct DetailSheet: View {
                 CustomerDetailView(
                     customer: customer,
                     stats: CustomerStats.summarize(reservations, today: today),
-                    reservationGroups: CustomerStats.groups(reservations, today: today),
+                    reservations: reservations,
                     serviceColorMap: data.serviceColorMap,
                     onEdit: { open(.editCustomer($0.id)) },
                     pointsEnabled: store?.usePointSystem ?? false,
