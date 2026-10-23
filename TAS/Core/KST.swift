@@ -7,6 +7,8 @@ enum KST {
     /// 요일 라벨(월 시작) — 웹 `WEEKDAY_LABELS`. 담당자 스케줄·영업시간 배열의 인덱스 순서와 같다.
     /// 화면마다 복붙하지 말고 여기서 가져다 쓴다.
     static let weekdayLabels = ["월", "화", "수", "목", "금", "토", "일"]
+    /// 달력 머리(일요일 시작) — 웹 캘린더·안드로이드와 같다. 근무시간·정기휴무 칸은 위 월요일 시작 배열(데이터 순서)을 쓴다.
+    static let calendarWeekdayLabels = ["일", "월", "화", "수", "목", "금", "토"]
 
     /// 날짜의 요일 라벨. 칼럼 순서(index)가 아니라 **날짜**에서 낸다 —
     /// 3일 뷰는 기준일부터 시작해 index 와 요일이 어긋나기 때문이다.
@@ -15,11 +17,11 @@ enum KST {
         return weekdayLabels[(weekday + 5) % 7]                  // 월요일 시작 배열로
     }
 
-    /// 월요일 시작(웹 WEEKDAY_LABELS) KST 캘린더.
+    /// 일요일 시작 KST 캘린더 — 웹 캘린더(월·주 뷰)·안드로이드와 같은 주(일~토).
     static var calendar: Calendar {
         var c = Calendar(identifier: .gregorian)
         c.timeZone = timeZone
-        c.firstWeekday = 2
+        c.firstWeekday = 1
         return c
     }
 

@@ -54,7 +54,7 @@ struct DayColumnsTimelineView: View {
                             }
                         }
                     }
-                    // 열 때 오늘 칸을 가운데로. 안 하면 늘 월요일부터라 주 후반엔 매번 밀어야 한다.
+                    // 열 때 오늘 칸을 가운데로. 안 하면 늘 일요일부터라 주 후반엔 매번 밀어야 한다.
                     .onAppear {
                         guard dayKeys.contains(todayKey) else { return }
                         Task { @MainActor in proxy.scrollTo(todayKey, anchor: .center) }

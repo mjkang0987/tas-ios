@@ -52,7 +52,7 @@ struct PointRechargeView: View {
                                 HStack {
                                     Text(formatWon(rule.baseAmount))
                                     if rule.bonusAmount > 0 {
-                                        Text("+ \(rule.bonusAmount.formatted())P")
+                                        Text("+ \(formatWon(rule.bonusAmount))")
                                             .font(.caption)
                                             .foregroundStyle(.tint)
                                     }
@@ -76,12 +76,12 @@ struct PointRechargeView: View {
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .onChange(of: customAmount) { selectedRule = nil }
-                        Text("P").foregroundStyle(.secondary)
+                        Text("원").foregroundStyle(.secondary)
                     }
                 } header: {
                     Text("직접 입력")
                 } footer: {
-                    Text("현재 \(currentPoints.formatted())P → 충전 후 \(resultPoints.formatted())P")
+                    Text("현재 \(formatWon(currentPoints)) → 충전 후 \(formatWon(resultPoints))")
                 }
 
                 Section {

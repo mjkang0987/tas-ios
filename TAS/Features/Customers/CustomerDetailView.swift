@@ -38,7 +38,7 @@ struct CustomerDetailView: View {
                     LabeledContent("이름", value: customer.name)
                     LabeledContent("연락처") { TelLink(customer: customer) }
                     if let points = customer.points {
-                        LabeledContent("적립금", value: "\(points.formatted())P")
+                        LabeledContent("적립금", value: formatWon(points))
                     }
                     if let first = customer.firstVisitDate, !first.isEmpty {
                         LabeledContent("첫 방문", value: first)
@@ -196,12 +196,12 @@ private struct PointHistoryRow: View {
                 Text(signed(entry.delta))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(entry.delta >= 0 ? Color.blue : Color.red)
-                Text("잔액 \(entry.balance.formatted())P").font(.caption2).foregroundStyle(.secondary)
+                Text("잔액 \(formatWon(entry.balance))").font(.caption2).foregroundStyle(.secondary)
             }
         }
     }
 
     private func signed(_ value: Int) -> String {
-        (value >= 0 ? "+" : "") + "\(value.formatted())P"
+        (value >= 0 ? "+" : "") + formatWon(value)
     }
 }

@@ -72,7 +72,7 @@ struct ReservationPaymentView: View {
                         Text("합계 \(formatWon(enteredTotal)) · 예약가 \(formatWon(reservation.price ?? 0))")
                             .foregroundStyle(enteredTotal == (reservation.price ?? 0) ? Color.secondary : Color.orange)
                         if pointsUsedNow > 0 || (customer?.points ?? 0) > 0 {
-                            Text("적립금 사용 \(pointsUsedNow.formatted())P · 보유 \(availablePoints.formatted())P")
+                            Text("적립금 사용 \(formatWon(pointsUsedNow)) · 보유 \(formatWon(availablePoints))")
                                 .foregroundStyle(pointsUsedNow > availablePoints ? Color.red : Color.secondary)
                         }
                     }
@@ -88,14 +88,14 @@ struct ReservationPaymentView: View {
                                 TextField("0", value: $pointAward, format: .number)
                                     .keyboardType(.numberPad)
                                     .multilineTextAlignment(.trailing)
-                                Text("P").foregroundStyle(.secondary)
+                                Text("원").foregroundStyle(.secondary)
                             }
                         }
                     } header: {
                         Text("적립")
                     } footer: {
                         if pointAwardEnabled, pointRate > 0 {
-                            Text("적립률 \(pointRate)% 기준 \(formatWon(nonPointTotal))의 \(defaultAward.formatted())P")
+                            Text("적립률 \(pointRate)% 기준 \(formatWon(nonPointTotal))의 \(formatWon(defaultAward))")
                         }
                     }
                 }
@@ -145,7 +145,7 @@ struct ReservationPaymentView: View {
             return
         }
         if newUsed > availablePoints {
-            errorMessage = "적립금 잔액이 부족합니다. (사용 \(newUsed.formatted())P / 보유 \(availablePoints.formatted())P)"
+            errorMessage = "적립금 잔액이 부족합니다. (사용 \(formatWon(newUsed)) / 보유 \(formatWon(availablePoints)))"
             return
         }
         isSaving = true

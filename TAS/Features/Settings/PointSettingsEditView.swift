@@ -49,7 +49,7 @@ struct PointSettingsEditView: View {
                             HStack {
                                 Text(formatWon(rule.baseAmount))
                                 Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.tertiary)
-                                Text("+\(rule.bonusAmount.formatted())P").foregroundStyle(.tint)
+                                Text("+\(formatWon(rule.bonusAmount))").foregroundStyle(.tint)
                                 Spacer()
                             }
                         }

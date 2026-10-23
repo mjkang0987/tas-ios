@@ -38,13 +38,13 @@ struct PointAdjustView: View {
                         TextField("0", value: $amount, format: .number)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
-                        Text("P").foregroundStyle(.secondary)
+                        Text("원").foregroundStyle(.secondary)
                     }
                     TextField("사유 (선택)", text: $reason)
                 } header: {
                     Text("적립금 조정")
                 } footer: {
-                    Text("현재 \(currentPoints.formatted())P → 조정 후 \(resultPoints.formatted())P")
+                    Text("현재 \(formatWon(currentPoints)) → 조정 후 \(formatWon(resultPoints))")
                 }
 
                 if let errorMessage {

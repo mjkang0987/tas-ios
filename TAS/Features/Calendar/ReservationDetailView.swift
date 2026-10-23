@@ -65,13 +65,13 @@ struct ReservationDetailView: View {
                         LabeledContent("연락처") { TelLink(customer: customer) }
                     }
                     if let points = customer?.points, points > 0 {
-                        LabeledContent("적립금", value: "\(points.formatted())P")
+                        LabeledContent("적립금", value: formatWon(points))
                     }
                 }
 
                 Section("예약") {
                     LabeledContent("날짜", value: reservation.date)
-                    LabeledContent("시간", value: "\(reservation.startTime) – \(reservation.endTime)")
+                    LabeledContent("시간", value: "\(reservation.startTime) ~ \(reservation.endTime)")
                     LabeledContent("서비스") {
                         ServiceChipList(
                             service: reservation.service,
@@ -106,12 +106,12 @@ struct ReservationDetailView: View {
                         LabeledContent("수단", value: method.rawValue)
                     }
                     if let earned = reservation.pointEarned, earned != 0 {
-                        LabeledContent("적립", value: "\(earned.formatted())P")
+                        LabeledContent("적립", value: formatWon(earned))
                     }
                 }
 
                 if let memo = reservation.memo, !memo.isEmpty {
-                    Section("메모") { Text(memo) }
+                    Section("요청사항") { Text(memo) }
                 }
 
                 if !history.isEmpty {

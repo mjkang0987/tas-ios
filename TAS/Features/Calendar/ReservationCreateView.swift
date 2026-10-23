@@ -372,7 +372,7 @@ struct ReservationCreateView: View {
             } footer: {
                 if markPaid {
                     if pointRate > 0 {
-                        Text("결제 \(formatWon(price)) · 적립률 \(pointRate)% → \(PointMath.earnedAmount(base: price, rate: pointRate).formatted())P 적립")
+                        Text("결제 \(formatWon(price)) · 적립률 \(pointRate)% → \(formatWon(PointMath.earnedAmount(base: price, rate: pointRate))) 적립")
                     } else {
                         Text("결제 \(formatWon(price))로 결제완료 처리됩니다.")
                     }
@@ -384,8 +384,8 @@ struct ReservationCreateView: View {
     // MARK: - 메모
 
     private var memoSection: some View {
-        Section("메모") {
-            TextField("메모", text: $memo, axis: .vertical)
+        Section("요청사항") {
+            TextField("예약 관련 요청사항", text: $memo, axis: .vertical)
                 .focused($focusedField, equals: .memo)
                 .lineLimit(1...3)
         }

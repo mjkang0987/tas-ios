@@ -28,4 +28,12 @@ final class WeekdayLabelTests: XCTestCase {
     func testAcrossWeekBoundary() {
         XCTAssertEqual(["2026-10-17", "2026-10-18", "2026-10-19"].map(label), ["토", "일", "월"])
     }
+
+    /// 주는 일요일 시작(웹 캘린더와 같다) — 2026-10-22(목)이 든 주는 10-18(일)~10-24(토).
+    func testWeekStartsOnSunday() {
+        let date = KST.dayKey.date(from: "2026-10-22")!
+        let week = KST.calendar.dateInterval(of: .weekOfYear, for: date)!
+        XCTAssertEqual(KST.dayKey.string(from: week.start), "2026-10-18")
+        XCTAssertEqual(KST.calendarWeekdayLabels.first, "일")
+    }
 }
