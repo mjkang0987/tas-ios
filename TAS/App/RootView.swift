@@ -9,6 +9,8 @@ struct RootView: View {
         content
             // 글자를 따로 정하지 않은 곳(목록 행·입력칸 등)도 웹 본문 크기(14)로 — 공용 단계는 `Theme.swift`
             .font(.tasBody)
+            // 한국어 전용 앱 — 기기 언어가 영어여도 날짜 고르기·요일이 웹처럼 한국어('2026년 10월 24일')로 나오게
+            .environment(\.locale, Locale(identifier: "ko_KR"))
             // 로그인 직후 게스트 데이터가 있고 계정에 이미 매장이 있으면 이관 확인.
             .alert("게스트 데이터 이관", isPresented: migrationConfirmBinding) {
                 Button("취소", role: .cancel) { session.cancelMigration() }

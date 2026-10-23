@@ -704,11 +704,11 @@
 				};
 			};
 			buildConfigurationList = 732F2AFE4FCE053A7A426011 /* Build configuration list for PBXProject "TAS" */;
-			developmentRegion = en;
+			developmentRegion = ko;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
-				en,
+				ko,
 			);
 			mainGroup = 436AB44D339CCE966FAA769E;
 			minimizedProjectReferenceProxies = 1;
