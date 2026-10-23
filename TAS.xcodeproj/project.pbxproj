@@ -93,6 +93,7 @@
 		B947728497C788BC629EE491 /* MobileToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4787653D278EF16C8135E758 /* MobileToken.swift */; };
 		BA65B22D729CDE02C4A77CD0 /* LoadableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 262FBC19C4518208D2B68F96 /* LoadableView.swift */; };
 		BAB0F434DD2A586082D48263 /* TASService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19DA9227F428A604A20F2C2E /* TASService.swift */; };
+		BCA3CD1C8F254C12E32678AB /* CustomerSaveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1FC3B13F3CDB07E35F7E04 /* CustomerSaveTests.swift */; };
 		C06BEDEDEBF9B334D59FD406 /* KST.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5A4BD9CAB4AD9E37E3CE6BD /* KST.swift */; };
 		C0B3B4A087BC8F34DC95A973 /* PointAdjustView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81ACDA8EFA9FB096F37B0912 /* PointAdjustView.swift */; };
 		C21A79335B9D978A661EA866 /* ServiceFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E6BB84325151ADD2585D1C5 /* ServiceFormView.swift */; };
@@ -245,6 +246,7 @@
 		E57DE55BC32AC382DF8BAD5E /* NoticesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoticesView.swift; sourceTree = "<group>"; };
 		E73D33EC3CF4F199705D6737 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EBEA56189BC0D40AC67F0150 /* BookingRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookingRequest.swift; sourceTree = "<group>"; };
+		EE1FC3B13F3CDB07E35F7E04 /* CustomerSaveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerSaveTests.swift; sourceTree = "<group>"; };
 		F00E26774B2A78180AADAAFD /* DayColumnsTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayColumnsTimelineView.swift; sourceTree = "<group>"; };
 		F2AD1E18242D8C7F239FAD39 /* RevenueViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueViewModelTests.swift; sourceTree = "<group>"; };
 		F73770FD2D24C7A0EABEFC3E /* TASApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TASApp.swift; sourceTree = "<group>"; };
@@ -432,6 +434,7 @@
 				D0BDE70C5C3ACBA48F331CFA /* BookingSettingsTests.swift */,
 				A6D1090403226F21B8208A0C /* ChosungTests.swift */,
 				6BA3D186ED7933CC3D3B0F66 /* CouponDecodingTests.swift */,
+				EE1FC3B13F3CDB07E35F7E04 /* CustomerSaveTests.swift */,
 				BF6DA9456A6095443D5C4D36 /* CustomerStatsTests.swift */,
 				CA8515899316850D4F446B73 /* CustomersViewModelTests.swift */,
 				7166A5CAD053D006FEFFCD79 /* GuestSeedTests.swift */,
@@ -706,6 +709,7 @@
 				090C395C290950FE1476962A /* BookingSettingsTests.swift in Sources */,
 				FF1B3C31A131EA725F126C8C /* ChosungTests.swift in Sources */,
 				2C8561EC8216772DDBFE9EE7 /* CouponDecodingTests.swift in Sources */,
+				BCA3CD1C8F254C12E32678AB /* CustomerSaveTests.swift in Sources */,
 				648AA73983370B5BA9726FC0 /* CustomerStatsTests.swift in Sources */,
 				7C8E0F51717C64CA0077A14B /* CustomersViewModelTests.swift in Sources */,
 				14B7F4643E3EF4EECD6027A2 /* GuestSeedTests.swift in Sources */,

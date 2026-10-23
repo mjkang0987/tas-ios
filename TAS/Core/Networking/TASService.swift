@@ -65,11 +65,26 @@ struct TASService {
 
     /// 고객 등록/수정 — POST /api/customers (body=`{customer}`, 응답 `{ok, id}`).
     @discardableResult
-    func upsertCustomer(_ customer: Customer) async throws -> Customer {
+    /// 고객 등록 — POST /api/customers. 서버는 **생성 전용**이고(같은 번호의 다른 고객을 덮지 않는다, tas 2026-10-16)
+    /// 번호가 겹치면 새 번호를 정한다 → 돌려준 번호로 바꾼 고객을 돌려준다(예약은 이 번호로 건다).
+    /// 생성은 이름·연락처·적립금·첫 방문만 받으므로 메모 태그가 있으면 이어서 수정(PUT)으로 저장한다.
+    func createCustomer(_ customer: Customer) async throws -> Customer {
         if guest.isActive { return guest.upsertCustomer(customer) }
         struct Body: Encodable { let customer: Customer }
-        let _: CustomerUpsertResponse = try await client.post("api/customers", body: Body(customer: customer))
-        return customer
+        let resp: CustomerUpsertResponse = try await client.post("api/customers", body: Body(customer: customer))
+        var saved = customer
+        saved.id = resp.id
+        if !(saved.memoTags ?? []).isEmpty { try await updateCustomer(saved) }
+        return saved
+    }
+
+    /// 고객 수정 — PUT /api/customers(`{customers: [고객]}`: 보낸 고객만 고치고 적립 이력은 새 것만 더한다 — 웹과 같은 경로).
+    /// 예전엔 POST 로 보냈는데 POST 가 생성 전용이 된 뒤로 로그인 모드의 수정·적립금 조정·충전이 서버에 안 남았다.
+    func updateCustomer(_ customer: Customer) async throws {
+        if guest.isActive { guest.upsertCustomer(customer); return }
+        struct Body: Encodable { let customers: [Customer] }
+        struct Resp: Decodable {}
+        let _: Resp = try await client.put("api/customers", body: Body(customers: [customer]))
     }
 
     /// 고객 병합 — POST /api/customers/merge (body=`{sourceIds, targetId}`).

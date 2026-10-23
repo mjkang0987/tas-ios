@@ -174,7 +174,11 @@ struct CustomerFormView: View {
                     memoTags: tags
                 )
             }
-            _ = try await service.upsertCustomer(customer)
+            if editing != nil {
+                try await service.updateCustomer(customer)
+            } else {
+                _ = try await service.createCustomer(customer)
+            }
             await onSaved()
             dismiss()
         } catch {

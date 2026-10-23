@@ -42,6 +42,9 @@ enum PaymentMethod: String, Codable, Hashable {
     case points = "적립금"
     case discount = "할인"
     case naverDeposit = "네이버 예약금"
+
+    /// 실제로 돈을 받는 수단 — 웹 `RECEIVED_PAYMENT_METHODS`(적립금·할인·네이버 예약금 제외). 충전 결제수단 선택지.
+    static let received: [PaymentMethod] = [.cash, .cashReceipt, .card, .naverPay, .localCurrency, .localCurrencyReceipt, .giftCard]
 }
 
 /// 담당자(디자이너) 재직 상태 — assignees/model.ts `AssigneeStatus`
