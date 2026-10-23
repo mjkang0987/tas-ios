@@ -26,7 +26,7 @@ struct ActionButtonStyle: ButtonStyle {
         switch kind {
         case .primary: return .white
         case .dangerOutline: return .dangerText
-        case .plain: return .secondary
+        case .plain: return .textSecondary // 시스템 .secondary 는 흰 바탕 3.4:1 — 글자 대비 4.5:1 미달
         }
     }
 
