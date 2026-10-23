@@ -733,6 +733,7 @@ struct RevenueView: View {
     @ViewBuilder private var extraCharts: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("기간별 매출 추이").font(.tasMedium.weight(.semibold)).foregroundStyle(Color.textSecondary)
+                .accessibilityAddTraits(.isHeader)
             RevenueTrendChart(
                 points: viewModel.trend,
                 unitLabel: "일",
@@ -745,6 +746,7 @@ struct RevenueView: View {
         if !byAssignee.isEmpty {
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(session.labels.assignee)별 매출").font(.tasMedium.weight(.semibold)).foregroundStyle(Color.textSecondary)
+                    .accessibilityAddTraits(.isHeader)
                 ForEach(Array(byAssignee.enumerated()), id: \.offset) { item in
                     Button {
                         detailKey = .assignee(item.element.assignee?.id)
