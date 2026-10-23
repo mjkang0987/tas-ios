@@ -209,3 +209,65 @@ enum ShopCatalog {
         }
     }
 }
+
+/// 업종별 화면 용어 — 웹 `features/store-settings/labels.ts` `getStoreLabels`·안드로이드 `domain/Labels.kt`.
+/// '담당자'·'서비스' 자리에 업종 말을 쓴다(음식점이면 테이블·메뉴). 업종이 없거나 모르면 담당자·서비스.
+struct StoreLabels: Equatable {
+    let assignee: String
+    let service: String
+
+    static let `default` = StoreLabels(assignee: "담당자", service: "서비스")
+
+    /// 웹 CATEGORY_LABELS.
+    private static let byCategory: [String: StoreLabels] = [
+        "beauty": .default,
+        "food": .init(assignee: "테이블", service: "메뉴"),
+        "medical": .init(assignee: "담당의", service: "진료"),
+        "fitness": .init(assignee: "강사", service: "수업"),
+        "class": .init(assignee: "선생님", service: "수업"),
+        "pet": .default,
+        "repair": .init(assignee: "기사", service: "작업"),
+        "space": .init(assignee: "룸", service: "이용"),
+        "counsel": .init(assignee: "상담사", service: "상담"),
+        "etc": .default,
+    ]
+
+    /// shopType 은 콤마로 이은 여러 업종일 수 있다 — 첫 유효 업종의 분류로 정한다(웹과 같다).
+    static func of(shopType: String?) -> StoreLabels {
+        ShopCatalog.primaryIndustry(shopType: shopType).flatMap { byCategory[$0.category] } ?? .default
+    }
+}
+
+/// 한국어 조사 — 받침이 있으면 앞 것(이·은·을·으로), 없으면 뒤 것(가·는·를·로). 업종 용어 뒤에 붙인다.
+/// 웹은 '가'·'는'을 고정으로 붙여 '수업가'·'테이블를' 처럼 틀린다 — 앱은 고쳐서 쓴다.
+enum Josa {
+    case iGa, eunNeun, eulReul, euroRo
+
+    func attach(to word: String) -> String {
+        word + suffix(for: word)
+    }
+
+    private func suffix(for word: String) -> String {
+        guard let scalar = word.unicodeScalars.last, (0xAC00...0xD7A3).contains(scalar.value) else {
+            return choose(final: false)
+        }
+        let jong = (scalar.value - 0xAC00) % 28
+        // '으로'는 ㄹ 받침(8) 뒤에서 '로'
+        if self == .euroRo && jong == 8 { return "로" }
+        return choose(final: jong != 0)
+    }
+
+    private func choose(final: Bool) -> String {
+        switch self {
+        case .iGa: return final ? "이" : "가"
+        case .eunNeun: return final ? "은" : "는"
+        case .eulReul: return final ? "을" : "를"
+        case .euroRo: return final ? "으로" : "로"
+        }
+    }
+}
+
+extension String {
+    /// "서비스".josa(.iGa) → "서비스가", "수업".josa(.iGa) → "수업이".
+    func josa(_ j: Josa) -> String { j.attach(to: self) }
+}
