@@ -57,9 +57,12 @@ final class BookingRequestsViewModel {
 struct BookingRequestsButton: View {
     /// 요청 수락으로 예약이 바뀌었을 때 캘린더를 다시 읽는다.
     let onApplied: () async -> Void
+    /// 요청 항목을 누르면 그 예약 상세(웹 `BookingRequestSection` 의 onOpenReservation) — 요청함을 닫은 뒤 연다.
+    var onOpenReservation: (Int) -> Void = { _ in }
 
     @State private var viewModel = BookingRequestsViewModel()
     @State private var isPresented = false
+    @State private var pendingReservationId: Int?
 
     var body: some View {
         Button {
@@ -75,8 +78,16 @@ struct BookingRequestsButton: View {
         .accessibilityLabel(viewModel.pendingCount > 0
             ? "예약 요청 \(viewModel.pendingCount)건"
             : "예약 요청")
-        .sheet(isPresented: $isPresented) {
-            BookingRequestsView(viewModel: viewModel, onApplied: onApplied)
+        .sheet(isPresented: $isPresented, onDismiss: {
+            if let id = pendingReservationId {
+                pendingReservationId = nil
+                onOpenReservation(id)
+            }
+        }) {
+            BookingRequestsView(viewModel: viewModel, onApplied: onApplied, onOpen: { id in
+                pendingReservationId = id
+                isPresented = false
+            })
         }
         .task { await viewModel.load() }
     }
@@ -86,6 +97,7 @@ struct BookingRequestsButton: View {
 struct BookingRequestsView: View {
     let viewModel: BookingRequestsViewModel
     let onApplied: () async -> Void
+    var onOpen: (Int) -> Void = { _ in }
 
     @Environment(\.dismiss) private var dismiss
 
@@ -103,6 +115,7 @@ struct BookingRequestsView: View {
                         BookingRequestRow(
                             request: request,
                             isBusy: viewModel.busyId != nil,
+                            onOpen: request.legacyId.map { id in { onOpen(id) } },
                             onDecide: { decision in
                                 Task {
                                     if await viewModel.decide(request, decision) { await onApplied() }
@@ -139,9 +152,36 @@ struct BookingRequestsView: View {
 private struct BookingRequestRow: View {
     let request: BookingRequest
     let isBusy: Bool
+    /// nil 이면(예약 번호가 아직 없는 요청) 내용은 글자만.
+    let onOpen: (() -> Void)?
     let onDecide: (BookingDecision) -> Void
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let onOpen {
+                Button(action: onOpen) { summary.contentShape(Rectangle()) }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("예약 상세 열기")
+            } else {
+                summary
+            }
+
+            HStack(spacing: 8) {
+                Spacer()
+                Button("거절") { onDecide(.reject) }
+                    .buttonStyle(.bordered)
+                    .tint(Color.dangerText)
+                Button("수락") { onDecide(.approve) }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.brandFill) // 흰 글자 채움 — 어두운 모드의 밝은 accent 위 흰 글자는 대비가 모자란다
+            }
+            .font(.tasBody)
+            .disabled(isBusy)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var summary: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text(request.customerName.isEmpty ? "고객" : request.customerName)
@@ -158,20 +198,7 @@ private struct BookingRequestRow: View {
             if request.kind == .change, let requestedChange = request.requestedChange {
                 slotLine(label: "변경", slot: requestedChange, isAccent: true)
             }
-
-            HStack(spacing: 8) {
-                Spacer()
-                Button("거절") { onDecide(.reject) }
-                    .buttonStyle(.bordered)
-                    .tint(Color.dangerText)
-                Button("수락") { onDecide(.approve) }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.brandFill) // 흰 글자 채움 — 어두운 모드의 밝은 accent 위 흰 글자는 대비가 모자란다
-            }
-            .font(.tasBody)
-            .disabled(isBusy)
         }
-        .padding(.vertical, 4)
     }
 
     private func slotLine(label: String, slot: BookingRequestSlot, isAccent: Bool) -> some View {
