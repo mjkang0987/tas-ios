@@ -82,7 +82,7 @@ struct PointAdjustView: View {
         )
         var updated = customer
         updated.points = resultPoints
-        updated.pointHistories = [entry] + (customer.pointHistories ?? [])
+        updated.pointHistories = (customer.pointHistories ?? []) + [entry] // 웹 appendPointHistories 처럼 끝에(오래된 것부터 저장)
         do {
             try await service.updateCustomer(updated)
             await onCompleted()
