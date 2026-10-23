@@ -17,6 +17,13 @@ enum PointMath {
     static func nonPointTotal(in entries: [PaymentEntry]) -> Int {
         entries.filter { $0.method != .points }.map(\.amount).reduce(0, +)
     }
+
+    /// 웹 `pointRefundOnCancel` — 결제한 예약을 취소·삭제할 때 고객 적립금에 더할 값
+    /// (결제에 쓴 적립금 반환 − 그 결제로 준 적립 회수). 이미 취소됐거나 결제 전이면 0.
+    static func refundOnCancel(_ reservation: Reservation) -> Int {
+        guard reservation.status != .cancelled, reservation.hasCompletedPayment else { return 0 }
+        return pointsUsed(in: reservation.paymentEntries ?? []) - (reservation.pointEarned ?? 0)
+    }
 }
 
 /// 결제에 따른 고객 적립금 잔액·이력 계산(순수). id/timestamp는 호출부가 부여한다.
@@ -53,6 +60,19 @@ enum PointLedger {
         }
 
         return (balance, out)
+    }
+
+    /// 취소·삭제 환원(`PointMath.refundOnCancel`)을 고객에 적용 — 웹 `refundPointsOnCancel`.
+    /// 잔액은 0 아래로 안 내려가고, 이력 잔액은 (이전 잔액 + 변화) 그대로 적는다(웹과 같다).
+    static func refund(_ customer: Customer, delta: Int, reservationId: Int, now: String, id: String) -> Customer {
+        let balance = (customer.points ?? 0) + delta
+        var updated = customer
+        updated.points = max(balance, 0)
+        updated.pointHistories = [PointHistoryEntry(
+            id: id, type: .paymentAdjust, delta: delta, balance: balance,
+            description: delta > 0 ? "예약 취소 — 결제에 쓴 적립금 반환" : "예약 취소 — 결제 적립금 회수",
+            createdAt: now, relatedReservationId: reservationId)] + (customer.pointHistories ?? [])
+        return updated
     }
 
     /// 계산된 변화를 고객에 적용해 갱신된 `Customer`를 돌려준다(변화 없으면 nil).

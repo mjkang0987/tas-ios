@@ -32,4 +32,20 @@ final class PointMathTests: XCTestCase {
         XCTAssertEqual(PointMath.pointsUsed(in: []), 0)
         XCTAssertEqual(PointMath.nonPointTotal(in: []), 0)
     }
+
+    // 웹 cancelRefund.test.ts 와 같은 경우
+    func testRefundOnCancel() {
+        var r = Reservation(id: 1, date: "2026-10-23", startTime: "10:00", endTime: "11:00", service: "컷", customerId: 1, status: .completed)
+        r.paymentCompleted = true
+        r.paymentEntries = [PaymentEntry(method: .card, amount: 20000), PaymentEntry(method: .points, amount: 3000)]
+        r.pointEarned = 1000
+        XCTAssertEqual(PointMath.refundOnCancel(r), 2000)
+        r.paymentEntries = [PaymentEntry(method: .card, amount: 20000)]
+        XCTAssertEqual(PointMath.refundOnCancel(r), -1000)
+        r.status = .cancelled
+        XCTAssertEqual(PointMath.refundOnCancel(r), 0)          // 이미 취소
+        var unpaid = Reservation(id: 2, date: "2026-10-23", startTime: "10:00", endTime: "11:00", service: "컷", customerId: 1, status: .active)
+        unpaid.paymentEntries = []
+        XCTAssertEqual(PointMath.refundOnCancel(unpaid), 0)     // 결제 전
+    }
 }
