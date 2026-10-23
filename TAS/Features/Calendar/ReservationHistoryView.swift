@@ -27,7 +27,7 @@ struct ReservationHistoryView: View {
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.tint)
                             Spacer()
-                            Text(formatTimestamp(entry.timestamp))
+                            Text(KST.timestampLabel(entry.timestamp))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -91,18 +91,5 @@ struct ReservationHistoryView: View {
             out.append((label: "가격", before: formatWon(b.price ?? 0), after: formatWon(a.price ?? 0)))
         }
         return out
-    }
-
-    /// ISO8601 → "M.d HH:mm"(KST). 초 유무 모두 허용.
-    private func formatTimestamp(_ iso: String) -> String {
-        let withFrac = ISO8601DateFormatter()
-        withFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let plain = ISO8601DateFormatter()
-        guard let date = withFrac.date(from: iso) ?? plain.date(from: iso) else { return iso }
-        let f = DateFormatter()
-        f.timeZone = KST.timeZone
-        f.locale = Locale(identifier: "ko_KR")
-        f.dateFormat = "M.d HH:mm"
-        return f.string(from: date)
     }
 }

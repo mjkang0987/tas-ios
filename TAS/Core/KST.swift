@@ -29,6 +29,15 @@ enum KST {
     static let monthKey: DateFormatter = formatter("yyyy-MM")      // "2026-07"
     static let monthLabel: DateFormatter = formatter("yyyy.MM")    // "2026.07"
 
+    /// 이력 시각 ISO8601 → "M.d HH:mm"(KST). 초 소수점 유무 모두 허용 — 예약 변경 이력·적립금 이력이 같이 쓴다.
+    static func timestampLabel(_ iso: String) -> String {
+        let withFrac = ISO8601DateFormatter()
+        withFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = withFrac.date(from: iso) ?? ISO8601DateFormatter().date(from: iso) else { return iso }
+        return timestamp.string(from: date)
+    }
+    private static let timestamp: DateFormatter = formatter("M.d HH:mm")
+
     private static func formatter(_ format: String) -> DateFormatter {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
