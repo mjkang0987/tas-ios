@@ -12,6 +12,8 @@ struct DayTimelineView: View {
     /// 서비스명 → hex. 기본값 없음 — 빠뜨리면 칩이 조용히 폴백 회색이 된다.
     let serviceColorMap: [String: String]
     var onTap: (Reservation) -> Void = { _ in }
+    /// 오늘이면 현재 시각 선을 얹는다.
+    var isToday: Bool = false
 
     private let hourHeight: CGFloat = 56
     private let gutterWidth: CGFloat = 40
@@ -45,6 +47,10 @@ struct DayTimelineView: View {
                             // 예약 블록
                             ForEach(positioned, id: \.reservation.id) { p in
                                 block(p, totalWidth: width)
+                            }
+                            if isToday {
+                                TimelineNowLine(startHour: startHour, endHour: endHour, ptPerMin: ptPerMin)
+                                    .frame(width: width, height: totalHeight)
                             }
                         }
                         .frame(width: width, height: totalHeight, alignment: .topLeading)

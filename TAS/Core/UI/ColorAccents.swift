@@ -119,3 +119,32 @@ extension View {
                                      isPending: isPending, width: width, height: height))
     }
 }
+
+/// 현재 시각 선 — 웹 `Timeline` StyledBar·안드로이드 `NowBar`: 주황 2pt 선 + 왼쪽 끝 10pt 점.
+/// 오늘 칸에만 얹고 30초마다 다시 그린다. 시간축 밖(영업시간 전·후)이면 그리지 않는다.
+struct TimelineNowLine: View {
+    let startHour: Int
+    let endHour: Int
+    let ptPerMin: CGFloat
+
+    static let color = Color(hex: "#FF7300") ?? .orange
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 30)) { context in
+            let c = KST.calendar.dateComponents([.hour, .minute, .second], from: context.date)
+            let minutes = Double((c.hour ?? 0) * 60 + (c.minute ?? 0)) + Double(c.second ?? 0) / 60
+            let start = Double(startHour * 60)
+            if minutes >= start && minutes <= Double(endHour * 60) {
+                let y = CGFloat(minutes - start) * ptPerMin
+                ZStack(alignment: .topLeading) {
+                    Rectangle().fill(Self.color).frame(height: 2).offset(y: y - 1)
+                    Circle().fill(Self.color).frame(width: 10, height: 10).offset(y: y - 5)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+        }
+        // 블록을 덮어도 누르는 건 블록으로 간다
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
