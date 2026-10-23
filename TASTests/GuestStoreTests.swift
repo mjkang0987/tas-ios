@@ -82,6 +82,15 @@ final class GuestStoreTests: XCTestCase {
         XCTAssertEqual(store.snapshot.customers.first?.points, 7000)
     }
 
+    func testDeleteAfterCancelDoesNotRefundTwice() {
+        store.upsertCustomer(Customer(id: 1, name: "가온", tel: "", points: 5000))
+        store.createReservation(paidReservation(1))
+        store.setReservationStatus(id: 1, status: .cancelled)
+        store.deleteReservation(id: 1)
+        XCTAssertEqual(store.snapshot.customers.first?.points, 7000)
+        XCTAssertEqual(store.snapshot.customers.first?.pointHistories?.count, 1)
+    }
+
     func testNoshowKeepsPaymentAndPoints() {
         store.upsertCustomer(Customer(id: 1, name: "가온", tel: "", points: 5000))
         store.createReservation(paidReservation(1))

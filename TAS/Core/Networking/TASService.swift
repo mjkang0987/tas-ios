@@ -74,7 +74,11 @@ struct TASService {
         let resp: CustomerUpsertResponse = try await client.post("api/customers", body: Body(customer: customer))
         var saved = customer
         saved.id = resp.id
-        if !(saved.memoTags ?? []).isEmpty { try await updateCustomer(saved) }
+        if !(saved.memoTags ?? []).isEmpty {
+            // 등록은 이미 됐다 — 태그 저장만 실패했다고 오류로 돌려보내면 다시 저장을 눌러 같은 고객이 또 생길 수 있다
+            // (연락처가 없으면 서버가 재시도로 못 알아본다). 태그는 상세에서 다시 넣으면 된다.
+            try? await updateCustomer(saved)
+        }
         return saved
     }
 
