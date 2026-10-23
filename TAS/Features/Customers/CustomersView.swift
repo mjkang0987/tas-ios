@@ -114,6 +114,8 @@ struct CustomersView: View {
 /// 이름·연락처 / 최근 서비스 / 적립금 + 상태별 건수.
 /// 웹·안드로이드처럼 **이름을 누르면 고객 상세**, 행의 나머지(·오른쪽 화살표)를 누르면 펼친다.
 private struct CustomerRow: View {
+    @Environment(SessionStore.self) private var session
+    private var labels: StoreLabels { session.labels }
     let customer: Customer
     let stats: CustomerStats.Summary
     let serviceColorMap: [String: String]
@@ -182,7 +184,7 @@ private struct CustomerRow: View {
             }
 
             HStack(spacing: 6) {
-                Text("최근 서비스").font(.caption2).foregroundStyle(.secondary)
+                Text("최근 \(labels.service)").font(.caption2).foregroundStyle(.secondary)
                 if let recent = stats.recentService {
                     ServiceChipList(service: recent, colorMap: serviceColorMap, wraps: false)
                 } else {

@@ -3,6 +3,8 @@ import SwiftUI
 /// 예약 변경 이력 — 웹 `ReservationHistoryLayer` 이식.
 /// 각 이력 항목을 시간·전환 태그와 함께 필드 diff(이전 → 이후)로 보여준다.
 struct ReservationHistoryView: View {
+    @Environment(SessionStore.self) private var session
+    private var labels: StoreLabels { session.labels }
     let entries: [ReservationHistoryEntry]     // 최신순
     var assigneeName: (Int?) -> String = { _ in "미지정" }
 
@@ -83,9 +85,9 @@ struct ReservationHistoryView: View {
         if b.date != a.date { out.append((label: "날짜", before: b.date, after: a.date)) }
         if b.startTime != a.startTime { out.append((label: "시작시간", before: b.startTime, after: a.startTime)) }
         if b.endTime != a.endTime { out.append((label: "종료시간", before: b.endTime, after: a.endTime)) }
-        if b.service != a.service { out.append((label: "서비스", before: b.service, after: a.service)) }
+        if b.service != a.service { out.append((label: "\(labels.service)", before: b.service, after: a.service)) }
         if (b.assigneeId ?? 0) != (a.assigneeId ?? 0) {
-            out.append((label: "담당자", before: assigneeName(b.assigneeId), after: assigneeName(a.assigneeId)))
+            out.append((label: "\(labels.assignee)", before: assigneeName(b.assigneeId), after: assigneeName(a.assigneeId)))
         }
         if (b.price ?? 0) != (a.price ?? 0) {
             out.append((label: "가격", before: formatWon(b.price ?? 0), after: formatWon(a.price ?? 0)))

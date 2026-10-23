@@ -101,12 +101,12 @@ struct SettingsView: View {
                     NavigationLink {
                         ServicesView()
                     } label: {
-                        Label("서비스", systemImage: "menucard")
+                        Label(session.labels.service, systemImage: "menucard")
                     }
                     NavigationLink {
                         AssigneesView()
                     } label: {
-                        Label("담당자", systemImage: "person.text.rectangle")
+                        Label(session.labels.assignee, systemImage: "person.text.rectangle")
                     }
                     NavigationLink {
                         NoticesView()

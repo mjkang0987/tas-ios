@@ -60,6 +60,7 @@
 		5495B71D60C7D59621D97F92 /* ServicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C94F2F799BD46C7058AF873 /* ServicesView.swift */; };
 		58C3E27DDFCFAF5240C2B224 /* SearchHighlightTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEBCC36214021C976CFB572E /* SearchHighlightTests.swift */; };
 		58CD4D102F327BEA91122F0F /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC40D55853F507001EB761E8 /* LocalStore.swift */; };
+		59F16FB7992C14AD6EC0F88E /* StoreLabelsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D38FA995866932174DBFA12F /* StoreLabelsTests.swift */; };
 		5AFB3FAB6ECA14F91EC096FB /* Badges.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40EBCD58D5F98E32419ADE6F /* Badges.swift */; };
 		5BA9508725EB60DE9FBBE4CE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E73D33EC3CF4F199705D6737 /* Assets.xcassets */; };
 		5C722F998F53A57402965417 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13F5BEA61DD380BA72ABE012 /* LoginView.swift */; };
@@ -252,6 +253,7 @@
 		D0BDE70C5C3ACBA48F331CFA /* BookingSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookingSettingsTests.swift; sourceTree = "<group>"; };
 		D11EA57AEE1D4E84B8C5B9F3 /* NoticeFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoticeFormView.swift; sourceTree = "<group>"; };
 		D1D84647E0906FA30D34B929 /* TimelineLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineLayoutTests.swift; sourceTree = "<group>"; };
+		D38FA995866932174DBFA12F /* StoreLabelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreLabelsTests.swift; sourceTree = "<group>"; };
 		D5C683C0FC10BE8233CAFF32 /* CouponFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CouponFormView.swift; sourceTree = "<group>"; };
 		D6A90A59320E939D9B195812 /* AssigneesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssigneesView.swift; sourceTree = "<group>"; };
 		D746F7DFD63340B7179AE3BA /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
@@ -482,6 +484,7 @@
 				F5BAA195D7E51148F41F2BCC /* ServiceRenameTests.swift */,
 				47AD35A2930D324720B6ADC8 /* ShopCatalogTests.swift */,
 				79FED8EF6AEAA8E71BE59ADA /* StoreClosedKindTests.swift */,
+				D38FA995866932174DBFA12F /* StoreLabelsTests.swift */,
 				D1D84647E0906FA30D34B929 /* TimelineLayoutTests.swift */,
 				059A19B44DD79D4C892071E8 /* WeekdayLabelTests.swift */,
 				3B54A96E9E5C0E5202149C89 /* Fixtures */,
@@ -774,6 +777,7 @@
 				8FEA795FB3D749FFD94C243B /* ServiceRenameTests.swift in Sources */,
 				CEEE6EE70E3DB98E43B228D1 /* ShopCatalogTests.swift in Sources */,
 				CC0DF281A27D513AECB5A6CD /* StoreClosedKindTests.swift in Sources */,
+				59F16FB7992C14AD6EC0F88E /* StoreLabelsTests.swift in Sources */,
 				9F1EDAF2961D26B25656F461 /* TimelineLayoutTests.swift in Sources */,
 				223D56BA56F54F9E75B7176D /* WeekdayLabelTests.swift in Sources */,
 			);
@@ -937,7 +941,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.19.0;
+				MARKETING_VERSION = 0.20.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1019,7 +1023,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.19.0;
+				MARKETING_VERSION = 0.20.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

@@ -116,11 +116,11 @@ struct BookingSettingsEditView: View {
                 }
                 numberRow("최소 사전 예약 시간", value: $settings.minLeadMinutes, range: 0...43200, unit: "분")
                 numberRow("최대 예약 가능 일수", value: $settings.maxAdvanceDays, range: 1...365, unit: "일")
-                Toggle("고객이 담당자 선택", isOn: $settings.allowAssigneeChoice)
+                Toggle("고객이 \(session.labels.assignee) 선택", isOn: $settings.allowAssigneeChoice)
             }
 
             Section {
-                Text("지금부터 최소 사전 예약 시간 이내의 슬롯은 예약할 수 없어요. 담당자 선택을 끄면 매장이 배정합니다.")
+                Text("지금부터 최소 사전 예약 시간 이내의 슬롯은 예약할 수 없어요. \(session.labels.assignee) 선택을 끄면 매장이 배정합니다.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
 
@@ -153,9 +153,9 @@ struct BookingSettingsEditView: View {
                         .buttonStyle(.plain)
                     }
                 } header: {
-                    Text("노출 서비스")
+                    Text("노출 \(session.labels.service)")
                 } footer: {
-                    Text("고객 예약 페이지에 보여줄 서비스입니다. 전체 선택이면 전체 노출로 저장됩니다.")
+                    Text("고객 예약 페이지에 보여줄 \(session.labels.service)입니다. 전체 선택이면 전체 노출로 저장됩니다.")
                 }
             }
 

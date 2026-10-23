@@ -5,6 +5,8 @@ import SwiftUI
 /// - 활성 예약: 변경, (미결제 시)취소·노쇼, 삭제
 /// - 취소·노쇼·완료 예약: 예약전환(복원), 삭제
 struct ReservationDetailView: View {
+    @Environment(SessionStore.self) private var session
+    private var labels: StoreLabels { session.labels }
     let reservation: Reservation
     let customer: Customer?
     let assignee: Assignee?
@@ -124,7 +126,7 @@ struct ReservationDetailView: View {
             if isRequested { row("상태") { ToneBadge(tone: .requested, text: "확정대기") } }
             row("날짜") { Text(reservation.date) }
             row("시간") { Text("\(reservation.startTime) ~ \(reservation.endTime)") }
-            row("서비스") { ServiceChipList(service: reservation.service, colorMap: serviceColorMap, font: .footnote) }
+            row("\(labels.service)") { ServiceChipList(service: reservation.service, colorMap: serviceColorMap, font: .footnote) }
             row("가격") { Text(formatWon(reservation.price ?? 0)) }
             row("결제") { paymentValue }
             row("고객명") { customerName }
@@ -140,7 +142,7 @@ struct ReservationDetailView: View {
                 row("요청사항") { Text(memo) }
             }
             row("적립금") { Text(formatWon(customer?.points ?? 0)) }
-            row("담당자") { AssigneeBadge(name: assignee?.name ?? "미지정", color: Color(hex: assignee?.color)) }
+            row("\(labels.assignee)") { AssigneeBadge(name: assignee?.name ?? "미지정", color: Color(hex: assignee?.color)) }
             row("예약경로") { channelValue }
         }
         .font(.subheadline)

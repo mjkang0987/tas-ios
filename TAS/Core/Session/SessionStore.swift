@@ -245,3 +245,8 @@ final class SessionStore {
         }
     }
 }
+
+extension SessionStore {
+    /// 지금 매장 업종의 화면 용어(담당자·서비스 자리).
+    var labels: StoreLabels { StoreLabels.of(shopType: currentStore?.shopType) }
+}
