@@ -73,7 +73,7 @@
    덤(발견): 캘린더 합계(일 머리줄·월 목록·연 카드)가 **확정대기**를 매출에 넣었다 — 웹 `getDailyRevenue(…,'booked')` 처럼 취소·노쇼·확정대기 제외.
    확인: 유닛 214건(월 칸 3·합계 1 추가) · 시뮬레이터 일(시각 선 11:50)·주(오늘 칸만)·월(9/27~ 앞 달, 9/28 누르면 목록만, 13일 태그 → 상세)·연(12월 자세히 → 12월 1일)·오늘.
    다른 점: 시각 선으로 자동 스크롤·예약 없는 날 빈 타임라인은 안 함(일 뷰는 '예약 없음' 그대로).
-7. 🟡 **매출** (`claude/revenue-like-android`, PR 대기) — 안드로이드 `domain/Revenue.kt`·`RevenueScreen`(= 웹 `utils/revenue.ts`·`features/sales`·`RevenueFilters`·`RevenueDailyList`):
+7. ✅ **매출** (`claude/revenue-like-android`, PR #48 머지 v0.16.0) — 안드로이드 `domain/Revenue.kt`·`RevenueScreen`(= 웹 `utils/revenue.ts`·`features/sales`·`RevenueFilters`·`RevenueDailyList`):
    기간에 '기간'(빠른 선택 오늘·7일·30일 + 시작일·종료일, 최대 365일, 기본 이번 달 1일 ~ 오늘, 앞뒤 이동) 추가 — 월·년은 그대로(iOS 차트 유지) ·
    담당자 필터(전체·담당자, 고르면 첫 방문 판정도 그 담당자 기준·충전 매출 빠짐) · 일별 목록(최신 날짜부터 건수·금액, 누르면 그날 예약·충전 목록) ·
    충전 매출(고객 적립금 이력 `recharge` 의 `paidAmount`, 날짜는 KST — 총 매출·차트·일별·결제완료(결제수단 있는 것)에 포함, 건수·신규/재방문엔 안 셈,
