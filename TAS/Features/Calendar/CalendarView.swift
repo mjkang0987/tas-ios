@@ -174,21 +174,22 @@ struct CalendarView: View {
         let summaries = viewModel.dailySummaries(monthPrefix: monthPrefix, assigneeId: selectedAssigneeId)
         let daysInMonth = cal.range(of: .day, in: .month, for: firstOfMonth)?.count ?? 30
         let weekday = cal.component(.weekday, from: firstOfMonth)   // 1=일…7=토
-        let leading = (weekday - cal.firstWeekday + 7) % 7           // 월요일 시작 오프셋
+        let leading = (weekday - cal.firstWeekday + 7) % 7           // 일요일 시작 오프셋
 
         VStack(spacing: 8) {
             LazyVGrid(columns: gridColumns, spacing: 4) {
-                ForEach(Array(KST.weekdayLabels.enumerated()), id: \.offset) { i, s in
+                ForEach(Array(KST.calendarWeekdayLabels.enumerated()), id: \.offset) { i, s in
                     Text(s)
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(i >= 5 ? Color.secondary : Color.primary)
+                        .foregroundStyle(i == 0 || i == 6 ? Color.secondary : Color.primary)
                         .frame(maxWidth: .infinity)
                 }
             }
             .padding(.horizontal, 12)
 
             LazyVGrid(columns: gridColumns, spacing: 4) {
-                ForEach(0..<leading, id: \.self) { _ in Color.clear.frame(height: 44) }
+                // 빈 칸은 음수 id — 날짜(1…)와 같은 id 를 쓰면 SwiftUI 가 겹친 날(1·2·3일)을 그리지 않는다
+                ForEach(-leading..<0, id: \.self) { _ in Color.clear.frame(height: 44) }
                 ForEach(1...daysInMonth, id: \.self) { day in
                     let date = cal.date(byAdding: .day, value: day - 1, to: firstOfMonth) ?? firstOfMonth
                     let key = KST.dayKey.string(from: date)
