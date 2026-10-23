@@ -19,15 +19,12 @@ struct CustomerFormView: View {
     @State private var tel = ""
     @State private var memoTags: [CustomerMemoTag] = []
     @State private var newTagText = ""
-    @State private var selectedColor = CustomerFormView.MEMO_TAG_COLORS[0]
+    @State private var selectedColor = MemoTagEditor.colors[0].hex
     @State private var errorMessage: String?
     @State private var isSaving = false
     @FocusState private var focusedField: Field?
 
-    private enum Field { case name, tel, tag }
-
-    /// 웹 MEMO_TAG_COLORS.
-    static let MEMO_TAG_COLORS = ["#4285F4", "#34A853", "#EA4335", "#FBBC04", "#FF6D01", "#46BDC6", "#9334E6", "#E91E8C"]
+    private enum Field { case name, tel }
     private static let telPattern = "^01[016789]\\d{7,8}$"
 
     var body: some View {
@@ -68,63 +65,23 @@ struct CustomerFormView: View {
 
     private var memoTagSection: some View {
         Section("고객 메모") {
-            if !memoTags.isEmpty {
-                // 등록된 태그: 색 점 + 텍스트 + 삭제.
-                ForEach(Array(memoTags.enumerated()), id: \.offset) { item in
-                    HStack(spacing: 8) {
-                        ColorDot(color: Color(hex: item.element.color) ?? .gray)
-                        Text(item.element.text)
-                        Spacer()
-                        Button {
-                            memoTags.remove(at: item.offset)
-                        } label: {
-                            Image(systemName: "minus.circle.fill").foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-
-            // 색 선택 팔레트.
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(Self.MEMO_TAG_COLORS, id: \.self) { hex in
-                        Circle()
-                            .fill(Color(hex: hex) ?? .gray)
-                            .frame(width: 24, height: 24)
-                            .overlay {
-                                if hex == selectedColor {
-                                    Circle().strokeBorder(.primary, lineWidth: 2)
-                                }
-                            }
-                            .onTapGesture { selectedColor = hex }
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-
-            HStack {
-                TextField("메모 태그 입력", text: $newTagText)
-                    .focused($focusedField, equals: .tag)
-                    .submitLabel(.done)
-                    .onSubmit(addTag)
-                Button("추가", action: addTag)
-                    .buttonStyle(.borderless)
-                    .disabled(newTagText.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
+            MemoTagEditor(
+                tags: memoTags,
+                text: $newTagText,
+                color: $selectedColor,
+                onAdd: addTag,
+                onRemove: { tag in memoTags.removeAll { $0.text == tag.text } }
+            )
+            .padding(.vertical, 4)
         }
     }
 
     private func addTag() {
-        let text = newTagText.trimmingCharacters(in: .whitespaces)
-        guard !text.isEmpty else { return }
-        if memoTags.contains(where: { $0.text == text }) {
-            errorMessage = "같은 메모 태그가 이미 있습니다."
-            return
-        }
-        memoTags.append(CustomerMemoTag(text: text, color: selectedColor))
+        let result = MemoTagEditor.adding(newTagText, color: selectedColor, to: memoTags)
+        errorMessage = result.error
+        guard result.error == nil, result.tags.count != memoTags.count else { return }
+        memoTags = result.tags
         newTagText = ""
-        errorMessage = nil
     }
 
     // MARK: - 로직

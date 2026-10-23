@@ -62,11 +62,11 @@ TAS/
                        ServiceChip(시술 배지) · FilterChip · ColorAccents ·
                        ReservationInfoCard(예약 목록 공용 행 — 캘린더·고객 상세·매출 드릴다운) ·
                        TelLink(연락처 → 전화) · ActionButtonStyle(레이어 아래 버튼 줄 — 주·위험 테두리·보통) ·
-                       MemoTagPill(고객 메모 태그) · Color+Hex(adaptive · dangerText · linkText · brandFill=흰 글자 채움) ·
+                       MemoTagPill(고객 메모 태그) · MemoTagEditor(태그 ✕ 삭제·색 8개·입력 — 고객 수정 폼·명단 펼친 행 공용) · Color+Hex(adaptive · dangerText · linkText · brandFill=흰 글자 채움) ·
                        ServiceColor(서비스별 색) · Formatting · StoreClosedStyle
     KST.swift          매장 기준(Asia/Seoul) 날짜 유틸(주는 일요일 시작) · 요일 라벨(weekdayLabels 월~일 데이터 순서 · calendarWeekdayLabels 일~토 달력 머리)
     ReservationOverlap 담당자 중복 예약(겹침) 판정 공용 유틸
-    PointMath          적립금 산식(적립/사용·취소 환원) 공용 유틸
+    PointMath          적립금 산식(적립/사용·취소 환원 · PointRecharge 충전 — 충전 화면·명단 펼친 행 공용) 공용 유틸
     NameSort           이름 정렬 규칙(고객 가나다순 · 담당자 영문→한글→기타)
     CustomerStats      고객 예약 집계(예약/완료/취소/노쇼 · 최근 시술) — 지난 예약은 완료로 판정
     RevenueStats       매출 대상·결제완료·신규/재방문 고객 판정(웹 revenue.ts 이식)

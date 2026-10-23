@@ -73,7 +73,8 @@ final class CustomersViewModel {
     private(set) var detailData: DetailData?
 
     func load() async {
-        state = .loading
+        // 다시 읽을 때는 목록을 그대로 둔다 — 펼친 행에서 태그·충전을 저장할 때마다 전체가 '불러오는 중'으로 깜빡이지 않게.
+        if state.value == nil { state = .loading }
         do {
             async let customers = service.fetchCustomers()
             async let reservations = service.fetchReservations()

@@ -249,7 +249,8 @@ struct CustomerDetailView: View {
     }
 }
 
-private struct PointHistoryRow: View {
+/// 적립금 이력 한 줄 — 고객 상세·고객 명단 펼친 행이 같이 쓴다.
+struct PointHistoryRow: View {
     let entry: PointHistoryEntry
 
     var body: some View {

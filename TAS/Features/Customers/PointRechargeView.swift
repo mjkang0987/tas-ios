@@ -25,20 +25,10 @@ struct PointRechargeView: View {
 
     private var currentPoints: Int { customer.points ?? 0 }
 
-    /// 충전액 — 규칙 선택 시 기준금액+보너스, 직접 입력 시 입력값.
-    private var amount: Int {
-        guard let selectedRule, rules.indices.contains(selectedRule) else { return max(0, customAmount) }
-        let rule = rules[selectedRule]
-        return rule.baseAmount + rule.bonusAmount
-    }
-
+    private var rule: RechargeRule? { selectedRule.flatMap { rules.indices.contains($0) ? rules[$0] : nil } }
+    private var amount: Int { PointRecharge.amount(rule: rule, custom: customAmount) }
     private var resultPoints: Int { currentPoints + amount }
-
-    /// 받은 돈 = 규칙이면 기준금액(보너스 제외), 직접 입력이면 충전액 — 웹과 같다.
-    private var paidAmount: Int {
-        guard let selectedRule, rules.indices.contains(selectedRule) else { return amount }
-        return rules[selectedRule].baseAmount
-    }
+    private var paidAmount: Int { PointRecharge.paid(rule: rule, custom: customAmount) }
 
     var body: some View {
         NavigationStack {
@@ -111,24 +101,12 @@ struct PointRechargeView: View {
     }
 
     private func save() async {
-        guard amount > 0 else { errorMessage = "충전 금액을 입력해주세요."; return }
+        guard let updated = PointRecharge.charged(customer, rule: rule, custom: customAmount, method: paymentMethod,
+                                                  now: ISO8601DateFormatter().string(from: Date()), id: UUID().uuidString) else {
+            errorMessage = "충전 금액을 입력해주세요."; return
+        }
         isSaving = true
         defer { isSaving = false }
-
-        let entry = PointHistoryEntry(
-            id: UUID().uuidString,
-            type: .recharge,
-            delta: amount,
-            balance: resultPoints,
-            description: selectedRule == nil ? "적립금 직접 충전" : "적립금 기준 충전",
-            createdAt: ISO8601DateFormatter().string(from: Date()),
-            relatedReservationId: nil,
-            paidAmount: paidAmount,
-            paymentMethod: paymentMethod
-        )
-        var updated = customer
-        updated.points = resultPoints
-        updated.pointHistories = (customer.pointHistories ?? []) + [entry] // 웹 appendPointHistories 처럼 끝에(오래된 것부터 저장)
         do {
             try await service.updateCustomer(updated)
             await onCompleted()

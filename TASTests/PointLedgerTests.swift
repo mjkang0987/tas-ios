@@ -89,4 +89,31 @@ final class PointLedgerTests: XCTestCase {
         XCTAssertEqual(updated?.points, 4500)
         XCTAssertEqual(updated?.pointHistories?.map(\.type), [.paymentUse, .paymentEarn])
     }
+
+    // MARK: - 충전(웹 AddressCustomerRecharge)
+
+    func testRechargeRuleEarnsBasePlusBonusButPaidIsBase() {
+        let c = Customer(id: 1, name: "가", tel: "010", points: 1000,
+                         pointHistories: [PointHistoryEntry(id: "old", type: .manualAdd, delta: 1000, balance: 1000,
+                                                            description: "", createdAt: "t0", relatedReservationId: nil)])
+        let updated = PointRecharge.charged(c, rule: RechargeRule(baseAmount: 50000, bonusAmount: 5000), custom: 0,
+                                            method: .card, now: "t", id: "h")
+        XCTAssertEqual(updated?.points, 56000)
+        XCTAssertEqual(updated?.pointHistories?.map(\.id), ["old", "h"])   // 끝에 붙는다
+        let entry = updated?.pointHistories?.last
+        XCTAssertEqual(entry?.delta, 55000)
+        XCTAssertEqual(entry?.paidAmount, 50000)
+        XCTAssertEqual(entry?.paymentMethod, .card)
+        XCTAssertEqual(entry?.description, "적립금 기준 충전")
+    }
+
+    func testRechargeCustomAmountPaysWhatWasTypedAndZeroDoesNothing() {
+        let c = Customer(id: 1, name: "가", tel: "010", points: nil)
+        let updated = PointRecharge.charged(c, rule: nil, custom: 30000, method: .cash, now: "t", id: "h")
+        XCTAssertEqual(updated?.points, 30000)
+        XCTAssertEqual(updated?.pointHistories?.first?.paidAmount, 30000)
+        XCTAssertEqual(updated?.pointHistories?.first?.description, "적립금 직접 충전")
+        XCTAssertNil(PointRecharge.charged(c, rule: nil, custom: 0, method: .cash, now: "t", id: "h"))
+        XCTAssertNil(PointRecharge.charged(c, rule: nil, custom: -5, method: .cash, now: "t", id: "h"))
+    }
 }
