@@ -23,98 +23,76 @@ struct SettingsView: View {
         return slug.isEmpty || contact.isEmpty
     }
 
-    /// 켜진(그리고 이 모드에서 쓸 수 있는) 기능이 하나라도 있으면 "기능 설정" 섹션을 노출.
-    private var hasFeatureSettings: Bool {
-        guard let store = session.currentStore else { return false }
-        if store.usePointSystem == true { return true }
-        guard serverFeaturesAvailable else { return false }
-        return store.useCouponSystem == true
-            || store.useMembershipSystem == true || store.useOnlineBooking == true
-    }
+    /// 웹 `isSettingsMenuVisible` — 로그인한 직원(오너 아님)은 관리 메뉴를 보지 않는다.
+    private var isLoggedInStaff: Bool { session.user.map { $0.role != .owner } ?? false }
+    @State private var confirmGuestLogout = false
 
     var body: some View {
         NavigationStack {
             List {
-                Section("매장") {
-                    LabeledContent("이름", value: session.currentStore?.name ?? "-")
-                    if let label = ShopCatalog.shopTypeLabel(session.currentStore?.shopType) {
-                        LabeledContent("업종", value: label)
+                // 웹 `/menu` 머리 카드 — 매장 이름(작게) · 사용자(크게) · 이메일
+                Section {
+                    VStack(alignment: .leading, spacing: 2) {
+                        if let name = session.currentStore?.name, !name.isEmpty {
+                            Text(name).font(.tasSmall).foregroundStyle(Color.textSecondary)
+                        }
+                        Text(session.isGuest ? "게스트" : (session.user?.name ?? "-")).font(.tasTitle.weight(.bold))
+                        if !session.isGuest, let email = session.user?.email, !email.isEmpty {
+                            Text(email).font(.tasSmall).foregroundStyle(Color.textSecondary)
+                        }
                     }
-                    // 공개 예약 주소는 온라인예약을 쓸 때만 의미가 있다(편집은 온라인예약 설정에서).
-                    if serverFeaturesAvailable, session.currentStore?.useOnlineBooking == true,
-                       let slug = session.currentStore?.bookingSlug, !slug.isEmpty {
-                        LabeledContent("예약 주소", value: slug)
-                    }
-                    Button("매장 정보 편집") { showStoreEdit = true }
-                        .disabled(session.currentStore == nil)
-                    Button("영업시간·휴무 설정") { showHoursEdit = true }
-                        .disabled(session.currentStore == nil)
+                    .padding(.vertical, 4)
                 }
 
-                // 매장 정보에서 켠 기능은 여기서 **바로 그 기능의 설정 화면으로** 들어간다.
-                // (읽기 전용 토글을 다시 보여주지 않는다 — 켜고 끄는 곳은 매장 정보 편집 한 곳.)
-                if hasFeatureSettings {
+                // 웹 `SETTINGS_SUBMENU` 차례·이름·노출 조건(매출·고객 명단은 아래 탭에 있어 뺀다 — 웹 HIDDEN_IN_MENU)
+                if !isLoggedInStaff {
                     Section {
+                        menuButton("매장 관리", systemImage: "storefront") { showStoreEdit = true }
+                            .disabled(session.currentStore == nil)
+                        // 웹은 매장 관리 한 화면에 영업시간·휴무까지 — 앱은 편집 화면이 둘이라 바로 아래에 둔다
+                        menuButton("영업시간·휴무", systemImage: "clock") { showHoursEdit = true }
+                            .disabled(session.currentStore == nil)
                         if session.currentStore?.usePointSystem == true {
-                            // 웹·안드로이드 '적립금 관리' — 내역·적립·설정(적립 방식·충전 기준)
-                            NavigationLink {
-                                PointManageView()
-                            } label: {
-                                Label("적립금 관리", systemImage: "wonsign.circle")
-                            }
-                        }
-                        if serverFeaturesAvailable, session.currentStore?.useCouponSystem == true {
-                            NavigationLink {
-                                CouponsView()
-                            } label: {
-                                Label("쿠폰 관리", systemImage: "ticket")
-                            }
+                            NavigationLink { PointManageView() } label: { menuLabel("적립금 관리", systemImage: "wonsign.circle") }
                         }
                         if serverFeaturesAvailable, session.currentStore?.useMembershipSystem == true {
-                            NavigationLink {
-                                MembershipsView()
-                            } label: {
-                                Label("회원권 관리", systemImage: "creditcard")
-                            }
+                            NavigationLink { MembershipsView() } label: { menuLabel("회원권 관리", systemImage: "creditcard") }
+                        }
+                        if serverFeaturesAvailable, session.currentStore?.useCouponSystem == true {
+                            NavigationLink { CouponsView() } label: { menuLabel("쿠폰 관리", systemImage: "ticket") }
                         }
                         if serverFeaturesAvailable, session.currentStore?.useOnlineBooking == true {
-                            Button { showBookingSettings = true } label: {
-                                HStack {
-                                    Label("온라인예약 설정", systemImage: "calendar.badge.clock")
-                                    // 토글만 켜고 주소·연락처를 비워두면 공개 예약 페이지가 열리지 않는다.
-                                    // (서버는 예약 설정을 저장할 때만 필수를 강제해서, 켜두기만 한 상태가 생긴다.)
-                                    if bookingNeedsSetup {
-                                        Spacer()
-                                        Text("설정 필요").font(.caption).foregroundStyle(Color.warningText)
-                                    }
-                                }
-                            }
+                            menuButton("고객 예약 설정", systemImage: "calendar.badge.clock",
+                                       // 토글만 켜고 주소·연락처를 비워두면 공개 예약 페이지가 열리지 않는다.
+                                       note: bookingNeedsSetup ? "설정 필요" : nil) { showBookingSettings = true }
+                            // 웹처럼 공지는 고객 예약 페이지에 나가는 것이라 온라인예약을 켰을 때만
+                            NavigationLink { NoticesView() } label: { menuLabel("공지사항 관리", systemImage: "megaphone") }
                         }
-                    } header: {
-                        Text("기능 설정")
-                    } footer: {
-                        Text("사용할 기능은 매장 정보 편집에서 켜고 끕니다.")
+                        NavigationLink { ServicesView() } label: { menuLabel("\(session.labels.service) 관리", systemImage: "menucard") }
+                        NavigationLink { AssigneesView() } label: { menuLabel("\(session.labels.assignee) 관리", systemImage: "person.text.rectangle") }
                     }
                 }
 
-                Section("관리") {
-                    NavigationLink {
-                        ServicesView()
-                    } label: {
-                        Label(session.labels.service, systemImage: "menucard")
+                Section {
+                    Link(destination: AppConfig.apiBaseURL.appending(path: "inquiry")) {
+                        menuLabel("고객센터", systemImage: "envelope")
                     }
-                    NavigationLink {
-                        AssigneesView()
-                    } label: {
-                        Label(session.labels.assignee, systemImage: "person.text.rectangle")
+                    .accessibilityHint("웹 페이지 열기")
+                    if session.user != nil {
+                        Button { session.signOut() } label: { menuLabel("로그아웃", systemImage: "rectangle.portrait.and.arrow.forward") }
+                    } else if session.isGuest {
+                        // 웹처럼 한 번 묻는다 — 게스트 데이터는 이 기기에만 있어 지우면 되돌릴 수 없다
+                        Button { confirmGuestLogout = true } label: { menuLabel("로그아웃", systemImage: "rectangle.portrait.and.arrow.forward") }
+                            // 누른 줄에 붙여야 묻는 창이 그 줄을 가리킨다
+                            .confirmationDialog("게스트 데이터를 모두 지우고 로그아웃할까요?", isPresented: $confirmGuestLogout, titleVisibility: .visible) {
+                                Button("삭제하고 로그아웃", role: .destructive) { session.logoutGuest() }
+                                Button("취소", role: .cancel) {}
+                            }
                     }
-                    NavigationLink {
-                        NoticesView()
-                    } label: {
-                        Label("공지", systemImage: "megaphone")
+                } footer: {
+                    if session.isGuest {
+                        Text("게스트 데이터는 이 기기에만 저장돼요. 로그아웃하면 모두 삭제됩니다. 로그인하면 데이터를 계정으로 옮길 수 있어요.")
                     }
-                    // 매출은 하단 탭바에 있으므로 여기서 중복으로 두지 않는다
-                    // (웹 `pages/menu.tsx`의 HIDDEN_IN_MENU와 같은 규칙).
                 }
 
                 // 웹에 없는 앱 기능(지시자 2026-10-22) — 예약 시각 전 휴대폰 알림. 안드로이드와 같은 선택지.
@@ -130,50 +108,30 @@ struct SettingsView: View {
                             Text(ReservationReminder.leadLabel(minutes)).tag(minutes)
                         }
                     } label: {
-                        Label("예약 알림", systemImage: "bell")
+                        menuLabel("예약 알림", systemImage: "bell")
                     }
-                } header: {
-                    Text("알림")
                 } footer: {
-                    if notificationsDenied {
-                        Text("알림이 꺼져 있어 보낼 수 없어요. 설정 앱 › TAS › 알림에서 켜 주세요.")
-                    }
-                }
-
-                Section {
-                    if let user = session.user {
-                        LabeledContent("권한", value: user.role.rawValue)
-                        Button("로그아웃", role: .destructive) {
-                            session.signOut()
+                    VStack(alignment: .leading, spacing: 12) {
+                        if notificationsDenied {
+                            Text("알림이 꺼져 있어 보낼 수 없어요. 설정 앱 › TAS › 알림에서 켜 주세요.")
                         }
-                    } else if session.isGuest {
-                        LabeledContent("모드", value: "게스트")
-                        Button("로그아웃 (게스트 데이터 삭제)", role: .destructive) {
-                            session.logoutGuest()
+                        // 웹 `/menu` 아래 약관 링크 — 웹 페이지를 브라우저로 연다
+                        HStack(spacing: 16) {
+                            Link("이용약관", destination: AppConfig.apiBaseURL.appending(path: "terms"))
+                            Link("개인정보처리방침", destination: AppConfig.apiBaseURL.appending(path: "privacy"))
+                            if !session.isGuest {
+                                Link("개인정보 처리위탁", destination: AppConfig.apiBaseURL.appending(path: "dpa"))
+                            }
                         }
-                    }
-                } header: {
-                    Text("계정")
-                } footer: {
-                    if session.isGuest {
-                        Text("게스트 데이터는 이 기기에만 저장돼요. 로그아웃하면 모두 삭제됩니다. 로그인하면 데이터를 계정으로 옮길 수 있어요.")
-                    }
-                }
-
-                // 웹·안드로이드 설정 맨 아래 약관 링크 — 웹 페이지를 브라우저로 연다
-                Section {
-                    Link("이용약관", destination: AppConfig.apiBaseURL.appending(path: "terms"))
-                        .accessibilityHint("웹 페이지 열기")
-                    Link("개인정보처리방침", destination: AppConfig.apiBaseURL.appending(path: "privacy"))
-                        .accessibilityHint("웹 페이지 열기")
-                }
-
-                Section {
-                    LabeledContent("API", value: AppConfig.apiBaseURL.absoluteString)
-                        .font(.footnote)
+                        .font(.tasSmall)
                         .foregroundStyle(Color.textSecondary)
+                        .frame(minHeight: 44)
+                        Text(AppConfig.apiBaseURL.absoluteString).font(.tasXSmall)
+                    }
                 }
             }
+            // 웹 카드 사이 간격 — 시스템 기본(넓음)보다 좁혀 한 화면에 더 보이게
+            .listSectionSpacing(.compact)
             .navigationTitle("설정")
             // 웹 머리처럼 제목은 왼쪽 한 줄(큰 제목 칸 없음) — 그만큼 내용이 더 보인다
             .toolbarTitleDisplayMode(.inlineLarge)
@@ -187,6 +145,31 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showBookingSettings) {
                 BookingSettingsEditView().environment(session)
+            }
+        }
+    }
+}
+
+extension SettingsView {
+    /// 웹 메뉴 줄 — 보라 아이콘 + 검정 글자(밀어 들어가는 줄·시트 여는 줄·링크 모두 같은 모양).
+    private func menuLabel(_ title: String, systemImage: String) -> some View {
+        Label {
+            Text(title).foregroundStyle(Color.textPrimary)
+        } icon: {
+            Image(systemName: systemImage).foregroundStyle(Color.accentColor)
+        }
+    }
+
+    /// 시트를 여는 메뉴 줄 — 밀어 들어가는 줄(NavigationLink)과 같은 모양(글자색·오른쪽 화살표).
+    private func menuButton(_ title: String, systemImage: String, note: String? = nil, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                menuLabel(title, systemImage: systemImage)
+                Spacer()
+                if let note { Text(note).font(.caption).foregroundStyle(Color.warningText) }
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Color(.tertiaryLabel)) // 밀어 들어가는 줄의 시스템 화살표와 같은 색
             }
         }
     }
