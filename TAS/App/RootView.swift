@@ -7,6 +7,8 @@ struct RootView: View {
 
     var body: some View {
         content
+            // 글자를 따로 정하지 않은 곳(목록 행·입력칸 등)도 웹 본문 크기(14)로 — 공용 단계는 `Theme.swift`
+            .font(.tasBody)
             // 로그인 직후 게스트 데이터가 있고 계정에 이미 매장이 있으면 이관 확인.
             .alert("게스트 데이터 이관", isPresented: migrationConfirmBinding) {
                 Button("취소", role: .cancel) { session.cancelMigration() }

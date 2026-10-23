@@ -58,7 +58,7 @@ struct StoreSettingsEditView: View {
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle("매장 정보")

@@ -73,7 +73,7 @@ struct BookingSettingsEditView: View {
                 if !trimmedSlug.isEmpty && !slugFormatInvalid {
                     LabeledContent("공개 주소") {
                         Text(AppConfig.bookingPublicURL(slug: trimmedSlug))
-                            .font(.caption).foregroundStyle(.secondary)
+                            .font(.caption).foregroundStyle(Color.textSecondary)
                             .multilineTextAlignment(.trailing)
                     }
                 }
@@ -81,12 +81,12 @@ struct BookingSettingsEditView: View {
                 Text("영문 매장명 (필수)")
             } footer: {
                 if slugFormatInvalid {
-                    Text("영문 소문자·숫자·하이픈 3~32자, 하이픈으로 시작·끝 불가.").foregroundStyle(.red)
+                    Text("영문 소문자·숫자·하이픈 3~32자, 하이픈으로 시작·끝 불가.").foregroundStyle(Color.dangerText)
                 } else {
                     switch slugCheck {
-                    case .available: Text("사용 가능한 주소입니다.").foregroundStyle(.green)
-                    case .taken: Text("이미 사용 중인 주소입니다. 다른 값을 입력해 주세요.").foregroundStyle(.red)
-                    case .invalid: Text("형식을 확인해 주세요.").foregroundStyle(.red)
+                    case .available: Text("사용 가능한 주소입니다.").foregroundStyle(Color.successText)
+                    case .taken: Text("이미 사용 중인 주소입니다. 다른 값을 입력해 주세요.").foregroundStyle(Color.dangerText)
+                    case .invalid: Text("형식을 확인해 주세요.").foregroundStyle(Color.dangerText)
                     case .checking: Text("확인 중…")
                     case .idle: Text("영문 매장명이 예약 페이지 주소가 됩니다.")
                     }
@@ -103,7 +103,7 @@ struct BookingSettingsEditView: View {
                 Text("매장 연락처 (필수)")
             } footer: {
                 if contactFormatInvalid {
-                    Text("숫자와 하이픈만 8~20자로 입력해 주세요.").foregroundStyle(.red)
+                    Text("숫자와 하이픈만 8~20자로 입력해 주세요.").foregroundStyle(Color.dangerText)
                 } else {
                     // 정책 문서·예약 페이지가 이 번호를 그대로 노출한다(입력 원문 유지).
                     Text("고객이 예약 문의와 개인정보 열람·삭제를 요구할 창구입니다. 예약 페이지와 개인정보 안내에 표시됩니다.")
@@ -121,7 +121,7 @@ struct BookingSettingsEditView: View {
 
             Section {
                 Text("지금부터 최소 사전 예약 시간 이내의 슬롯은 예약할 수 없어요. \(session.labels.assignee) 선택을 끄면 매장이 배정합니다.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(.footnote).foregroundStyle(Color.textSecondary)
             }
 
             Section {
@@ -142,7 +142,7 @@ struct BookingSettingsEditView: View {
                             toggleServiceExposure(name)
                         } label: {
                             HStack {
-                                Text(name).foregroundStyle(.primary)
+                                Text(name).foregroundStyle(Color.textPrimary)
                                 Spacer()
                                 if isServiceExposed(name) {
                                     Image(systemName: "checkmark").foregroundStyle(.tint)
@@ -160,7 +160,7 @@ struct BookingSettingsEditView: View {
             }
 
             if let errorMessage {
-                Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
             }
         }
     }
@@ -177,13 +177,13 @@ struct BookingSettingsEditView: View {
                     let clamped = min(max(new, range.lowerBound), range.upperBound)
                     if clamped != new { value.wrappedValue = clamped }
                 }
-            Text(unit).foregroundStyle(.secondary)
+            Text(unit).foregroundStyle(Color.textSecondary)
         }
     }
 
     private func noticeField(_ title: String, text: Binding<String?>, caption: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+            Text(title).font(.caption).foregroundStyle(Color.textSecondary)
             TextField(caption, text: Binding(
                 get: { text.wrappedValue ?? "" },
                 set: { text.wrappedValue = $0.isEmpty ? nil : $0 }

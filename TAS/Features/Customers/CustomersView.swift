@@ -137,16 +137,16 @@ private struct CustomerRow: View {
             HStack(spacing: 6) {
                 Button(action: onNameTap) {
                     highlightedText(customer.name, range: nameMatchRange)
-                        .font(.subheadline.weight(.medium))
+                        .font(.tasBody.weight(.medium))
                         .foregroundStyle(Color.linkText)
                 }
                 .buttonStyle(.plain)
                 .accessibilityHint("고객 상세 열기")
-                Text(customer.formattedTel).font(.caption2).foregroundStyle(.secondary)
+                Text(customer.formattedTel).font(.caption2).foregroundStyle(Color.textSecondary)
                 Spacer(minLength: 0)
                 // 적립금은 웹처럼 라벨과 함께 항상 보인다(0도) — 없다가 생기면 행 높이가 흔들린다.
                 // 단위는 앱 전체가 쓰는 P로 맞춘다(상세·병합·조정 화면 모두 P).
-                Text("적립금").font(.caption2).foregroundStyle(.secondary)
+                Text("적립금").font(.caption2).foregroundStyle(Color.textSecondary)
                 Text(formatWon(customer.points ?? 0))
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.tint)
@@ -155,7 +155,7 @@ private struct CustomerRow: View {
                 Button(action: onToggle) {
                     Image(systemName: "chevron.right")
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.textSecondary)
                         .rotationEffect(.degrees(isOpen ? 90 : 0))
                         .frame(width: 24, height: 24)
                         .contentShape(Rectangle().inset(by: -10))
@@ -180,15 +180,15 @@ private struct CustomerRow: View {
                     }
                 }
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
             }
 
             HStack(spacing: 6) {
-                Text("최근 \(labels.service)").font(.caption2).foregroundStyle(.secondary)
+                Text("최근 \(labels.service)").font(.caption2).foregroundStyle(Color.textSecondary)
                 if let recent = stats.recentService {
                     ServiceChipList(service: recent, colorMap: serviceColorMap, wraps: false)
                 } else {
-                    Text("-").font(.caption2).foregroundStyle(.tertiary)
+                    Text("-").font(.caption2).foregroundStyle(Color.textTertiary)
                 }
             }
 
@@ -258,7 +258,7 @@ private struct CustomerExpandedContent: View {
     }
 
     private func sectionTitle(_ text: String) -> some View {
-        Text(text).font(.footnote.weight(.semibold)).foregroundStyle(.secondary).accessibilityAddTraits(.isHeader)
+        Text(text).font(.footnote.weight(.semibold)).foregroundStyle(Color.textSecondary).accessibilityAddTraits(.isHeader)
     }
 
     // MARK: 메모 태그
@@ -284,7 +284,7 @@ private struct CustomerExpandedContent: View {
             let tags = customer.memoTags ?? []
             HStack(alignment: .top, spacing: 8) {
                 if tags.isEmpty {
-                    Text("메모 없음").font(.footnote).foregroundStyle(.secondary)
+                    Text("메모 없음").font(.footnote).foregroundStyle(Color.textSecondary)
                 } else {
                     WrapLayout(spacing: 6) { ForEach(Array(tags.enumerated()), id: \.offset) { MemoTagPill(tag: $0.element) } }
                 }
@@ -310,7 +310,7 @@ private struct CustomerExpandedContent: View {
             HStack {
                 sectionTitle("적립금 충전")
                 Spacer(minLength: 0)
-                Text("현재 잔액 \(formatWon(customer.points ?? 0))").font(.caption).foregroundStyle(.secondary)
+                Text("현재 잔액 \(formatWon(customer.points ?? 0))").font(.caption).foregroundStyle(Color.textSecondary)
             }
             HStack(spacing: 8) {
                 Picker("충전 금액 선택", selection: $ruleIndex) {
@@ -364,7 +364,7 @@ private struct CustomerExpandedContent: View {
 
     @ViewBuilder private var reservations: some View {
         if groups.isEmpty {
-            Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(.secondary)
+            Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(Color.textSecondary)
                 .frame(maxWidth: .infinity).padding(.vertical, 8)
         }
         ForEach(groups) { group in

@@ -85,7 +85,7 @@ struct SettingsView: View {
                                     // (서버는 예약 설정을 저장할 때만 필수를 강제해서, 켜두기만 한 상태가 생긴다.)
                                     if bookingNeedsSetup {
                                         Spacer()
-                                        Text("설정 필요").font(.caption).foregroundStyle(.orange)
+                                        Text("설정 필요").font(.caption).foregroundStyle(Color.warningText)
                                     }
                                 }
                             }
@@ -171,7 +171,7 @@ struct SettingsView: View {
                 Section {
                     LabeledContent("API", value: AppConfig.apiBaseURL.absoluteString)
                         .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.textSecondary)
                 }
             }
             .navigationTitle("설정")

@@ -306,11 +306,11 @@ private struct ServiceRow: View {
 
     var body: some View {
         HStack {
-            Text(item.name).font(.subheadline)
+            Text(item.name).font(.tasBody)
             Spacer()
             VStack(alignment: .trailing, spacing: 1) {
                 Text(formatWon(item.price)).font(.footnote.weight(.medium))
-                Text("\(item.durationMinutes)분").font(.caption2).foregroundStyle(.secondary)
+                Text("\(item.durationMinutes)분").font(.caption2).foregroundStyle(Color.textSecondary)
             }
         }
         .padding(.vertical, 1)

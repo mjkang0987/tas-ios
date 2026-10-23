@@ -33,7 +33,7 @@ struct CouponFormView: View {
                         Spacer()
                         TextField("0", value: $discountValue, format: .number)
                             .keyboardType(.numberPad).multilineTextAlignment(.trailing)
-                        Text(discountType == .amount ? "원" : "%").foregroundStyle(.secondary)
+                        Text(discountType == .amount ? "원" : "%").foregroundStyle(Color.textSecondary)
                     }
                     if discountType == .rate {
                         numberRow("최대 할인액", value: $maxDiscount, unit: "원", zeroHint: "없음")
@@ -56,7 +56,7 @@ struct CouponFormView: View {
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle(editing == nil ? "쿠폰 등록" : "쿠폰 수정")
@@ -80,7 +80,7 @@ struct CouponFormView: View {
             Spacer()
             TextField(zeroHint, value: value, format: .number)
                 .keyboardType(.numberPad).multilineTextAlignment(.trailing)
-            Text(unit).foregroundStyle(.secondary)
+            Text(unit).foregroundStyle(Color.textSecondary)
         }
     }
 

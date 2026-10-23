@@ -218,12 +218,12 @@ private struct AssigneeRow: View {
             ColorDot(color: Color(hex: assignee.color) ?? .gray, size: 9)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    Text(assignee.name).font(.subheadline.weight(.medium))
+                    Text(assignee.name).font(.tasBody.weight(.medium))
                     if let status = assignee.status { AssigneeStatusText(status: status) }
                 }
-                Text(scheduleSummary).font(.caption2).foregroundStyle(.secondary)
+                Text(scheduleSummary).font(.caption2).foregroundStyle(Color.textSecondary)
                 if let phone = assignee.phone, !phone.isEmpty {
-                    Text(phone).font(.caption2).foregroundStyle(.secondary)
+                    Text(phone).font(.caption2).foregroundStyle(Color.textSecondary)
                 }
             }
             Spacer()

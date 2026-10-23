@@ -27,12 +27,12 @@ struct MembershipFormView: View {
                         Spacer()
                         TextField("0", value: $price, format: .number)
                             .keyboardType(.numberPad).multilineTextAlignment(.trailing)
-                        Text("원").foregroundStyle(.secondary)
+                        Text("원").foregroundStyle(Color.textSecondary)
                     }
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle(editing == nil ? "회원권 등록" : "회원권 수정")
@@ -56,7 +56,7 @@ struct MembershipFormView: View {
             Spacer()
             TextField(zeroHint, value: value, format: .number)
                 .keyboardType(.numberPad).multilineTextAlignment(.trailing)
-            Text(unit).foregroundStyle(.secondary)
+            Text(unit).foregroundStyle(Color.textSecondary)
         }
     }
 

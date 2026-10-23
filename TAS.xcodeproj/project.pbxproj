@@ -99,6 +99,7 @@
 		B77A150735765FE3CD9F58EC /* ServiceChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EC7DE2820F9B8CCE8CA448D /* ServiceChip.swift */; };
 		B7AD7386CC658B5C77C9FD9F /* ReservationHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1E6E96BC207F687A481FF1 /* ReservationHistoryView.swift */; };
 		B8899F3C142898BFF166B5EF /* Loadable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0003DB937F39B47463D2EF99 /* Loadable.swift */; };
+		B8ABB70728152235A7718360 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15095988AE1B021B67F1D788 /* Theme.swift */; };
 		B8BB0743E71CD08ACF98AE41 /* CalendarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 811AE97D844DE7D95B3C4A4E /* CalendarViewModel.swift */; };
 		B947728497C788BC629EE491 /* MobileToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4787653D278EF16C8135E758 /* MobileToken.swift */; };
 		BA65B22D729CDE02C4A77CD0 /* LoadableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 262FBC19C4518208D2B68F96 /* LoadableView.swift */; };
@@ -160,6 +161,7 @@
 		136BA0E72CEE1E8E34A7443C /* DetailStackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailStackTests.swift; sourceTree = "<group>"; };
 		13F5BEA61DD380BA72ABE012 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		14F49762175D09C599D52678 /* TASTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TASTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		15095988AE1B021B67F1D788 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		1614F9F7CD06DED9BDA9417A /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		18ACB22B836E1C4959002C1F /* GuestConsentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestConsentView.swift; sourceTree = "<group>"; };
 		19DA9227F428A604A20F2C2E /* TASService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TASService.swift; sourceTree = "<group>"; };
@@ -567,6 +569,7 @@
 				4CB6FE22CCA04D8D615D63AD /* ServiceColor.swift */,
 				0512EA40D355CBDEB8419763 /* StoreClosedStyle.swift */,
 				8DFC031F031A2C7743D8AA0E /* TelLink.swift */,
+				15095988AE1B021B67F1D788 /* Theme.swift */,
 				984B55239DEA946A51E651EC /* Toast.swift */,
 				B331F6FA4115DF71589C5D3F /* WrapLayout.swift */,
 			);
@@ -876,6 +879,7 @@
 				4EF5BA2D307F45D70F9F2790 /* TASApp.swift in Sources */,
 				BAB0F434DD2A586082D48263 /* TASService.swift in Sources */,
 				6D24C8F083ABC2D9A5E0B930 /* TelLink.swift in Sources */,
+				B8ABB70728152235A7718360 /* Theme.swift in Sources */,
 				C90824AC42EF1ECB66E7501F /* TimelineLayout.swift in Sources */,
 				0BB45E2B1674898EBD20641C /* Toast.swift in Sources */,
 				FFF600EE2856527CF23557C7 /* WebAuthSession.swift in Sources */,
@@ -941,7 +945,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.20.0;
+				MARKETING_VERSION = 0.21.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1023,7 +1027,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.20.0;
+				MARKETING_VERSION = 0.21.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

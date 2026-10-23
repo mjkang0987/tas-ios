@@ -55,7 +55,7 @@ struct ReservationPaymentView: View {
                             TextField("금액", value: $entries[i].amount, format: .number)
                                 .keyboardType(.numberPad)
                                 .multilineTextAlignment(.trailing)
-                            Text("원").foregroundStyle(.secondary)
+                            Text("원").foregroundStyle(Color.textSecondary)
                         }
                     }
                     .onDelete { offsets in
@@ -70,10 +70,10 @@ struct ReservationPaymentView: View {
                 } footer: {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("합계 \(formatWon(enteredTotal)) · 예약가 \(formatWon(reservation.price ?? 0))")
-                            .foregroundStyle(enteredTotal == (reservation.price ?? 0) ? Color.secondary : Color.orange)
+                            .foregroundStyle(enteredTotal == (reservation.price ?? 0) ? Color.textSecondary : Color.warningText)
                         if pointsUsedNow > 0 || (customer?.points ?? 0) > 0 {
                             Text("적립금 사용 \(formatWon(pointsUsedNow)) · 보유 \(formatWon(availablePoints))")
-                                .foregroundStyle(pointsUsedNow > availablePoints ? Color.red : Color.secondary)
+                                .foregroundStyle(pointsUsedNow > availablePoints ? Color.dangerText : Color.textSecondary)
                         }
                     }
                 }
@@ -88,7 +88,7 @@ struct ReservationPaymentView: View {
                                 TextField("0", value: $pointAward, format: .number)
                                     .keyboardType(.numberPad)
                                     .multilineTextAlignment(.trailing)
-                                Text("원").foregroundStyle(.secondary)
+                                Text("원").foregroundStyle(Color.textSecondary)
                             }
                         }
                     } header: {
@@ -101,7 +101,7 @@ struct ReservationPaymentView: View {
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle(reservation.hasCompletedPayment ? "결제수단 변경" : "결제완료")

@@ -527,7 +527,7 @@ struct RevenueView: View {
                 Section("일별 목록") {
                     let rows = viewModel.dailyRows
                     if rows.isEmpty {
-                        Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(.secondary)
+                        Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(Color.textSecondary)
                     }
                     ForEach(rows) { row in
                         Button { detailKey = .day(row.date) } label: { DailyRevenueRow(row: row) }
@@ -586,12 +586,12 @@ struct RevenueView: View {
                 Text(key.label)
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(value).foregroundStyle(.secondary).monospacedDigit()
-                    if let note { Text(note).font(.caption2).foregroundStyle(.secondary) }
+                    Text(value).foregroundStyle(Color.textSecondary).monospacedDigit()
+                    if let note { Text(note).font(.caption2).foregroundStyle(Color.textSecondary) }
                 }
                 Image(systemName: "chevron.right")
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Color.textTertiary)
             }
             .contentShape(Rectangle())
         }
@@ -611,7 +611,7 @@ struct RevenueView: View {
             Button { viewModel.shift(-1) } label: { Image(systemName: "chevron.left") }
                 .accessibilityLabel("이전 기간")
             DatePicker("시작일", selection: $viewModel.rangeStart, displayedComponents: .date).labelsHidden()
-            Text("~").foregroundStyle(.secondary)
+            Text("~").foregroundStyle(Color.textSecondary)
             DatePicker("종료일", selection: $viewModel.rangeEnd, displayedComponents: .date).labelsHidden()
             Spacer(minLength: 0)
             Button { viewModel.shift(1) } label: { Image(systemName: "chevron.right") }
@@ -652,7 +652,7 @@ struct RevenueView: View {
         HStack {
             Button { viewModel.shift(-1) } label: { Image(systemName: "chevron.left") }
             Spacer()
-            Text(viewModel.periodLabel).font(.headline).monospacedDigit()
+            Text(viewModel.periodLabel).font(.tasTitle).monospacedDigit()
             Spacer()
             Button { viewModel.shift(1) } label: { Image(systemName: "chevron.right") }
         }
@@ -672,7 +672,7 @@ private struct RevenueTrendChart: View {
         if points.isEmpty || points.allSatisfy({ $0.total == 0 }) {
             Text("매출 없음")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
                 .frame(maxWidth: .infinity, minHeight: 120)
         } else {
             Chart(points) { point in
@@ -731,15 +731,15 @@ private struct DailyRevenueRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(dateLabel).font(.subheadline.weight(.semibold))
-                Text(yearLabel).font(.caption2).foregroundStyle(.secondary)
+                Text(dateLabel).font(.tasBody.weight(.semibold))
+                Text(yearLabel).font(.caption2).foregroundStyle(Color.textSecondary)
             }
             Spacer()
-            Text("\(row.count)건").font(.caption).foregroundStyle(.secondary)
-            Text(formatWon(row.total)).font(.subheadline.weight(.semibold)).monospacedDigit()
+            Text("\(row.count)건").font(.caption).foregroundStyle(Color.textSecondary)
+            Text(formatWon(row.total)).font(.tasBody.weight(.semibold)).monospacedDigit()
             Image(systemName: "chevron.right")
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(Color.textTertiary)
         }
         .contentShape(Rectangle())
     }
@@ -768,12 +768,12 @@ private struct AssigneeRevenueRow: View {
             Text(row.assignee?.name ?? "미지정")
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                Text(formatWon(row.total)).font(.subheadline.weight(.semibold))
-                Text("\(row.count)건").font(.caption2).foregroundStyle(.secondary)
+                Text(formatWon(row.total)).font(.tasBody.weight(.semibold))
+                Text("\(row.count)건").font(.caption2).foregroundStyle(Color.textSecondary)
             }
             Image(systemName: "chevron.right")
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(Color.textTertiary)
         }
         .contentShape(Rectangle())
     }

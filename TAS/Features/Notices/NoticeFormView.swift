@@ -37,7 +37,7 @@ struct NoticeFormView: View {
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle(editing == nil ? "공지 추가" : "공지 수정")

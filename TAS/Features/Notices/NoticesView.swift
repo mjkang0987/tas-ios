@@ -126,14 +126,14 @@ private struct NoticeRow: View {
                 Text(notice.category.label)
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.tint)
-                Text(notice.title).font(.subheadline.weight(.medium)).lineLimit(1)
+                Text(notice.title).font(.tasBody.weight(.medium)).lineLimit(1)
                 Spacer()
                 if !notice.visible {
-                    Image(systemName: "eye.slash").font(.caption2).foregroundStyle(.secondary)
+                    Image(systemName: "eye.slash").font(.caption2).foregroundStyle(Color.textSecondary)
                 }
             }
             if !notice.body.isEmpty {
-                Text(notice.body).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                Text(notice.body).font(.caption).foregroundStyle(Color.textSecondary).lineLimit(2)
             }
         }
         .padding(.vertical, 2)

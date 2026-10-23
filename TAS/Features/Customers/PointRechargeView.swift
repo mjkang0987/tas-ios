@@ -66,7 +66,7 @@ struct PointRechargeView: View {
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
                             .onChange(of: customAmount) { selectedRule = nil }
-                        Text("원").foregroundStyle(.secondary)
+                        Text("원").foregroundStyle(Color.textSecondary)
                     }
                 } header: {
                     Text("직접 입력")
@@ -83,7 +83,7 @@ struct PointRechargeView: View {
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle("적립금 충전")

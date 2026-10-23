@@ -119,12 +119,12 @@ struct CustomerDetailView: View {
     }
 
     private func title(_ text: String) -> some View {
-        Text(text).font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
+        Text(text).font(.tasBody.weight(.semibold)).accessibilityAddTraits(.isHeader)
     }
 
     private var empty: some View {
         Text(Self.emptyText)
-            .font(.footnote).foregroundStyle(.secondary)
+            .font(.footnote).foregroundStyle(Color.textSecondary)
             .frame(maxWidth: .infinity).padding(.vertical, 8)
     }
 
@@ -145,19 +145,19 @@ struct CustomerDetailView: View {
                         .foregroundStyle(stats.noshow > 0 ? CustomerStats.EffectiveStatus.noshow.tone.foreground : .primary)
                 }
             }
-            .font(.subheadline)
+            .font(.tasBody)
 
             // 웹과 같은 4버킷 — 상태 없는 지난 예약은 '완료'로 친다.
             let counts = stats.total > 0 ? CustomerStats.EffectiveStatus.allCases.map { "\($0.label) \(stats.count($0))" } : []
             let first = customer.firstVisitDate.flatMap { $0.isEmpty ? nil : ["첫 방문 \($0)"] } ?? []
             if !(counts + first).isEmpty {
-                Text((counts + first).joined(separator: " · ")).font(.caption).foregroundStyle(.secondary)
+                Text((counts + first).joined(separator: " · ")).font(.caption).foregroundStyle(Color.textSecondary)
             }
         }
     }
 
     private func label(_ text: String) -> some View {
-        Text(text).foregroundStyle(.secondary).gridColumnAlignment(.leading)
+        Text(text).foregroundStyle(Color.textSecondary).gridColumnAlignment(.leading)
     }
 
     /// 고객 메모 — 웹 `CustomerMemoTagSection` 보기 모드. 추가·삭제는 "수정"(웹·안드로이드와 같다).
@@ -256,16 +256,16 @@ struct PointHistoryRow: View {
     var body: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.type.label).font(.subheadline)
-                Text(entry.description).font(.caption).foregroundStyle(.secondary)
-                Text(KST.timestampLabel(entry.createdAt)).font(.caption2).foregroundStyle(.secondary)
+                Text(entry.type.label).font(.tasBody)
+                Text(entry.description).font(.caption).foregroundStyle(Color.textSecondary)
+                Text(KST.timestampLabel(entry.createdAt)).font(.caption2).foregroundStyle(Color.textSecondary)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text(signed(entry.delta))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(entry.delta >= 0 ? Color.blue : Color.red)
-                Text("잔액 \(formatWon(entry.balance))").font(.caption2).foregroundStyle(.secondary)
+                    .font(.tasBody.weight(.semibold))
+                    .foregroundStyle(entry.delta >= 0 ? Color.blueText : Color.dangerText)
+                Text("잔액 \(formatWon(entry.balance))").font(.caption2).foregroundStyle(Color.textSecondary)
             }
         }
         .padding(.vertical, 2)

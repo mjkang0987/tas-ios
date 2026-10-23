@@ -40,9 +40,9 @@ struct CustomerMergePicker: View {
                         } label: {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(customer.name).font(.subheadline.weight(.medium))
-                                    Text(customer.formattedTel).font(.caption2).foregroundStyle(.secondary)
-                                    Text(metaText(for: customer)).font(.caption2).foregroundStyle(.secondary)
+                                    Text(customer.name).font(.tasBody.weight(.medium))
+                                    Text(customer.formattedTel).font(.caption2).foregroundStyle(Color.textSecondary)
+                                    Text(metaText(for: customer)).font(.caption2).foregroundStyle(Color.textSecondary)
                                 }
                                 Spacer()
                             }
@@ -63,7 +63,7 @@ struct CustomerMergePicker: View {
             .disabled(isMerging)
             .overlay(alignment: .bottom) {
                 if let errorMessage {
-                    Text(errorMessage).font(.footnote).foregroundStyle(.red).padding()
+                    Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText).padding()
                 }
             }
             .confirmationDialog(confirmMessage, isPresented: confirmBinding, titleVisibility: .visible) {

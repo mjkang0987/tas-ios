@@ -54,7 +54,7 @@ struct RevenueDetailListView: View {
         switch layer.content {
         case .reservations(let reservations):
             if reservations.isEmpty && layer.sales.isEmpty {
-                Text(Self.emptyText).font(.footnote).foregroundStyle(.secondary)
+                Text(Self.emptyText).font(.footnote).foregroundStyle(Color.textSecondary)
             } else {
                 ForEach(reservations) { reservation in
                     let customer = viewModel.customer(reservation.customerId)
@@ -92,7 +92,7 @@ struct RevenueDetailListView: View {
 
         case .customers(let visits):
             if visits.isEmpty {
-                Text(Self.emptyText).font(.footnote).foregroundStyle(.secondary)
+                Text(Self.emptyText).font(.footnote).foregroundStyle(Color.textSecondary)
             } else {
                 ForEach(visits) { visit in
                     let customer = viewModel.customer(visit.customerId)
@@ -118,15 +118,15 @@ private struct SaleRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
-                Text("적립금 충전").font(.subheadline.weight(.semibold))
+                Text("적립금 충전").font(.tasBody.weight(.semibold))
                 HStack(spacing: 6) {
                     Text(customerName ?? "고객 미지정").foregroundStyle(Color.linkText)
-                    Text(sale.method?.rawValue ?? "결제수단 없음").foregroundStyle(.secondary)
+                    Text(sale.method?.rawValue ?? "결제수단 없음").foregroundStyle(Color.textSecondary)
                 }
                 .font(.caption)
             }
             Spacer()
-            Text(formatWon(sale.amount)).font(.subheadline.weight(.semibold)).monospacedDigit()
+            Text(formatWon(sale.amount)).font(.tasBody.weight(.semibold)).monospacedDigit()
         }
         .padding(.vertical, 3)
         .contentShape(Rectangle())
@@ -145,14 +145,14 @@ private struct CustomerVisitRow: View {
                 // 이전 방문이 없으면 신규 — 웹도 같은 기준으로 'N' 배지를 단다.
                 if visit.prevVisitDate == nil { NewCustomerBadge() }
                 Text(customer?.name ?? "고객 #\(visit.customerId)")
-                    .font(.subheadline.weight(.semibold))
+                    .font(.tasBody.weight(.semibold))
                 if let prev = visit.prevVisitDate,
                    let gap = RevenueStats.visitGapLabel(from: prev, to: visit.visitDate) {
                     ToneBadge(tone: .booked, text: gap)
                 }
                 Spacer(minLength: 0)
                 Text(visit.visitDate)
-                    .font(.caption2).foregroundStyle(.secondary).monospacedDigit()
+                    .font(.caption2).foregroundStyle(Color.textSecondary).monospacedDigit()
             }
 
             WrapLayout(spacing: 10) {
@@ -170,7 +170,7 @@ private struct CustomerVisitRow: View {
 
     private func infoItem(_ label: String, _ value: String) -> some View {
         HStack(spacing: 4) {
-            Text(label).font(.caption2).foregroundStyle(.secondary)
+            Text(label).font(.caption2).foregroundStyle(Color.textSecondary)
             Text(value).font(.caption2.weight(.semibold)).monospacedDigit()
         }
     }

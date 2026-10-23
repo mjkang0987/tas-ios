@@ -23,7 +23,7 @@ struct GuestOnboardingView: View {
                 actions
                 Button("로그인으로 돌아가기") { session.exitGuest() }
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.textSecondary)
                     .padding(.top, 4)
                 Spacer(minLength: 24)
             }
@@ -49,8 +49,8 @@ struct GuestOnboardingView: View {
             Text("게스트로 시작하기")
                 .font(.title2.bold())
             Text("⚡ 30초 설정으로 바로 시작")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.tasBody)
+                .foregroundStyle(Color.textSecondary)
         }
     }
 
@@ -62,7 +62,7 @@ struct GuestOnboardingView: View {
                 .foregroundStyle(Color.accentColor)
             Text("데이터는 이 기기에만 저장돼요. 다른 기기에선 보이지 않고, 앱 데이터를 지우면 사라져요. 로그인하면 지금까지 입력한 데이터를 계정으로 옮길 수 있어요.")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -75,7 +75,7 @@ struct GuestOnboardingView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("샵 이름")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
             TextField("예) 우리 매장", text: $storeName)
                 .focused($nameFocused)
                 .submitLabel(.done)
@@ -98,7 +98,7 @@ struct GuestOnboardingView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("업종 (복수 선택 가능)")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
                 ForEach(ShopCatalog.industries) { industry in
                     industryCard(industry)
@@ -118,10 +118,10 @@ struct GuestOnboardingView: View {
                     .font(.system(size: 24))
                 Text(industry.label)
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.textPrimary)
                 Text(industry.desc)
                     .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }
@@ -146,7 +146,7 @@ struct GuestOnboardingView: View {
                 start()
             } label: {
                 Text("시작하기")
-                    .font(.headline)
+                    .font(.tasTitle)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
             }
@@ -154,8 +154,8 @@ struct GuestOnboardingView: View {
             .tint(.brandFill) // 흰 글자 채움 — 어두운 모드 accent(밝은 보라) 위 흰 글자는 대비 부족
 
             Button("설정 없이 둘러보기") { skip() }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.tasBody)
+                .foregroundStyle(Color.textSecondary)
         }
     }
 

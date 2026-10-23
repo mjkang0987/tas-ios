@@ -33,15 +33,15 @@ private struct StoreClosedStyle: ViewModifier {
     /// 정기 휴무는 매주 반복이라 배경처럼 가라앉힌다(회색 계열). 웹과 같은 구분.
     private func tint(_ kind: StoreClosedKind) -> Color {
         switch kind {
-        case .date: return Color(hex: "FF3B30")?.opacity(0.10) ?? Color.red.opacity(0.10)
-        case .weekday: return Color.secondary.opacity(0.10)
+        case .date: return Color.dangerFill.opacity(0.07) // 웹 --closed-date-bg
+        case .weekday: return Color.textSecondary.opacity(0.10)
         }
     }
 
     private func border(_ kind: StoreClosedKind) -> Color {
         switch kind {
-        case .date: return Color(hex: "FF3B30")?.opacity(0.35) ?? Color.red.opacity(0.35)
-        case .weekday: return Color.secondary.opacity(0.30)
+        case .date: return Color.dangerFill.opacity(0.35)
+        case .weekday: return Color.textSecondary.opacity(0.30)
         }
     }
 }

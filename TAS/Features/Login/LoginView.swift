@@ -80,8 +80,8 @@ struct LoginView: View {
     private var card: some View {
         VStack(spacing: 16) {
             Text("SNS 계정으로 로그인")
-                .font(.callout.weight(.medium))
-                .foregroundStyle(.secondary)
+                .font(.tasLarge.weight(.medium))
+                .foregroundStyle(Color.textSecondary)
 
             inviteSection
 
@@ -104,7 +104,7 @@ struct LoginView: View {
             line
             Text("또는")
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
             line
         }
         .padding(.top, 8)
@@ -124,7 +124,7 @@ struct LoginView: View {
         } label: {
             Text("게스트로 사용하기")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(Color.textPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
                 .overlay(
@@ -171,7 +171,7 @@ struct LoginView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("초대코드 (신규 등록 시)")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
             TextField("6자리 코드 입력", text: $inviteCode)
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()

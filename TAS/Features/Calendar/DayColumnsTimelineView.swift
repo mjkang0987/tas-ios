@@ -73,7 +73,7 @@ struct DayColumnsTimelineView: View {
             ForEach(startHour..<endHour, id: \.self) { h in
                 Text(String(format: "%02d", h))
                     .font(.caption2).monospacedDigit()
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.textSecondary)
                     .frame(height: hourHeight, alignment: .top)
             }
         }

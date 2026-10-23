@@ -145,11 +145,11 @@ private struct BookingRequestRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text(request.customerName.isEmpty ? "고객" : request.customerName)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.tasBody.weight(.semibold))
                 BookingRequestKindBadge(kind: request.kind)
                 Spacer()
                 if let assigneeName = request.assigneeName, !assigneeName.isEmpty {
-                    Text(assigneeName).font(.caption2).foregroundStyle(.secondary)
+                    Text(assigneeName).font(.caption2).foregroundStyle(Color.textSecondary)
                 }
             }
 
@@ -163,12 +163,12 @@ private struct BookingRequestRow: View {
                 Spacer()
                 Button("거절") { onDecide(.reject) }
                     .buttonStyle(.bordered)
-                    .tint(.red)
+                    .tint(Color.dangerText)
                 Button("수락") { onDecide(.approve) }
                     .buttonStyle(.borderedProminent)
                     .tint(.brandFill) // 흰 글자 채움 — 어두운 모드의 밝은 accent 위 흰 글자는 대비가 모자란다
             }
-            .font(.subheadline)
+            .font(.tasBody)
             .disabled(isBusy)
         }
         .padding(.vertical, 4)
@@ -178,12 +178,12 @@ private struct BookingRequestRow: View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(label)
                 .font(.caption2.weight(.semibold))
-                .foregroundStyle(isAccent ? Color.accentColor : Color.secondary)
+                .foregroundStyle(isAccent ? Color.accentColor : Color.textSecondary)
             Text("\(monthDay(slot.date)) \(slot.startTime)~\(slot.endTime)")
                 .font(.caption)
             Text(slot.serviceSummary)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
                 .lineLimit(1)
         }
     }
@@ -229,6 +229,6 @@ private struct CountBadge: View {
             .foregroundStyle(.white)
             .padding(.horizontal, 4)
             .frame(minWidth: 14, minHeight: 14)
-            .background(Color.red, in: Capsule())
+            .background(Color.dangerFill, in: Capsule())
     }
 }

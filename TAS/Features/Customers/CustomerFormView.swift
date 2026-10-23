@@ -43,7 +43,7 @@ struct CustomerFormView: View {
                 memoTagSection
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle(editing == nil ? "고객 등록" : "고객 수정")

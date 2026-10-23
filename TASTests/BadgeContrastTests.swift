@@ -29,6 +29,20 @@ final class BadgeContrastTests: XCTestCase {
         }
     }
 
+    private func ratio(_ x: String, _ y: String) -> Double {
+        let (a, b) = (luminance(x), luminance(y))
+        return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+    }
+
+    /// 어두운 화면 — 글자 7:1 이상, 배지 바탕이 카드(#1C1C1E)와 구분(1.3:1 이상). 첫 시안은 1.2:1 로 배지가 묻혔다(지시자 2026-10-24).
+    func testDarkTonesAreReadableAndStandOut() {
+        let tones: [BadgeTone] = [.booked, .cancelled, .completed, .noshow, .paid, .unpaid, .requested]
+        for tone in tones {
+            XCTAssertGreaterThanOrEqual(ratio(tone.darkForegroundHex, tone.darkBackgroundHex), 7, "\(tone) 글자")
+            XCTAssertGreaterThanOrEqual(ratio(tone.darkBackgroundHex, "#1C1C1E"), 1.3, "\(tone) 바탕")
+        }
+    }
+
     /// 웹 features/colors/contrast.ts backgroundForWhiteText 와 같은 결과(세 플랫폼이 같은 색을 낸다).
     func testBackgroundForWhiteTextMatchesWeb() {
         let expected: [String: String] = [
