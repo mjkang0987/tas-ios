@@ -83,6 +83,27 @@ enum CustomerStats {
             .flatMap { $0.isEmpty ? nil : $0 }
     }
 
+    /// 미래 → 과거(날짜 내림, 시간 내림) — 웹 `sortFutureFirst`.
+    static func sortedFutureFirst(_ reservations: [Reservation]) -> [Reservation] {
+        reservations.sorted { $1.precedes($0) }
+    }
+
+    /// 상태별로 묶인 예약 묶음 — `ForEach`가 바로 쓰도록 Identifiable.
+    /// (튜플 배열 + 키패스 id는 쓰지 않는다.)
+    struct Group: Identifiable {
+        let status: EffectiveStatus
+        let items: [Reservation]
+        var id: EffectiveStatus { status }
+    }
+
+    /// 예약을 상태별로 묶는다. 빈 그룹은 뺀다(웹 `nonEmptyGroups`).
+    static func groups(_ reservations: [Reservation], today: String) -> [Group] {
+        EffectiveStatus.allCases.compactMap { status in
+            let items = reservations.filter { effectiveStatus($0, today: today) == status }
+            return items.isEmpty ? nil : Group(status: status, items: sortedFutureFirst(items))
+        }
+    }
+
     /// 고객별로 묶어 한 번에 집계 — 목록 화면이 행마다 다시 훑지 않도록.
     static func byCustomer(_ reservationsByCustomer: [Int: [Reservation]], today: String) -> [Int: Summary] {
         reservationsByCustomer.mapValues { summarize($0, today: today) }
