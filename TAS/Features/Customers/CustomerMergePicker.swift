@@ -80,7 +80,7 @@ struct CustomerMergePicker: View {
     /// "예약 3건 · 적립 12,000P" — 기준 고객을 고를 판단 근거.
     private func metaText(for customer: Customer) -> String {
         let count = reservationCounts[customer.id] ?? 0
-        return "예약 \(count)건 · 적립 \((customer.points ?? 0).formatted())P"
+        return "예약 \(count)건 · 적립 \(formatWon(customer.points ?? 0))"
     }
 
     private var confirmBinding: Binding<Bool> {

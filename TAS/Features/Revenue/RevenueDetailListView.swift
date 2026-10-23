@@ -122,7 +122,7 @@ private struct CustomerVisitRow: View {
 
             WrapLayout(spacing: 10) {
                 infoItem("연락처", customer.map(\.formattedTel).flatMap { $0.isEmpty ? nil : $0 } ?? "-")
-                infoItem("적립금", "\((customer?.points ?? 0).formatted())P")
+                infoItem("적립금", formatWon(customer?.points ?? 0))
                 infoItem("최근 방문일", visit.visitDate)
                 if let prev = visit.prevVisitDate {
                     infoItem("이전 방문", prev)

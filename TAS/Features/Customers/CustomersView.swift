@@ -109,7 +109,7 @@ private struct CustomerRow: View {
                 // 적립금은 웹처럼 라벨과 함께 항상 보인다(0도) — 없다가 생기면 행 높이가 흔들린다.
                 // 단위는 앱 전체가 쓰는 P로 맞춘다(상세·병합·조정 화면 모두 P).
                 Text("적립금").font(.caption2).foregroundStyle(.secondary)
-                Text("\((customer.points ?? 0).formatted())P")
+                Text(formatWon(customer.points ?? 0))
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.tint)
                     .monospacedDigit()
@@ -134,7 +134,7 @@ private struct CustomerRow: View {
             }
 
             HStack(spacing: 6) {
-                Text("최근 시술").font(.caption2).foregroundStyle(.secondary)
+                Text("최근 서비스").font(.caption2).foregroundStyle(.secondary)
                 if let recent = stats.recentService {
                     ServiceChipList(service: recent, colorMap: serviceColorMap, wraps: false)
                 } else {
