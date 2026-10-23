@@ -111,6 +111,17 @@ final class GuestStore {
         return updated
     }
 
+    /// 여러 예약을 한 번에 고치고 이력도 남긴다(서비스 이름·가격 변경 반영 — 서버 일괄 PUT 과 같다).
+    func updateReservations(_ updates: [ServiceRename.Update]) {
+        mutate { s in
+            for u in updates {
+                guard let i = s.reservations.firstIndex(where: { $0.id == u.prev.id }) else { continue }
+                s.reservations[i] = u.updated
+                s.history.append(ReservationHistoryEntry(reservationId: u.prev.id, before: u.prev, after: u.updated, timestamp: Self.nowISO()))
+            }
+        }
+    }
+
     /// 상태 변경(취소/노쇼/복원 등) + 변경 이력 기록. 없으면 nil.
     func setReservationStatus(id: Int, status: ReservationStatus) -> Reservation? {
         var result: Reservation?

@@ -14,7 +14,9 @@
 		090C395C290950FE1476962A /* BookingSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BDE70C5C3ACBA48F331CFA /* BookingSettingsTests.swift */; };
 		09CAC210B448DA6AE0E15687 /* AssigneeFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABCD2D16CFF565866C3C0BD4 /* AssigneeFormView.swift */; };
 		0AC55A08C06AEFF96C22F712 /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E51BBDE4C4999C42A0D18652 /* SessionStore.swift */; };
+		0BB45E2B1674898EBD20641C /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 984B55239DEA946A51E651EC /* Toast.swift */; };
 		0C61A4F0920A725EC3DA2130 /* Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49CBDB6E8945CB07A4C47224 /* Formatting.swift */; };
+		11AFC25660487EE05381799F /* ServiceRename.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7DF60039AE525848EFB875 /* ServiceRename.swift */; };
 		122D104886F6A1E1A03A45BE /* PointManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFFC9F153269AE4FF6C7A605 /* PointManageView.swift */; };
 		134148B797D05D51D946EB04 /* DayTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9D11CE025721C279EE2257 /* DayTimelineView.swift */; };
 		13F7690D8FDD24E3DD02CEB3 /* SearchHighlight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7116065DD27F67F4639D0F61 /* SearchHighlight.swift */; };
@@ -79,6 +81,7 @@
 		88B959F268D03AEB2000679A /* GuestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D5EBE5EF5D294612FE15E4 /* GuestStore.swift */; };
 		8C0132640D8E321F1CC9334D /* NoticeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26934AF8F7CB34F5FE2C508E /* NoticeTests.swift */; };
 		8E34F199703A8243036A0005 /* StoreSettingsEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D95164D10CF2DB55D0357C3F /* StoreSettingsEditView.swift */; };
+		8FEA795FB3D749FFD94C243B /* ServiceRenameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5BAA195D7E51148F41F2BCC /* ServiceRenameTests.swift */; };
 		911E4F62F8ECAD25D0B7B83F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97CCFF3BC11879CFF36EA585 /* SettingsView.swift */; };
 		9628E95DFC090B9E59449D5C /* NoticesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57DE55BC32AC382DF8BAD5E /* NoticesView.swift */; };
 		9B5E6EEA1946C82BC0900E8B /* Coupon.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE25BD9C6BC2C011F0A8BF3B /* Coupon.swift */; };
@@ -220,6 +223,7 @@
 		94351DE366FFFDEF2A694141 /* BookingSettingsEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookingSettingsEditView.swift; sourceTree = "<group>"; };
 		97CCFF3BC11879CFF36EA585 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		97F669FC46E7A3354DA52710 /* RevenueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueView.swift; sourceTree = "<group>"; };
+		984B55239DEA946A51E651EC /* Toast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Toast.swift; sourceTree = "<group>"; };
 		9AB02DF73BBC91A3E1FC9C24 /* Membership.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Membership.swift; sourceTree = "<group>"; };
 		9B6210FDC1C5EBF89BDC54DF /* MembershipFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MembershipFormView.swift; sourceTree = "<group>"; };
 		9DB5B643968739DB91B14D49 /* KeychainTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainTokenStore.swift; sourceTree = "<group>"; };
@@ -253,6 +257,7 @@
 		D746F7DFD63340B7179AE3BA /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		D95164D10CF2DB55D0357C3F /* StoreSettingsEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreSettingsEditView.swift; sourceTree = "<group>"; };
 		DC40D55853F507001EB761E8 /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
+		DC7DF60039AE525848EFB875 /* ServiceRename.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceRename.swift; sourceTree = "<group>"; };
 		DD885A5E97F8304BFD9B75CE /* MemoTagEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoTagEditor.swift; sourceTree = "<group>"; };
 		DF91E10214D3A6C3D96DD306 /* RevenueStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueStatsTests.swift; sourceTree = "<group>"; };
 		E0847DD986F4388D8E1E0BA1 /* Assignee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assignee.swift; sourceTree = "<group>"; };
@@ -265,6 +270,7 @@
 		EE1FC3B13F3CDB07E35F7E04 /* CustomerSaveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerSaveTests.swift; sourceTree = "<group>"; };
 		F00E26774B2A78180AADAAFD /* DayColumnsTimelineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayColumnsTimelineView.swift; sourceTree = "<group>"; };
 		F2AD1E18242D8C7F239FAD39 /* RevenueViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueViewModelTests.swift; sourceTree = "<group>"; };
+		F5BAA195D7E51148F41F2BCC /* ServiceRenameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceRenameTests.swift; sourceTree = "<group>"; };
 		F73770FD2D24C7A0EABEFC3E /* TASApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TASApp.swift; sourceTree = "<group>"; };
 		F79019AC369D68AA13E1DF61 /* CustomerMergePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerMergePicker.swift; sourceTree = "<group>"; };
 		FC2702CE04E330FED733B01C /* MembershipsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MembershipsView.swift; sourceTree = "<group>"; };
@@ -298,6 +304,7 @@
 				8A619A7CC9188F9D0E1395A7 /* ReservationReminder.swift */,
 				BEEBFDC3378C1A15DCB295BE /* RevenueStats.swift */,
 				7116065DD27F67F4639D0F61 /* SearchHighlight.swift */,
+				DC7DF60039AE525848EFB875 /* ServiceRename.swift */,
 				FE2CD3F7B25215BC1C3A6F7A /* TimelineLayout.swift */,
 				0CE7A94BD3B2B86E7AE3437E /* Config */,
 				FABBB73CD4902177AECDCE6A /* Networking */,
@@ -472,6 +479,7 @@
 				F2AD1E18242D8C7F239FAD39 /* RevenueViewModelTests.swift */,
 				BEBCC36214021C976CFB572E /* SearchHighlightTests.swift */,
 				2741E286FBD4183F6124ECF5 /* ServiceColorTests.swift */,
+				F5BAA195D7E51148F41F2BCC /* ServiceRenameTests.swift */,
 				47AD35A2930D324720B6ADC8 /* ShopCatalogTests.swift */,
 				79FED8EF6AEAA8E71BE59ADA /* StoreClosedKindTests.swift */,
 				D1D84647E0906FA30D34B929 /* TimelineLayoutTests.swift */,
@@ -556,6 +564,7 @@
 				4CB6FE22CCA04D8D615D63AD /* ServiceColor.swift */,
 				0512EA40D355CBDEB8419763 /* StoreClosedStyle.swift */,
 				8DFC031F031A2C7743D8AA0E /* TelLink.swift */,
+				984B55239DEA946A51E651EC /* Toast.swift */,
 				B331F6FA4115DF71589C5D3F /* WrapLayout.swift */,
 			);
 			path = UI;
@@ -762,6 +771,7 @@
 				8007874DAE4BBC7969BDA64F /* RevenueViewModelTests.swift in Sources */,
 				58C3E27DDFCFAF5240C2B224 /* SearchHighlightTests.swift in Sources */,
 				720CF37DC5121EF5FEE35EE1 /* ServiceColorTests.swift in Sources */,
+				8FEA795FB3D749FFD94C243B /* ServiceRenameTests.swift in Sources */,
 				CEEE6EE70E3DB98E43B228D1 /* ShopCatalogTests.swift in Sources */,
 				CC0DF281A27D513AECB5A6CD /* StoreClosedKindTests.swift in Sources */,
 				9F1EDAF2961D26B25656F461 /* TimelineLayoutTests.swift in Sources */,
@@ -850,6 +860,7 @@
 				B77A150735765FE3CD9F58EC /* ServiceChip.swift in Sources */,
 				3D3CE03DC6A92E84FDDA412A /* ServiceColor.swift in Sources */,
 				C21A79335B9D978A661EA866 /* ServiceFormView.swift in Sources */,
+				11AFC25660487EE05381799F /* ServiceRename.swift in Sources */,
 				5495B71D60C7D59621D97F92 /* ServicesView.swift in Sources */,
 				0AC55A08C06AEFF96C22F712 /* SessionStore.swift in Sources */,
 				911E4F62F8ECAD25D0B7B83F /* SettingsView.swift in Sources */,
@@ -862,6 +873,7 @@
 				BAB0F434DD2A586082D48263 /* TASService.swift in Sources */,
 				6D24C8F083ABC2D9A5E0B930 /* TelLink.swift in Sources */,
 				C90824AC42EF1ECB66E7501F /* TimelineLayout.swift in Sources */,
+				0BB45E2B1674898EBD20641C /* Toast.swift in Sources */,
 				FFF600EE2856527CF23557C7 /* WebAuthSession.swift in Sources */,
 				EE72E34EC6AA21EBD86C0045 /* WrapLayout.swift in Sources */,
 			);
@@ -925,7 +937,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.17.0;
+				MARKETING_VERSION = 0.18.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1007,7 +1019,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.17.0;
+				MARKETING_VERSION = 0.18.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

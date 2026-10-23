@@ -38,6 +38,16 @@ struct TASService {
         return env.reservation
     }
 
+    /// 서비스 카탈로그 변경을 여러 예약에 한 번에 — PUT /api/reservations (body=`{updates: [{prev, updated}]}`).
+    /// 서버가 한 트랜잭션으로 고치고 이력도 남긴다(웹 `updateService` 와 같은 경로 — 건마다 PUT 하지 않는다).
+    func updateReservations(_ updates: [ServiceRename.Update]) async throws {
+        guard !updates.isEmpty else { return }
+        if guest.isActive { guest.updateReservations(updates); return }
+        struct Body: Encodable { let updates: [ServiceRename.Update] }
+        struct Count: Decodable { let count: Int }
+        let _: Count = try await client.put("api/reservations", body: Body(updates: updates))
+    }
+
     /// 예약 상태 변경(취소/노쇼/복원) — PATCH /api/reservations (body=`{id, status, reason?}`).
     @discardableResult
     func setReservationStatus(id: Int, status: ReservationStatus, reason: String? = nil) async throws -> Reservation {

@@ -3,11 +3,13 @@ import SwiftUI
 /// 서비스(시술) 추가/수정 폼 — 웹 `ServiceManageSection` 이식.
 ///
 /// 필드: 이름 · 카테고리(기존 선택 또는 새로 추가) · 소요시간(분) · 가격(원).
-/// 이름은 예약이 참조하는 식별자라 **수정 시 고정**(변경이 필요하면 삭제 후 재등록).
-/// 저장은 상위 목록에 name 기준 upsert 후 전체 PUT(웹 일괄 저장 모델).
+/// 이름도 바꿀 수 있다 — 바꾸면 상위가 앞으로의 미결제 예약에도 반영한다(웹 `updateService`).
+/// 저장은 상위 목록에서 고친 뒤 전체 PUT(웹 일괄 저장 모델).
 struct ServiceFormView: View {
     var editing: ServiceItem? = nil
     let existingCategories: [String]
+    /// 이미 있는 서비스 이름 — 같은 이름 중복 등록을 막는다(수정 중인 자기 이름은 괜찮다).
+    var existingNames: [String] = []
     /// 편집한 서비스를 넘기고 저장 성공 여부(Bool)를 돌려받는다.
     let onSave: (ServiceItem) async -> Bool
 
@@ -28,11 +30,7 @@ struct ServiceFormView: View {
         NavigationStack {
             Form {
                 Section("서비스") {
-                    if isEditing {
-                        LabeledContent("이름", value: name)
-                    } else {
-                        TextField("서비스명", text: $name)
-                    }
+                    TextField("서비스명", text: $name)
                 }
 
                 Section("카테고리") {
@@ -112,6 +110,9 @@ struct ServiceFormView: View {
     private func save() async {
         let trimmedName = name.trimmingCharacters(in: .whitespaces)
         if trimmedName.isEmpty { errorMessage = "서비스명을 입력해주세요."; return }
+        if trimmedName != editing?.name, existingNames.contains(trimmedName) {
+            errorMessage = "\"\(trimmedName)\" 서비스는 이미 등록되어 있습니다."; return
+        }
         let resolvedCategory = (useNewCategory || existingCategories.isEmpty)
             ? newCategory.trimmingCharacters(in: .whitespaces)
             : category.trimmingCharacters(in: .whitespaces)
