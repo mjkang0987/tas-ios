@@ -97,3 +97,33 @@ enum PointLedger {
         return updated
     }
 }
+
+/// 적립금 충전(순수) — 웹 `AddressCustomerRecharge` handleCharge. 충전 화면과 고객 명단 펼친 행이 같이 쓴다.
+/// 규칙을 고르면 기준금액 + 보너스가 적립되고 받은 돈은 기준금액, 직접 입력이면 둘 다 친 금액.
+enum PointRecharge {
+    /// 적립할 금액 — `rule` 이 nil 이면 직접 입력(음수는 0).
+    static func amount(rule: RechargeRule?, custom: Int) -> Int {
+        rule.map { $0.baseAmount + $0.bonusAmount } ?? max(0, custom)
+    }
+
+    /// 받은 돈(매출로 잡힌다) — 규칙이면 기준금액(보너스 제외), 직접 입력이면 충전액.
+    static func paid(rule: RechargeRule?, custom: Int) -> Int {
+        rule?.baseAmount ?? amount(rule: nil, custom: custom)
+    }
+
+    /// 충전을 반영한 고객 — 충전액이 0 이하면 nil(웹은 아무것도 안 한다). 이력은 웹처럼 끝에 붙인다.
+    static func charged(_ customer: Customer, rule: RechargeRule?, custom: Int, method: PaymentMethod,
+                        now: String, id: String) -> Customer? {
+        let amount = amount(rule: rule, custom: custom)
+        guard amount > 0 else { return nil }
+        let balance = (customer.points ?? 0) + amount
+        var updated = customer
+        updated.points = balance
+        updated.pointHistories = (customer.pointHistories ?? []) + [PointHistoryEntry(
+            id: id, type: .recharge, delta: amount, balance: balance,
+            description: rule == nil ? "적립금 직접 충전" : "적립금 기준 충전",
+            createdAt: now, relatedReservationId: nil,
+            paidAmount: paid(rule: rule, custom: custom), paymentMethod: method)]
+        return updated
+    }
+}
