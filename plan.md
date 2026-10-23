@@ -45,13 +45,18 @@
    `.borderedProminent` 에 `.tint(.brandFill)`. 위험 글자 `dangerText`, 링크 `linkText`, 네이버 배지 `forWhiteText`.
    확인: 유닛 통과 · 시뮬레이터 밝은/어두운 모드 예약 상세·네이버 정보·… 삭제 메뉴·월 달력.
    남음(4b): 수정 전→후 확인 · 과거 시간 경고 · 가격 미입력 시 서비스 합계 대체(웹 `resolveReservationPrice`, 앱 전체가 `price ?? 0`).
-5. 🟡 **고객 상세 웹 모양** (`claude/customer-detail-web`, PR 대기) — 웹 `overlays/CustomerDetail`·안드로이드 `CustomerDetailSheet` 순서:
+5. ✅ **고객 상세 웹 모양** (`claude/customer-detail-web`, PR #43 머지 v0.12.0) — 웹 `overlays/CustomerDetail`·안드로이드 `CustomerDetailSheet` 순서:
    연락처·적립금·노쇼 n회(있으면 노쇼 색 굵게) · 방문 통계/첫 방문(iOS 정보, 작게) / 고객 메모 태그 / 적립금 이력(n) 최근 1건 + 더보기(전체 목록,
    예약에서 생긴 이력은 누르면 그 예약) · 적립금 조정·충전 / 예약 내역(n) 오래된 순 5건씩 더보기. 머리: 고객명 · 수정 · × · "…"(합치기).
    메모 태그 추가·삭제는 웹·안드로이드처럼 "수정"에서. 이력 시각은 `KST.timestampLabel`(예약 변경 이력과 공용).
    정리: 안 쓰게 된 `CustomerStats.groups`·`sortedFutureFirst`(+테스트 2) 삭제 — 정렬은 `RevenueStats.sortedChronologically` 재사용.
    확인: 유닛 203건 · 시뮬레이터 예약 상세 → 고객명 → 고객 상세, … 메뉴.
-   남음(5b): 고객 명단 행 펼치기.
+   🟡 5b **고객 명단 행 펼치기** (`claude/customer-list-expand`, PR 대기) — 웹 `AddressCustomerRow`·안드로이드 `CustomersScreen`:
+   이름(링크색) → 고객 상세, 행의 나머지·오른쪽 화살표(44pt, 낭독기 '펼침/접힘') → 펼침(여럿 동시). 펼친 행: 메모 태그(없으면 '메모 없음') +
+   '추가/수정'(고객 수정 폼) · 적립금·충전 켠 매장은 현재 잔액 + '적립금 충전' · 상태별 예약(예약/완료/취소/노쇼, 미래 → 과거) → 예약 상세.
+   펼친 행은 위아래 구분선을 진하게. `CustomerStats.groups` 되살림(5단계에서 지웠던 것).
+   확인: 유닛 205건 · 시뮬레이터 펼침·이름 → 상세·카드 → 예약 상세.
+   남음(5c): 펼친 행의 메모 태그 바로 추가·삭제 · 충전 칸(웹은 행 안에서 고르고 충전) — 공용 태그 편집 컴포넌트가 필요해 브리핑 먼저.
 6. ⬜ 캘린더: 오늘 버튼·현재 시각 선·취소 빗금·월 칸 고객명/앞뒤 달·연 '자세히'.
 7. ⬜ 매출: 기간 지정·담당자 필터·일별 목록·충전 매출.
 8. ⬜ 설정: 적립금 관리(내역·적립·설정)·매장 관리 카드·서비스 이름 바꾸기/카테고리·토스트·약관 링크.
