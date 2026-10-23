@@ -61,7 +61,7 @@ TAS/
     UI/                LoadableView · Badges(BadgeTone·StatusBadge·StatusCountBadge) ·
                        ServiceChip(시술 배지) · FilterChip · ColorAccents ·
                        ReservationInfoCard(예약 목록 공용 행 — 캘린더·고객 상세·매출 드릴다운) ·
-                       TelLink(연락처 → 전화) · Toast(저장·삭제 결과 — `.toast($toast)`) · TimelineNowLine(현재 시각 선 — 일·3일·주 오늘 칸) · ActionButtonStyle(레이어 아래 버튼 줄 — 주·위험 테두리·보통) ·
+                       Theme(공용 디자인 값 — 글자색·의미 색·글자 단계 tas*·어두운 화면, 웹·안드로이드와 같은 값) · TelLink(연락처 → 전화) · Toast(저장·삭제 결과 — `.toast($toast)`) · TimelineNowLine(현재 시각 선 — 일·3일·주 오늘 칸) · ActionButtonStyle(레이어 아래 버튼 줄 — 주·위험 테두리·보통) ·
                        MemoTagPill(고객 메모 태그) · MemoTagEditor(태그 ✕ 삭제·색 8개·입력 — 고객 수정 폼·명단 펼친 행 공용) · Color+Hex(adaptive · dangerText · linkText · brandFill=흰 글자 채움) ·
                        ServiceColor(서비스별 색) · Formatting · StoreClosedStyle
     KST.swift          매장 기준(Asia/Seoul) 날짜 유틸(주는 일요일 시작) · 요일 라벨(weekdayLabels 월~일 데이터 순서 · calendarWeekdayLabels 일~토 달력 머리)
