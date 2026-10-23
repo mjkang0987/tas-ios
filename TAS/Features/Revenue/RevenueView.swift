@@ -555,7 +555,8 @@ struct RevenueView: View {
         // 않아 앱을 껐다 켜야 복구된다. 다른 탭 루트 둘과 같이 당겨서 새로고침을 연다.
         .refreshable { await viewModel.load() }
         .navigationTitle("매출")
-        .navigationBarTitleDisplayMode(.inline)
+        // 웹 머리처럼 제목은 왼쪽 한 줄(큰 제목 칸 없음) — 그만큼 내용이 더 보인다
+        .toolbarTitleDisplayMode(.inlineLarge)
         .sheet(item: $detailKey) { key in
             RevenueDetailListView(
                 key: key,

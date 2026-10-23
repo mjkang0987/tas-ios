@@ -26,7 +26,9 @@ struct CustomersView: View {
             LoadableView(state: viewModel.state, loadingText: "고객 불러오는 중…") { _ in
                 list
             }
-            .navigationTitle("고객")
+            // 웹 머리처럼 제목은 왼쪽 한 줄(큰 제목 칸 없음) — 그만큼 내용이 더 보인다
+            .navigationTitle("고객 명단")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .searchable(text: $viewModel.searchText, prompt: "이름 또는 전화번호")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

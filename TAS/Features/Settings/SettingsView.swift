@@ -175,6 +175,8 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("설정")
+            // 웹 머리처럼 제목은 왼쪽 한 줄(큰 제목 칸 없음) — 그만큼 내용이 더 보인다
+            .toolbarTitleDisplayMode(.inlineLarge)
             .toast($toast)
             .task { notificationsDenied = !(await reminders.requestAuthorizationIfNeeded()) }
             .sheet(isPresented: $showStoreEdit) {
