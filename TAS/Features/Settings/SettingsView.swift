@@ -7,7 +7,6 @@ struct SettingsView: View {
     @State private var notificationsDenied = false
     @State private var showStoreEdit = false
     @State private var showHoursEdit = false
-    @State private var showPointSettings = false
     @State private var showBookingSettings = false
 
     /// 쿠폰·회원권·온라인예약은 서버(발급/차감 API·공개 예약 페이지)가 있어야 동작한다.
@@ -56,8 +55,11 @@ struct SettingsView: View {
                 if hasFeatureSettings {
                     Section {
                         if session.currentStore?.usePointSystem == true {
-                            Button { showPointSettings = true } label: {
-                                Label("적립금 설정", systemImage: "wonsign.circle")
+                            // 웹·안드로이드 '적립금 관리' — 내역·적립·설정(적립 방식·충전 기준)
+                            NavigationLink {
+                                PointManageView()
+                            } label: {
+                                Label("적립금 관리", systemImage: "wonsign.circle")
                             }
                         }
                         if serverFeaturesAvailable, session.currentStore?.useCouponSystem == true {
@@ -170,9 +172,6 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showHoursEdit) {
                 StoreHoursEditView().environment(session)
-            }
-            .sheet(isPresented: $showPointSettings) {
-                PointSettingsEditView().environment(session)
             }
             .sheet(isPresented: $showBookingSettings) {
                 BookingSettingsEditView().environment(session)

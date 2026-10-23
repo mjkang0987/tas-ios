@@ -67,22 +67,12 @@ struct PointAdjustView: View {
 
     private func save() async {
         if amount <= 0 { errorMessage = "금액을 입력해주세요."; return }
+        guard let updated = PointAdjust.adjusted(customer, amount: amount, add: isAdd, reason: reason,
+                                                 now: ISO8601DateFormatter().string(from: Date()), id: UUID().uuidString) else {
+            errorMessage = "차감할 적립금이 없습니다."; return
+        }
         isSaving = true
         defer { isSaving = false }
-
-        let trimmed = reason.trimmingCharacters(in: .whitespaces)
-        let entry = PointHistoryEntry(
-            id: UUID().uuidString,
-            type: isAdd ? .manualAdd : .manualSubtract,
-            delta: delta,
-            balance: resultPoints,
-            description: trimmed.isEmpty ? (isAdd ? "수동 적립" : "수동 차감") : trimmed,
-            createdAt: ISO8601DateFormatter().string(from: Date()),
-            relatedReservationId: nil
-        )
-        var updated = customer
-        updated.points = resultPoints
-        updated.pointHistories = (customer.pointHistories ?? []) + [entry] // 웹 appendPointHistories 처럼 끝에(오래된 것부터 저장)
         do {
             try await service.updateCustomer(updated)
             await onCompleted()

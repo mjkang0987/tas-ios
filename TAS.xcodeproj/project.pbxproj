@@ -17,6 +17,7 @@
 		0BB45E2B1674898EBD20641C /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 984B55239DEA946A51E651EC /* Toast.swift */; };
 		0C61A4F0920A725EC3DA2130 /* Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49CBDB6E8945CB07A4C47224 /* Formatting.swift */; };
 		11AFC25660487EE05381799F /* ServiceRename.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7DF60039AE525848EFB875 /* ServiceRename.swift */; };
+		122D104886F6A1E1A03A45BE /* PointManageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFFC9F153269AE4FF6C7A605 /* PointManageView.swift */; };
 		134148B797D05D51D946EB04 /* DayTimelineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9D11CE025721C279EE2257 /* DayTimelineView.swift */; };
 		13F7690D8FDD24E3DD02CEB3 /* SearchHighlight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7116065DD27F67F4639D0F61 /* SearchHighlight.swift */; };
 		14B7F4643E3EF4EECD6027A2 /* GuestSeedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7166A5CAD053D006FEFFCD79 /* GuestSeedTests.swift */; };
@@ -241,6 +242,7 @@
 		BEBCC36214021C976CFB572E /* SearchHighlightTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchHighlightTests.swift; sourceTree = "<group>"; };
 		BEEBFDC3378C1A15DCB295BE /* RevenueStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueStats.swift; sourceTree = "<group>"; };
 		BF6DA9456A6095443D5C4D36 /* CustomerStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerStatsTests.swift; sourceTree = "<group>"; };
+		BFFC9F153269AE4FF6C7A605 /* PointManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointManageView.swift; sourceTree = "<group>"; };
 		C35B233C8966E45F530E48D9 /* PointMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointMath.swift; sourceTree = "<group>"; };
 		C8430AA115B850BB10351285 /* WebAuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAuthSession.swift; sourceTree = "<group>"; };
 		C962E4F20D8566F76883BB7F /* CustomerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDetailView.swift; sourceTree = "<group>"; };
@@ -429,6 +431,7 @@
 			isa = PBXGroup;
 			children = (
 				94351DE366FFFDEF2A694141 /* BookingSettingsEditView.swift */,
+				BFFC9F153269AE4FF6C7A605 /* PointManageView.swift */,
 				6E68D54449A4BD8C0297045F /* PointSettingsEditView.swift */,
 				97CCFF3BC11879CFF36EA585 /* SettingsView.swift */,
 				A28DC00A6F4615988ADDC9DA /* StoreHoursEditView.swift */,
@@ -835,6 +838,7 @@
 				18C3297E19520DAE0FDC11BD /* NoticeFormView.swift in Sources */,
 				9628E95DFC090B9E59449D5C /* NoticesView.swift in Sources */,
 				C0B3B4A087BC8F34DC95A973 /* PointAdjustView.swift in Sources */,
+				122D104886F6A1E1A03A45BE /* PointManageView.swift in Sources */,
 				4E3E07943311225E12744298 /* PointMath.swift in Sources */,
 				B4D17F31CBC616F6AF76B5DF /* PointRechargeView.swift in Sources */,
 				EBEB839589247392AFCD122C /* PointSettingsEditView.swift in Sources */,
@@ -933,7 +937,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.16.0;
+				MARKETING_VERSION = 0.18.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1015,7 +1019,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.16.0;
+				MARKETING_VERSION = 0.18.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
