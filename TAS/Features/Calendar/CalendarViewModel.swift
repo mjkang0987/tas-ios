@@ -69,13 +69,8 @@ final class CalendarViewModel {
     /// 쌓인 상세가 빈 화면이 되지 않게 한다.
     private(set) var detailData: DetailData?
 
-    /// 기간 요약 — 건수(전체) + 매출(취소·노쇼 제외). 월/년 뷰 집계용.
+    /// 기간 요약 — 건수(전체) + 매출(취소·노쇼·확정대기 제외). 년 뷰 집계용.
     struct PeriodSummary: Equatable { var count: Int; var total: Int }
-
-    /// 월 그리드용: "YYYY-MM" 프리픽스의 일자별 요약("YYYY-MM-DD" → 요약).
-    func dailySummaries(monthPrefix: String, assigneeId: Int? = nil) -> [String: PeriodSummary] {
-        aggregate(prefix: monthPrefix, keyLength: 10, assigneeId: assigneeId)
-    }
 
     /// 연 리스트용: "YYYY" 프리픽스의 월별 요약("YYYY-MM" → 요약).
     func monthlySummaries(yearPrefix: String, assigneeId: Int? = nil) -> [String: PeriodSummary] {
@@ -90,17 +85,22 @@ final class CalendarViewModel {
             let key = String(r.date.prefix(keyLength))
             var s = out[key] ?? PeriodSummary(count: 0, total: 0)
             s.count += 1
-            if r.status != .cancelled && r.status != .noshow { s.total += r.price ?? 0 }
+            if Self.countsAsBooked(r) { s.total += r.price ?? 0 }
             out[key] = s
         }
         return out
     }
 
-    /// 당일 요약: 건수 + 매출 합계(취소·노쇼 제외).
+    /// 캘린더 합계에 넣는 예약 — 웹 `getDailyRevenue(…, 'booked')`: 취소·노쇼·확정대기(아직 수락 전) 제외.
+    static func countsAsBooked(_ r: Reservation) -> Bool {
+        r.status != .cancelled && r.status != .noshow && r.status != .requested
+    }
+
+    /// 당일 요약: 건수 + 매출 합계(취소·노쇼·확정대기 제외).
     func daySummary(on dateKey: String, assigneeId: Int? = nil) -> (count: Int, total: Int) {
         let items = reservations(on: dateKey, assigneeId: assigneeId)
         let total = items
-            .filter { $0.status != .cancelled && $0.status != .noshow }
+            .filter(Self.countsAsBooked)
             .compactMap(\.price)
             .reduce(0, +)
         return (items.count, total)

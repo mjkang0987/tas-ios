@@ -100,6 +100,10 @@ struct DayColumnsTimelineView: View {
                 ForEach(placed, id: \.reservation.id) { p in
                     block(p, laneCount: lanes)
                 }
+                if key == todayKey {
+                    TimelineNowLine(startHour: startHour, endHour: endHour, ptPerMin: ptPerMin)
+                        .frame(width: width, height: totalHeight)
+                }
             }
             .frame(width: width, height: totalHeight, alignment: .topLeading)
             .storeClosed(closedKind(key), cornerRadius: 0)

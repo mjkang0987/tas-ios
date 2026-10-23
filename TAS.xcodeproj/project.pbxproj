@@ -46,6 +46,7 @@
 		48BEF0F6EC1B7EACFC6FE6DE /* BadgeContrastTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EADF2B77E799B25EEC33A1D /* BadgeContrastTests.swift */; };
 		493DCB40605DBEAB21362FCD /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3DF5093A72A7E4625DB310 /* Store.swift */; };
 		4983FECF1BCCFEFC8CF1F7FE /* RevenueStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF91E10214D3A6C3D96DD306 /* RevenueStatsTests.swift */; };
+		4BD39F30287BD3C3A98B4E94 /* CalendarMonthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 046BEA357F5697D26285D7F6 /* CalendarMonthTests.swift */; };
 		4DE1A401C24FA83BAE1D26D1 /* ReservationOverlap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D5111A10AA59B3865CBEAF5 /* ReservationOverlap.swift */; };
 		4E3E07943311225E12744298 /* PointMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35B233C8966E45F530E48D9 /* PointMath.swift */; };
 		4EF5BA2D307F45D70F9F2790 /* TASApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73770FD2D24C7A0EABEFC3E /* TASApp.swift */; };
@@ -144,6 +145,7 @@
 
 /* Begin PBXFileReference section */
 		0003DB937F39B47463D2EF99 /* Loadable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Loadable.swift; sourceTree = "<group>"; };
+		046BEA357F5697D26285D7F6 /* CalendarMonthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarMonthTests.swift; sourceTree = "<group>"; };
 		0512EA40D355CBDEB8419763 /* StoreClosedStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreClosedStyle.swift; sourceTree = "<group>"; };
 		059A19B44DD79D4C892071E8 /* WeekdayLabelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekdayLabelTests.swift; sourceTree = "<group>"; };
 		0D5111A10AA59B3865CBEAF5 /* ReservationOverlap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationOverlap.swift; sourceTree = "<group>"; };
@@ -444,6 +446,7 @@
 				BE22BCB16342CDF48D500A49 /* AssigneeScheduleTests.swift */,
 				7EADF2B77E799B25EEC33A1D /* BadgeContrastTests.swift */,
 				D0BDE70C5C3ACBA48F331CFA /* BookingSettingsTests.swift */,
+				046BEA357F5697D26285D7F6 /* CalendarMonthTests.swift */,
 				A6D1090403226F21B8208A0C /* ChosungTests.swift */,
 				6BA3D186ED7933CC3D3B0F66 /* CouponDecodingTests.swift */,
 				EE1FC3B13F3CDB07E35F7E04 /* CustomerSaveTests.swift */,
@@ -733,6 +736,7 @@
 				72FD6A06AFCF994A21FDFDE7 /* AssigneeScheduleTests.swift in Sources */,
 				48BEF0F6EC1B7EACFC6FE6DE /* BadgeContrastTests.swift in Sources */,
 				090C395C290950FE1476962A /* BookingSettingsTests.swift in Sources */,
+				4BD39F30287BD3C3A98B4E94 /* CalendarMonthTests.swift in Sources */,
 				FF1B3C31A131EA725F126C8C /* ChosungTests.swift in Sources */,
 				2C8561EC8216772DDBFE9EE7 /* CouponDecodingTests.swift in Sources */,
 				BCA3CD1C8F254C12E32678AB /* CustomerSaveTests.swift in Sources */,
@@ -917,7 +921,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.14.0;
+				MARKETING_VERSION = 0.15.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -999,7 +1003,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.14.0;
+				MARKETING_VERSION = 0.15.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

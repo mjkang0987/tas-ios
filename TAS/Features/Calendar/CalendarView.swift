@@ -11,6 +11,9 @@ struct CalendarView: View {
     @State private var selectedAssigneeId: Int?
     @State private var mode: Mode = .day
     @State private var activeSheet: ActiveSheet?
+    /// 월 뷰에서 앞뒤 달 날짜를 누르면 아래 목록만 그날로 — 달력은 보던 달 그대로(안드로이드 `listDateKey`). nil 이면 선택한 날.
+    @State private var monthListDate: Date?
+    private var listDate: Date { monthListDate ?? selectedDate }
 
     /// 매장 적립률(%) — 판정은 `Store.effectivePointRate` 한 곳에서만 한다.
     private var pointRate: Int { session.currentStore?.effectivePointRate ?? 0 }
@@ -65,6 +68,8 @@ struct CalendarView: View {
                 // 웹 헤더처럼 좌우 이동을 날짜 왼쪽에 둔다 — 뷰마다 따로 머리줄을 두면
                 // 같은 조작이 화면마다 다른 자리에 있고 세로도 그만큼 먹는다.
                 ToolbarItemGroup(placement: .topBarLeading) {
+                    // 웹 `CalendarDirection`·안드로이드 헤더의 '오늘' — 어느 뷰든 오늘이 든 칸으로 간다(늘 누를 수 있다)
+                    Button("오늘") { selectedDate = Date() }
                     Button { shiftPeriod(-1) } label: { Image(systemName: "chevron.left") }
                         .accessibilityLabel("이전")
                     Button { shiftPeriod(1) } label: { Image(systemName: "chevron.right") }
@@ -111,6 +116,9 @@ struct CalendarView: View {
             }
         }
         .task { await viewModel.load() }
+        // 날짜를 옮기거나(이전·다음·오늘·날짜 선택) 뷰를 바꾸면 앞뒤 달 목록 고르기는 풀린다
+        .onChange(of: selectedDate) { _, _ in monthListDate = nil }
+        .onChange(of: mode) { _, _ in monthListDate = nil }
         // 예약 알림을 눌러 들어오면 그 예약 상세 — 아직 불러오는 중이면 다 불러온 뒤에 연다
         .onChange(of: reminders.pendingReservationId, initial: true) { _, _ in openPendingReminder() }
         .onChange(of: viewModel.state.value?.reservations.count) { _, _ in openPendingReminder() }
@@ -168,13 +176,8 @@ struct CalendarView: View {
 
     @ViewBuilder private var monthView: some View {
         let cal = KST.calendar
-        let comps = cal.dateComponents([.year, .month], from: selectedDate)
-        let firstOfMonth = cal.date(from: comps) ?? selectedDate
-        let monthPrefix = KST.monthKey.string(from: firstOfMonth)
-        let summaries = viewModel.dailySummaries(monthPrefix: monthPrefix, assigneeId: selectedAssigneeId)
-        let daysInMonth = cal.range(of: .day, in: .month, for: firstOfMonth)?.count ?? 30
-        let weekday = cal.component(.weekday, from: firstOfMonth)   // 1=일…7=토
-        let leading = (weekday - cal.firstWeekday + 7) % 7           // 일요일 시작 오프셋
+        let firstOfMonth = cal.date(from: cal.dateComponents([.year, .month], from: selectedDate)) ?? selectedDate
+        let month = cal.component(.month, from: firstOfMonth)
 
         VStack(spacing: 8) {
             LazyVGrid(columns: gridColumns, spacing: 4) {
@@ -188,20 +191,13 @@ struct CalendarView: View {
             .padding(.horizontal, 12)
 
             LazyVGrid(columns: gridColumns, spacing: 4) {
-                // 빈 칸은 음수 id — 날짜(1…)와 같은 id 를 쓰면 SwiftUI 가 겹친 날(1·2·3일)을 그리지 않는다
-                ForEach(-leading..<0, id: \.self) { _ in Color.clear.frame(height: 44) }
-                ForEach(1...daysInMonth, id: \.self) { day in
-                    let date = cal.date(byAdding: .day, value: day - 1, to: firstOfMonth) ?? firstOfMonth
+                ForEach(Self.monthGridDates(firstOfMonth), id: \.self) { date in
                     let key = KST.dayKey.string(from: date)
-                    Button {
-                        selectedDate = date        // 모드 전환 없이 선택만
-                    } label: {
-                        monthDayCell(day: day, summary: summaries[key],
-                                     isToday: cal.isDateInToday(date),
-                                     isSelected: cal.isDate(date, inSameDayAs: selectedDate))
-                            .storeClosed(closedKind(key))
-                    }
-                    .buttonStyle(.plain)
+                    monthDayCell(date: date, key: key,
+                                 inMonth: cal.component(.month, from: date) == month,
+                                 isToday: cal.isDateInToday(date),
+                                 isSelected: cal.isDate(date, inSameDayAs: listDate))
+                        .storeClosed(closedKind(key))
                 }
             }
             .padding(.horizontal, 12)
@@ -212,30 +208,89 @@ struct CalendarView: View {
         }
     }
 
-    private func monthDayCell(day: Int, summary: CalendarViewModel.PeriodSummary?, isToday: Bool, isSelected: Bool) -> some View {
-        VStack(spacing: 2) {
-            Text("\(day)")
-                .font(.subheadline.weight(isSelected ? .bold : .regular))
-                .frame(width: 28, height: 28)
-                .background(isSelected ? Color.brandFill : (isToday ? Color.accentColor.opacity(0.18) : Color.clear))
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
-                .clipShape(Circle())
-            if let count = summary?.count, count > 0 {
-                Text("\(count)")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Color.accentColor)
-            } else {
-                Text(" ").font(.caption2)
+    /// 달력 칸 날짜 — 1일이 든 주의 일요일부터 말일이 든 주의 토요일까지(4~6주). 앞뒤 달 날짜도 채운다(웹 `Days`·안드로이드 `monthGrid`).
+    static func monthGridDates(_ firstOfMonth: Date) -> [Date] {
+        let cal = KST.calendar
+        guard let days = cal.range(of: .day, in: .month, for: firstOfMonth)?.count,
+              let last = cal.date(byAdding: .day, value: days - 1, to: firstOfMonth),
+              let start = cal.dateInterval(of: .weekOfYear, for: firstOfMonth)?.start,
+              let endWeek = cal.dateInterval(of: .weekOfYear, for: last)?.start else { return [] }
+        let count = (cal.dateComponents([.day], from: start, to: endWeek).day ?? 0) + 7
+        return (0..<count).compactMap { cal.date(byAdding: .day, value: $0, to: start) }
+    }
+
+    /// 칸 하나 — 웹 `Num`·`ReservationList`(모바일 이름 1개): 예약 1건이면 고객명 태그(누르면 그 예약), 2건 이상이면 건수.
+    /// 앞뒤 달 날짜는 'M/D' 흐린 글자 — 누르면 아래 목록만 그날로.
+    private func monthDayCell(date: Date, key: String, inMonth: Bool, isToday: Bool, isSelected: Bool) -> some View {
+        let cal = KST.calendar
+        let items = viewModel.reservations(on: key, assigneeId: selectedAssigneeId)
+        let day = cal.component(.day, from: date)
+        let month = cal.component(.month, from: date)
+        let single = items.count == 1 ? items.first : nil
+        return Button {
+            if inMonth { selectedDate = date; monthListDate = nil } else { monthListDate = date }
+        } label: {
+            VStack(spacing: 2) {
+                Text(inMonth ? "\(day)" : "\(month)/\(day)")
+                    .font(.subheadline.weight(isSelected ? .bold : .regular))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                    .padding(.horizontal, inMonth ? 0 : 4)
+                    .frame(minWidth: 28, minHeight: 28)
+                    .background(isSelected ? Color.brandFill : (isToday ? Color.accentColor.opacity(0.18) : Color.clear), in: Capsule())
+                    .foregroundStyle(isSelected ? Color.white : (inMonth ? Color.primary : Color.secondary))
+                if items.count > 1 {
+                    Text("\(items.count)").font(.caption2.weight(.semibold)).foregroundStyle(Color.accentColor)
+                } else if let single {
+                    // 자리만 잡는다 — 이름 태그는 따로 누르는 버튼이라 아래 overlay 로 얹는다
+                    monthNameTag(single).hidden()
+                } else {
+                    Text(" ").font(.caption2)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .top)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(month)월 \(day)일" + (items.isEmpty ? "" : ", 예약 \(items.count)건"))
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .overlay(alignment: .bottom) {
+            if let single {
+                Button { activeSheet = .detail(single.id) } label: { monthNameTag(single) }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(viewModel.customerName(single.customerId)) 예약" + (single.isInactive ? ", \(single.isNoshow ? "노쇼" : "취소")" : ""))
+                    .accessibilityHint("예약 상세 열기")
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 44)
-        .contentShape(Rectangle())
+    }
+
+    /// 칸 안 고객명 태그 — 담당자 색 옅은 바탕·테두리·왼쪽 띠. 취소·노쇼는 회색 + 빗금 + 가로줄(타임라인 블록과 같은 규칙).
+    private func monthNameTag(_ r: Reservation) -> some View {
+        let color = Color(hex: viewModel.assignee(r.assigneeId)?.color) ?? .secondary
+        let inactive = r.isInactive
+        return Text(viewModel.customerName(r.customerId))
+            .font(.caption2)
+            .strikethrough(inactive)
+            .foregroundStyle(inactive ? Color.secondary : Color.primary)
+            .lineLimit(1)
+            .padding(.leading, 5).padding(.trailing, 2).padding(.vertical, 1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                ZStack {
+                    inactive ? Color(.secondarySystemBackground) : color.opacity(0.07)
+                    if inactive { HatchPattern(noshow: r.isNoshow) }
+                }
+            }
+            .overlay(alignment: .leading) { Rectangle().fill(inactive ? Color(.separator) : color).frame(width: 3) }
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .overlay { RoundedRectangle(cornerRadius: 4).strokeBorder(inactive ? Color(.separator) : color.opacity(0.4), lineWidth: 1) }
     }
 
     /// 월 뷰 하단: 선택한 날짜의 예약 리스트.
     @ViewBuilder private var selectedDayList: some View {
-        let items = viewModel.reservations(on: dateKey, assigneeId: selectedAssigneeId)
-        let summary = viewModel.daySummary(on: dateKey, assigneeId: selectedAssigneeId)
+        let listKey = KST.dayKey.string(from: listDate)
+        let items = viewModel.reservations(on: listKey, assigneeId: selectedAssigneeId)
+        let summary = viewModel.daySummary(on: listKey, assigneeId: selectedAssigneeId)
         VStack(spacing: 0) {
             HStack {
                 Text(selectedDayLabel).font(.footnote.weight(.semibold))
@@ -270,7 +325,7 @@ struct CalendarView: View {
 
     private var selectedDayLabel: String {
         let cal = KST.calendar
-        return "\(cal.component(.month, from: selectedDate))월 \(cal.component(.day, from: selectedDate))일"
+        return "\(cal.component(.month, from: listDate))월 \(cal.component(.day, from: listDate))일"
     }
 
     // MARK: - 년(Year) 뷰
@@ -296,6 +351,17 @@ struct CalendarView: View {
                         monthCard(month: m, summary: monthly[key], isSelected: m == selMonth)
                     }
                     .buttonStyle(.plain)
+                    // 웹 `Year` StyledMonthDetail·안드로이드 — 그 달 월 뷰로(오늘이 그 달이면 오늘, 아니면 1일)
+                    .overlay(alignment: .bottom) {
+                        Button("자세히") { openMonth(year: year, month: m) }
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
+                            .frame(minHeight: 24)
+                            .contentShape(Capsule())
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("\(m)월 월 보기")
+                    }
                 }
             }
             .padding(.horizontal, 12)
@@ -316,6 +382,8 @@ struct CalendarView: View {
                 Text("–").font(.caption2).foregroundStyle(.secondary)
             }
         }
+        .padding(.top, 6)
+        .padding(.bottom, 24)   // 아래 '자세히' 자리
         .frame(maxWidth: .infinity, minHeight: 58)
         .background(isSelected ? Color.accentColor.opacity(0.14) : Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -416,6 +484,14 @@ struct CalendarView: View {
         .buttonStyle(.plain)
     }
 
+    private func openMonth(year: Int, month: Int) {
+        let cal = KST.calendar
+        let today = Date()
+        let inThatMonth = cal.component(.year, from: today) == year && cal.component(.month, from: today) == month
+        selectedDate = inThatMonth ? today : (cal.date(from: DateComponents(year: year, month: month, day: 1)) ?? selectedDate)
+        mode = .month
+    }
+
     // MARK: - 기간 이동 헤더 (월/년 공용)
 
     /// 보고 있는 뷰의 한 칸만큼 움직인다 — 웹 헤더의 좌우 버튼과 같은 규칙.
@@ -483,7 +559,8 @@ struct CalendarView: View {
                     customerName: { viewModel.customerName($0) },
                     color: { timelineColor($0) },
                     serviceColorMap: viewModel.serviceColorMap,
-                    onTap: { activeSheet = .detail($0.id) }
+                    onTap: { activeSheet = .detail($0.id) },
+                    isToday: dateKey == KST.dayKey.string(from: Date())
                 )
             }
         }
