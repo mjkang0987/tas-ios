@@ -19,6 +19,8 @@ struct DayColumnsTimelineView: View {
     var customerName: (Int) -> String = { "고객 #\($0)" }
     var color: (Reservation) -> Color = { _ in .accentColor }
     var onTap: (Reservation) -> Void = { _ in }
+    /// 날짜 머리를 누르면 그날 일 뷰 — 웹 `Week` 의 `StyledDayHeading`. nil 이면 머리는 글자만.
+    var onSelectDay: ((String) -> Void)? = nil
 
     private let hourHeight: CGFloat = 56
     private let gutterWidth: CGFloat = 40
@@ -26,7 +28,7 @@ struct DayColumnsTimelineView: View {
     private let laneSpacing: CGFloat = 2
     private let columnSpacing: CGFloat = 1
     private let minBlockHeight: CGFloat = 22
-    private let headerHeight: CGFloat = 34
+    private let headerHeight: CGFloat = 44     // 머리가 버튼이라 손가락 크기
 
     private var ptPerMin: CGFloat { hourHeight / 60 }
     private var axisStartMin: Int { startHour * 60 }
@@ -84,11 +86,19 @@ struct DayColumnsTimelineView: View {
         let lanes = TimelineLayout.maxLanes(placed)
         let width = laneWidth * CGFloat(lanes) + laneSpacing * CGFloat(lanes - 1)
         return VStack(spacing: 0) {
-            Text(header(key, index))
-                .font(.caption2.weight(key == todayKey ? .bold : .regular))
-                .foregroundStyle(key == todayKey ? Color.accentColor : .secondary)
-                .lineLimit(1)
-                .frame(width: width, height: headerHeight)
+            Button {
+                onSelectDay?(key)
+            } label: {
+                Text(header(key, index))
+                    .font(.caption2.weight(key == todayKey ? .bold : .regular))
+                    .foregroundStyle(key == todayKey ? Color.accentColor : Color.textSecondary)
+                    .lineLimit(1)
+                    .frame(width: width, height: headerHeight)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(onSelectDay == nil)
+            .accessibilityHint(onSelectDay == nil ? "" : "그날 일 보기")
 
             ZStack(alignment: .topLeading) {
                 ForEach(0...(endHour - startHour), id: \.self) { i in
