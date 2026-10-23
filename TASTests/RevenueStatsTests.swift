@@ -89,7 +89,8 @@ final class RevenueStatsTests: XCTestCase {
             res(2, date: "2026-07-02", price: 3000, paymentCompleted: true, paymentMethod: .cash),
             res(3, date: "2026-07-03"),   // 미결제 → 0
         ]
-        XCTAssertEqual(RevenueStats.paidTotal(reservations) { $0.price ?? 0 }, 13000)
+        // 적립금 4,000 은 받은 돈이 아니라 빠진다(웹 getPaidBreakdown 의 isRevenuePaymentMethod) — 카드 6,000 + 현금 3,000
+        XCTAssertEqual(RevenueStats.paidTotal(reservations) { $0.price ?? 0 }, 9000)
     }
 
     // MARK: - 신규 / 재방문
@@ -181,5 +182,78 @@ final class RevenueStatsTests: XCTestCase {
             res(3, date: "2026-07-01", startTime: "09:00"),
         ])
         XCTAssertEqual(sorted.map(\.id), [3, 2, 1])
+    }
+
+    // MARK: - 매출 금액·충전·기간 (웹 resolveRevenue · buildStoreSales · clampRevenueRange)
+
+    func testRevenueSubtractsDiscountPointsAndMembershipButNotCash() {
+        var r = res(1, date: "2026-10-13", price: 80000)
+        r.paymentEntries = [PaymentEntry(method: .card, amount: 60000), PaymentEntry(method: .discount, amount: 10000),
+                            PaymentEntry(method: .points, amount: 5000), PaymentEntry(method: .membership, amount: 5000)]
+        XCTAssertEqual(RevenueStats.revenue(r, price: 80000), 60000)
+        // 깎은 게 금액보다 커도 0 아래로 안 간다
+        r.paymentEntries = [PaymentEntry(method: .discount, amount: 90000)]
+        XCTAssertEqual(RevenueStats.revenue(r, price: 80000), 0)
+    }
+
+    func testPaidTotalSkipsNonRevenueMethods() {
+        var r = res(1, date: "2026-10-13", price: 80000)
+        r.paymentEntries = [PaymentEntry(method: .card, amount: 70000), PaymentEntry(method: .discount, amount: 10000)]
+        XCTAssertEqual(RevenueStats.paidTotal([r]) { _ in 70000 }, 70000)
+    }
+
+    func testPriceFallsBackToSumOfServicePrices() {
+        let r = res(1, date: "2026-10-13", price: nil)
+        var multi = r
+        multi.service = "커트 + 염색"
+        XCTAssertEqual(RevenueStats.price(multi, priceByName: ["커트": 20000, "염색": 50000]), 70000)
+        XCTAssertEqual(RevenueStats.price(res(2, date: "2026-10-13", price: 15000), priceByName: ["커트": 20000]), 15000)
+    }
+
+    func testStoreSalesKeepsRechargesWithPaidAmountInKST() {
+        let entries = [
+            // UTC 16:00 = KST 다음날 01:00 — 매장 날짜로 친다
+            PointHistoryEntry(id: "a", type: .recharge, delta: 55000, balance: 55000, description: "", createdAt: "2026-10-19T16:00:00.000Z",
+                              relatedReservationId: nil, paidAmount: 50000, paymentMethod: .card),
+            PointHistoryEntry(id: "b", type: .recharge, delta: 10000, balance: 65000, description: "", createdAt: "2026-10-20T01:00:00Z",
+                              relatedReservationId: nil),                       // 받은 금액 없는 옛 충전 — 뺀다
+            PointHistoryEntry(id: "c", type: .manualAdd, delta: 1000, balance: 66000, description: "", createdAt: "2026-10-20T01:00:00Z",
+                              relatedReservationId: nil, paidAmount: 1000),     // 충전 아님 — 뺀다
+        ]
+        let sales = RevenueStats.storeSales([Customer(id: 7, name: "가", tel: "010", pointHistories: entries)])
+        XCTAssertEqual(sales.map(\.id), ["a"])
+        XCTAssertEqual(sales.first?.date, "2026-10-20")
+        XCTAssertEqual(sales.first?.amount, 50000)
+        XCTAssertEqual(sales.first?.customerId, 7)
+    }
+
+    private func day(_ s: String) -> Date { KST.dayKey.date(from: s)! }
+    private func key(_ d: Date) -> String { KST.dayKey.string(from: d) }
+
+    func testQuickRangesAndDetection() {
+        let today = day("2026-10-23")
+        let week = RevenueStats.quickRange(.week, today: today)
+        XCTAssertEqual(key(week.0), "2026-10-16")
+        XCTAssertEqual(RevenueStats.quickRangeOf(week.0, week.1, today: today), .week)
+        XCTAssertNil(RevenueStats.quickRangeOf(day("2026-10-01"), today, today: today))
+    }
+
+    func testClampKeepsEndAndPullsStartTo365Days() {
+        let (s, e) = RevenueStats.clampRange(day("2024-01-01"), day("2026-10-23"))
+        XCTAssertEqual(key(e), "2026-10-23")
+        XCTAssertEqual(RevenueStats.days(from: s, to: e), 365)
+    }
+
+    func testMoveRangeNeverPassesToday() {
+        let today = day("2026-10-23")
+        // 30일 기간을 앞으로 — 오늘에서 멈추고 길이는 그대로
+        let (s, e) = RevenueStats.moveRange(day("2026-09-01"), day("2026-10-01"), forward: true, today: today)
+        XCTAssertEqual(key(e), "2026-10-23")
+        XCTAssertEqual(key(s), "2026-09-23")
+        // 오늘 하루는 하루씩, 앞으로는 오늘을 넘지 않는다
+        let back = RevenueStats.moveRange(today, today, forward: false, today: today)
+        XCTAssertEqual(key(back.0), "2026-10-22")
+        let stay = RevenueStats.moveRange(today, today, forward: true, today: today)
+        XCTAssertEqual(key(stay.1), "2026-10-23")
     }
 }
