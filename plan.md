@@ -65,7 +65,7 @@
    새 공용: `MemoTagEditor`(고객 수정 폼도 이걸로 — 색 고르기가 낭독기로 안 골라지던 것 같이 고침) · `PointRecharge`(충전 화면과 공용 산식).
    목록 다시 읽기는 기존 목록을 둔 채(첫 로드만 '불러오는 중') — 저장할 때마다 깜빡이지 않게.
    확인: 유닛 210건(충전 2·태그 3 추가) · 시뮬레이터(게스트) 충전 50,000+5,000 카드 → 3,000 → 58,000·이력, 태그 추가·삭제·완료, 수정 폼.
-6. 🟡 **캘린더** (`claude/calendar-like-android`, PR 대기) — 안드로이드 `CalendarHeader`·`CalendarTimeline`·`MonthView`·`YearView`(= 웹 `CalendarDirection`·`Timeline`·`Days`·`Year`):
+6. ✅ **캘린더** (`claude/calendar-like-android`, PR #47 머지 v0.15.0) — 안드로이드 `CalendarHeader`·`CalendarTimeline`·`MonthView`·`YearView`(= 웹 `CalendarDirection`·`Timeline`·`Days`·`Year`):
    '오늘' 버튼(헤더 맨 앞, 늘 누를 수 있다 — 어느 뷰든 오늘이 든 칸으로) · **현재 시각 선**(주황 #FF7300 2pt + 왼쪽 10pt 점, 일·3일·주의 오늘 칸에만,
    30초마다, 시간축 밖이면 안 그림 — 공용 `TimelineNowLine`) · **월 칸**: 1일이 든 주 일요일 ~ 말일이 든 주 토요일(앞뒤 달은 'M/D' 흐린 글자,
    누르면 아래 목록만 그날로 — 달력은 그대로), 예약 1건이면 고객명 태그(담당자 색, 취소·노쇼는 회색·빗금·가로줄, 누르면 예약 상세), 2건 이상은 건수 ·
