@@ -158,7 +158,7 @@ final class RevenueStatsTests: XCTestCase {
     }
 
     /// 예약 시간순 규칙은 `Reservation.precedes` 한 곳에서만 나온다
-    /// (`RevenueStats.sortedChronologically`와 `CustomerStats.sortedFutureFirst`가 함께 쓴다).
+    /// (`RevenueStats.sortedChronologically`가 쓴다 — 매출·고객 상세 예약 내역).
     func testPrecedesComparesDateThenStartTime() {
         let early = res(1, date: "2026-07-01", startTime: "09:00")
         let sameDayLater = res(2, date: "2026-07-01", startTime: "15:00")
@@ -169,9 +169,7 @@ final class RevenueStatsTests: XCTestCase {
         XCTAssertTrue(sameDayLater.precedes(nextDay))
         XCTAssertFalse(early.precedes(early))   // 같은 건은 앞서지 않는다
 
-        // 두 방향 헬퍼가 같은 규칙을 쓴다.
         XCTAssertEqual(RevenueStats.sortedChronologically([nextDay, early, sameDayLater]).map(\.id), [1, 2, 3])
-        XCTAssertEqual(CustomerStats.sortedFutureFirst([early, nextDay, sameDayLater]).map(\.id), [3, 2, 1])
     }
 
     func testSortedChronologicallyOrdersByDateThenStartTime() {

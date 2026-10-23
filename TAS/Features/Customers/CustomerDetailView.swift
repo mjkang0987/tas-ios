@@ -1,11 +1,12 @@
 import SwiftUI
 
-/// 고객 상세 (읽기) — 웹 `/address` 상세에 대응하는 스켈레톤.
+/// 고객 상세 — 웹 `overlays/CustomerDetail`·안드로이드 `CustomerDetailSheet` 순서:
+/// 연락처·적립금·노쇼 / 고객 메모 / 적립금 이력(최근 1건 + 더보기) / 예약 내역(5건씩).
 struct CustomerDetailView: View {
     let customer: Customer
     var stats: CustomerStats.Summary = .empty
-    /// 웹처럼 예약/완료/취소/노쇼로 묶인 최근 예약(빈 그룹은 빠져 있다).
-    var reservationGroups: [CustomerStats.Group] = []
+    /// 이 고객의 예약(순서 무관) — 웹처럼 날짜·시작 시간 오름차순으로 보여 준다.
+    var reservations: [Reservation] = []
     /// 서비스명 → hex(웹 `SERVICE_COLOR_MAP`). 예약 이력의 시술 칩 색.
     let serviceColorMap: [String: String]
     /// "수정" 탭 시 편집 폼을 여는 콜백(제공되지 않으면 수정 버튼 숨김).
@@ -26,91 +27,46 @@ struct CustomerDetailView: View {
     /// 예약을 누르면 그 예약 상세 — 상세는 `DetailSheet` 가 위에 쌓는다(웹 `/address` 의 `onReservationClick`).
     var onReservationTap: (Reservation) -> Void = { _ in }
 
+    /// 웹 `PAGE_SIZE` — 예약 내역을 5건씩 더 보여 준다.
+    private static let pageSize = 5
+    /// 웹 `EMPTY_TEXT`.
+    private static let emptyText = "등록된 데이터가 없습니다"
+
     @Environment(\.dismiss) private var dismiss
     @State private var showPointAdjust = false
     @State private var showPointRecharge = false
     @State private var showMerge = false
+    @State private var visibleCount = pageSize
+
+    /// 웹은 최신 이력부터.
+    private var histories: [PointHistoryEntry] { (customer.pointHistories ?? []).reversed() }
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("기본 정보") {
-                    LabeledContent("이름", value: customer.name)
-                    LabeledContent("연락처") { TelLink(customer: customer) }
-                    if let points = customer.points {
-                        LabeledContent("적립금", value: formatWon(points))
-                    }
-                    if let first = customer.firstVisitDate, !first.isEmpty {
-                        LabeledContent("첫 방문", value: first)
-                    }
-                    if pointsEnabled {
-                        Button("적립금 조정") { showPointAdjust = true }
-                    }
-                    if pointsEnabled, pointSettings?.enableRecharge == true {
-                        Button("적립금 충전") { showPointRecharge = true }
-                    }
-                    if !mergeCandidates.isEmpty {
-                        Button("다른 고객과 합치기") { showMerge = true }
-                    }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    section { infoRows }
+                    section { memoSection }
+                    section { pointHistorySection }
+                    reservationSection.padding(.vertical, 12)
                 }
-
-                if stats.total > 0 {
-                    Section("방문 통계") {
-                        HStack {
-                            // 웹과 같은 4버킷 — 상태 없는 지난 예약은 '완료'로 친다.
-                            let buckets = CustomerStats.EffectiveStatus.allCases
-                            ForEach(Array(buckets.indices), id: \.self) { index in
-                                if index > 0 { Divider() }
-                                statCell(buckets[index], stats.count(buckets[index]))
-                            }
-                        }
-                    }
-                }
-
-                if let tags = customer.memoTags, !tags.isEmpty {
-                    Section("메모 태그") {
-                        FlowTags(tags: tags)
-                    }
-                }
-
-                if let histories = customer.pointHistories, !histories.isEmpty {
-                    Section("적립금 이력") {
-                        ForEach(histories) { PointHistoryRow(entry: $0) }
-                    }
-                }
-
-                // 웹은 예약/완료/취소/노쇼 그룹마다 건수를 달고 나눠 보여준다.
-                ForEach(reservationGroups) { group in
-                    Section("\(group.status.label) (\(group.items.count))") {
-                        ForEach(group.items.prefix(10)) { reservation in
-                            let rowAssignee = assignee(reservation.assigneeId)
-                            Button {
-                                onReservationTap(reservation)
-                            } label: {
-                                ReservationInfoCard(
-                                    reservation: reservation,
-                                    serviceColorMap: serviceColorMap,
-                                    assigneeName: rowAssignee?.name,
-                                    assigneeColor: Color(hex: rowAssignee?.color),
-                                    showDate: true,
-                                    showPrice: true,
-                                    // 그룹이 판정한 유효 상태로 덮는다. `displayState`는 날짜를 몰라
-                                    // '완료' 그룹 안에서도 파란 '예약' 배지를 그려버린다.
-                                    statusOverride: group.status
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        if group.items.count > 10 {
-                            Text("외 \(group.items.count - 10)건")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                }
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .navigationTitle(customer.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // 웹 머리의 버튼 줄에 없는 합치기는 "…" 메뉴로(지시자 2026-10-23)
+                if !mergeCandidates.isEmpty {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Menu {
+                            Button("다른 고객과 합치기", systemImage: "arrow.triangle.merge") { showMerge = true }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+                        .accessibilityLabel("더보기")
+                    }
+                }
                 if let onEdit {
                     ToolbarItem(placement: .topBarTrailing) {
                         // dismiss() 없이 상위 sheet(item:) 값만 .edit로 바꿔 시트를 교체.
@@ -118,7 +74,8 @@ struct CustomerDetailView: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("완료") { dismiss() }
+                    Button { dismiss() } label: { Image(systemName: "xmark") }
+                        .accessibilityLabel("닫기")
                 }
             }
             .sheet(isPresented: $showPointAdjust) {
@@ -151,32 +108,142 @@ struct CustomerDetailView: View {
         }
     }
 
-    private func assignee(_ id: Int?) -> Assignee? { id.flatMap { assigneesById[$0] } }
+    // MARK: - 칸
 
-    private func statCell(_ status: CustomerStats.EffectiveStatus, _ count: Int) -> some View {
-        VStack(spacing: 2) {
-            Text("\(count)")
-                .font(.title3.weight(.bold))
-                .foregroundStyle(status.tone.foreground)
-                .monospacedDigit()
-            Text(status.label).font(.caption).foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
+    /// 웹 `StyledCustomerContent` 한 칸 — 위아래 여백 + 아래 옅은 선.
+    private func section<V: View>(@ViewBuilder _ content: () -> V) -> some View {
+        VStack(alignment: .leading, spacing: 10) { content() }
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(alignment: .bottom) { Divider() }
     }
-}
 
-private struct FlowTags: View {
-    let tags: [CustomerMemoTag]
+    private func title(_ text: String) -> some View {
+        Text(text).font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
+    }
 
-    var body: some View {
-        // 단순 래핑 없이 세로 나열(간단 스켈레톤). 필요 시 Layout으로 개선.
-        VStack(alignment: .leading, spacing: 6) {
-            ForEach(Array(tags.enumerated()), id: \.offset) { item in
-                let tag = item.element
-                HStack(spacing: 6) {
-                    ColorDot(color: Color(hex: tag.color) ?? .gray, size: 10)
-                    Text(tag.text)
+    private var empty: some View {
+        Text(Self.emptyText)
+            .font(.footnote).foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity).padding(.vertical, 8)
+    }
+
+    /// 연락처·적립금·노쇼(웹 `StyledInfoList`) + 방문 통계·첫 방문(웹엔 없는 iOS 정보 — 작게 유지, 지시자 2026-10-23).
+    private var infoRows: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+                GridRow {
+                    label("연락처")
+                    if customer.formattedTel.isEmpty { Text("-") } else { TelLink(customer: customer) }
                 }
+                GridRow { label("적립금"); Text(formatWon(customer.points ?? 0)) }
+                GridRow {
+                    label("노쇼")
+                    // 웹 StyledNoshowCount — 있으면 노쇼 색 굵게
+                    Text("\(stats.noshow)회")
+                        .fontWeight(stats.noshow > 0 ? .bold : .regular)
+                        .foregroundStyle(stats.noshow > 0 ? CustomerStats.EffectiveStatus.noshow.tone.foreground : .primary)
+                }
+            }
+            .font(.subheadline)
+
+            // 웹과 같은 4버킷 — 상태 없는 지난 예약은 '완료'로 친다.
+            let counts = stats.total > 0 ? CustomerStats.EffectiveStatus.allCases.map { "\($0.label) \(stats.count($0))" } : []
+            let first = customer.firstVisitDate.flatMap { $0.isEmpty ? nil : ["첫 방문 \($0)"] } ?? []
+            if !(counts + first).isEmpty {
+                Text((counts + first).joined(separator: " · ")).font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func label(_ text: String) -> some View {
+        Text(text).foregroundStyle(.secondary).gridColumnAlignment(.leading)
+    }
+
+    /// 고객 메모 — 웹 `CustomerMemoTagSection` 보기 모드. 추가·삭제는 "수정"(웹·안드로이드와 같다).
+    @ViewBuilder private var memoSection: some View {
+        title("고객 메모")
+        if let tags = customer.memoTags, !tags.isEmpty {
+            WrapLayout(spacing: 6) { ForEach(Array(tags.enumerated()), id: \.offset) { MemoTagPill(tag: $0.element) } }
+        } else {
+            empty
+        }
+    }
+
+    /// 적립금 이력 — 최근 1건 + 더보기(전체). 예약에서 생긴 이력은 누르면 그 예약.
+    @ViewBuilder private var pointHistorySection: some View {
+        HStack(spacing: 8) {
+            title("적립금 이력 (\(histories.count))")
+            Spacer(minLength: 0)
+            if histories.count > 1 {
+                NavigationLink("더보기") { allHistories }
+                    .font(.footnote.weight(.semibold))
+                    .frame(minHeight: 44)
+                    .accessibilityHint("적립금 이력 전체 보기")
+            }
+        }
+        if let latest = histories.first {
+            historyRow(latest)
+        } else {
+            empty
+        }
+        if pointsEnabled {
+            HStack(spacing: 8) {
+                Spacer(minLength: 0)
+                Button("적립금 조정") { showPointAdjust = true }.buttonStyle(.action())
+                if pointSettings?.enableRecharge == true {
+                    Button("적립금 충전") { showPointRecharge = true }.buttonStyle(.action())
+                }
+            }
+        }
+    }
+
+    private var allHistories: some View {
+        List(histories) { historyRow($0) }
+            .navigationTitle("적립금 이력 (\(histories.count))")
+            .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder private func historyRow(_ entry: PointHistoryEntry) -> some View {
+        if let id = entry.relatedReservationId, let reservation = reservations.first(where: { $0.id == id }) {
+            Button { onReservationTap(reservation) } label: { PointHistoryRow(entry: entry) }
+                .buttonStyle(.plain)
+                .accessibilityHint("예약 상세 열기")
+        } else {
+            PointHistoryRow(entry: entry)
+        }
+    }
+
+    /// 예약 내역 — 5건씩 더보기(웹 `CustomerReservationCards`).
+    @ViewBuilder private var reservationSection: some View {
+        let list = RevenueStats.sortedChronologically(reservations) // 웹: 오래된 것부터
+        let today = KST.dayKey.string(from: Date())
+        VStack(alignment: .leading, spacing: 8) {
+            title("예약 내역 (\(list.count))")
+            if list.isEmpty { empty }
+            ForEach(list.prefix(visibleCount)) { reservation in
+                let rowAssignee = reservation.assigneeId.flatMap { assigneesById[$0] }
+                Button {
+                    onReservationTap(reservation)
+                } label: {
+                    ReservationInfoCard(
+                        reservation: reservation,
+                        serviceColorMap: serviceColorMap,
+                        assigneeName: rowAssignee?.name,
+                        assigneeColor: Color(hex: rowAssignee?.color),
+                        showDate: true,
+                        showPrice: true,
+                        // 날짜로 판정한 상태로 덮는다 — `displayState`는 날짜를 몰라 지난 예약도 '예약'으로 그린다.
+                        statusOverride: CustomerStats.effectiveStatus(reservation, today: today)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            if list.count > visibleCount {
+                Button("더보기") { visibleCount += Self.pageSize }
+                    .buttonStyle(.action())
+                    .frame(maxWidth: .infinity)
+                    .accessibilityHint("예약 내역 더 보기")
             }
         }
     }
@@ -186,10 +253,11 @@ private struct PointHistoryRow: View {
     let entry: PointHistoryEntry
 
     var body: some View {
-        HStack {
+        HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.type.label).font(.subheadline)
                 Text(entry.description).font(.caption).foregroundStyle(.secondary)
+                Text(KST.timestampLabel(entry.createdAt)).font(.caption2).foregroundStyle(.secondary)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
@@ -199,6 +267,8 @@ private struct PointHistoryRow: View {
                 Text("잔액 \(formatWon(entry.balance))").font(.caption2).foregroundStyle(.secondary)
             }
         }
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
     }
 
     private func signed(_ value: Int) -> String {
