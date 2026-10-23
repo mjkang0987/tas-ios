@@ -104,6 +104,8 @@ struct CustomersView: View {
                     }
                     // 웹: 펼친 행은 아래 선을 굵게 — 목록 구분선 대신 펼침 상태를 알린다
                     .listRowSeparatorTint(isOpen ? .primary : nil)
+                    // 웹 행 여백(위아래 10) — 시스템 기본보다 좁혀 한 화면에 더 보이게
+                    .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 8))
                 }
                 .listStyle(.plain)
                 .refreshable { await viewModel.load() }
@@ -135,79 +137,92 @@ private struct CustomerRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 6) {
-                Button(action: onNameTap) {
-                    // 웹 `AddressCustomerSummary` 처럼 굵은 검정 — 눌리는 건 VoiceOver 힌트가 알린다
-                    highlightedText(customer.name, range: nameMatchRange)
-                        .font(.tasBody.weight(.bold))
-                        .foregroundStyle(Color.textPrimary)
+        // 웹 `AddressCustomerSummary` 배치: 왼쪽 세 줄(이름·연락처 / 최근 서비스 / 적립금 · 상태 수), 오른쪽 가운데 화살표
+        HStack(alignment: .center, spacing: 4) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Button(action: onNameTap) {
+                        // 웹처럼 굵은 검정 — 눌리는 건 VoiceOver 힌트가 알린다
+                        highlightedText(customer.name, range: nameMatchRange)
+                            .font(.tasBody.weight(.bold))
+                            .foregroundStyle(Color.textPrimary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("고객 상세 열기")
+                    // 웹처럼 연락처를 누르면 전화
+                    TelLink(customer: customer).font(.tasBody)
                 }
-                .buttonStyle(.plain)
-                .accessibilityHint("고객 상세 열기")
-                // 웹처럼 연락처를 누르면 전화
-                TelLink(customer: customer).font(.tasBody)
-                Spacer(minLength: 0)
-                // 적립금은 웹처럼 라벨과 함께 항상 보인다(0도) — 없다가 생기면 행 높이가 흔들린다.
-                // 단위는 앱 전체가 쓰는 P로 맞춘다(상세·병합·조정 화면 모두 P).
-                Text("적립금").font(.caption2).foregroundStyle(Color.textSecondary)
-                Text(formatWon(customer.points ?? 0))
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.tint)
-                    .monospacedDigit()
-                // 웹 StyledArrow — 펼치면 아래로. 글자 줄 높이는 그대로, 누르는 영역만 44로 넓힌다.
-                Button(action: onToggle) {
-                    Image(systemName: "chevron.right")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(Color.textSecondary)
-                        .rotationEffect(.degrees(isOpen ? 90 : 0))
-                        .frame(width: 24, height: 24)
-                        .contentShape(Rectangle().inset(by: -10))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(customer.name) 예약 내역")
-                .accessibilityValue(isOpen ? "펼침" : "접힘")
-            }
 
-            if !matchedMemoTags.isEmpty {
-                // 색 점 자체가 "이 메모 때문에 걸렸다"는 근거라 글자 안에 다시 마킹을 얹지 않는다
-                // (상세 화면 `FlowTags`와 같은 표시 방식 재사용, 컨텍스트만 목록 행).
-                // 태그가 여럿이거나 길면 한 줄로는 잘리므로 상태 배지와 같은 WrapLayout으로 줄바꿈한다.
-                WrapLayout(spacing: 8) {
-                    ForEach(Array(matchedMemoTags.enumerated()), id: \.offset) { item in
-                        HStack(spacing: 4) {
-                            ColorDot(color: Color(hex: item.element.color) ?? .gray, size: 8)
-                            // WrapLayout은 한 줄 높이로 측정하고 폭만 잘라 배치한다 — lineLimit(1)이
-                            // 없으면 폭보다 긴 태그가 두 줄로 감싸이면서 레이아웃이 어긋난다.
-                            Text(item.element.text).lineLimit(1)
+                if !matchedMemoTags.isEmpty {
+                    // 색 점 자체가 "이 메모 때문에 걸렸다"는 근거라 글자 안에 다시 마킹을 얹지 않는다
+                    // (상세 화면 `FlowTags`와 같은 표시 방식 재사용, 컨텍스트만 목록 행).
+                    // 태그가 여럿이거나 길면 한 줄로는 잘리므로 상태 배지와 같은 WrapLayout으로 줄바꿈한다.
+                    WrapLayout(spacing: 8) {
+                        ForEach(Array(matchedMemoTags.enumerated()), id: \.offset) { item in
+                            HStack(spacing: 4) {
+                                ColorDot(color: Color(hex: item.element.color) ?? .gray, size: 8)
+                                // WrapLayout은 한 줄 높이로 측정하고 폭만 잘라 배치한다 — lineLimit(1)이
+                                // 없으면 폭보다 긴 태그가 두 줄로 감싸이면서 레이아웃이 어긋난다.
+                                Text(item.element.text).lineLimit(1)
+                            }
                         }
                     }
+                    .font(.caption2)
+                    .foregroundStyle(Color.textSecondary)
                 }
-                .font(.caption2)
-                .foregroundStyle(Color.textSecondary)
+
+                HStack(spacing: 6) {
+                    Text("최근 \(labels.service)").font(.tasSmall).foregroundStyle(Color.textSecondary)
+                    if let recent = stats.recentService {
+                        ServiceChipList(service: recent, colorMap: serviceColorMap, wraps: false)
+                    } else {
+                        Text("-").font(.tasSmall).foregroundStyle(Color.textTertiary)
+                    }
+                }
+
+                // 적립금(왼쪽) · 상태 수(오른쪽) 한 줄 — 좁은 폭·큰 글자면 두 줄로(숫자가 잘리지 않게)
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 6) { points; Spacer(minLength: 4); counts }
+                    VStack(alignment: .leading, spacing: 4) { points; counts }
+                }
             }
 
-            HStack(spacing: 6) {
-                Text("최근 \(labels.service)").font(.caption2).foregroundStyle(Color.textSecondary)
-                if let recent = stats.recentService {
-                    ServiceChipList(service: recent, colorMap: serviceColorMap, wraps: false)
-                } else {
-                    Text("-").font(.caption2).foregroundStyle(Color.textTertiary)
-                }
+            // 웹 StyledArrow — 펼치면 아래로. 누르는 영역은 44.
+            Button(action: onToggle) {
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Color.textSecondary)
+                    .rotationEffect(.degrees(isOpen ? 90 : 0))
+                    .frame(width: 28, height: 44)
+                    .contentShape(Rectangle())
             }
-
-            // 건수 0인 상태도 웹처럼 전부 노출한다 — 행마다 배지 개수가 달라지면 훑기 어렵다.
-            // 좁은 폭·큰 글자에서 배지가 줄어들면 숫자가 잘리므로(웹은 flex-shrink: 0) 줄을 바꾼다.
-            WrapLayout(spacing: 4) {
-                ForEach(CustomerStats.EffectiveStatus.summaryOrder, id: \.self) { status in
-                    StatusCountBadge(status: status, count: stats.count(status))
-                }
-            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(customer.name) 예약 내역")
+            .accessibilityValue(isOpen ? "펼침" : "접힘")
         }
-        .padding(.vertical, 3)
         .contentShape(Rectangle())
         // 이름 버튼 밖 아무 데나 눌러도 펼친다(웹 행 클릭). 낭독기는 오른쪽 화살표 버튼으로.
         .onTapGesture(perform: onToggle)
+    }
+
+    /// 적립금은 웹처럼 라벨과 함께 항상 보인다(0도) — 없다가 생기면 행 높이가 흔들린다.
+    private var points: some View {
+        HStack(spacing: 4) {
+            Text("적립금").foregroundStyle(Color.textSecondary)
+            Text(formatWon(customer.points ?? 0)).fontWeight(.bold).foregroundStyle(Color.textPrimary).monospacedDigit()
+        }
+        .font(.tasSmall)
+        .fixedSize()
+    }
+
+    /// 건수 0인 상태도 웹처럼 전부 — 행마다 배지 개수가 달라지면 훑기 어렵다.
+    private var counts: some View {
+        HStack(spacing: 4) {
+            ForEach(CustomerStats.EffectiveStatus.summaryOrder, id: \.self) { status in
+                StatusCountBadge(status: status, count: stats.count(status))
+            }
+        }
+        .fixedSize()
     }
 }
 
