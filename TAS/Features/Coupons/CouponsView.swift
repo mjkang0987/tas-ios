@@ -222,14 +222,14 @@ struct CouponsView: View {
                     .disabled(viewModel.activeProducts.isEmpty)
                 if viewModel.activeProducts.isEmpty {
                     Text("직접 발급할 수 있는 쿠폰이 없습니다. (보관·코드형 제외)")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(Color.textSecondary)
                 }
             }
             if let err = viewModel.actionError {
-                Section { Text(err).font(.footnote).foregroundStyle(.red) }
+                Section { Text(err).font(.footnote).foregroundStyle(Color.dangerText) }
             }
             if viewModel.issued.isEmpty {
-                Section { Text("발급된 쿠폰이 없습니다.").font(.footnote).foregroundStyle(.secondary) }
+                Section { Text("발급된 쿠폰이 없습니다.").font(.footnote).foregroundStyle(Color.textSecondary) }
             } else {
                 Section("발급 내역") {
                     ForEach(viewModel.issued) { c in
@@ -253,9 +253,9 @@ private struct CouponRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
-                Text(product.name).font(.subheadline.weight(.medium)).lineLimit(1)
+                Text(product.name).font(.tasBody.weight(.medium)).lineLimit(1)
                 if product.status != "active" {
-                    Text("보관").font(.caption2).foregroundStyle(.secondary)
+                    Text("보관").font(.caption2).foregroundStyle(Color.textSecondary)
                 }
                 Spacer()
                 Text(CouponFormatting.discountText(product.discountType, product.discountValue, product.maxDiscount))
@@ -263,18 +263,18 @@ private struct CouponRow: View {
             }
             HStack(spacing: 8) {
                 if let c = product.code, !c.isEmpty {
-                    Label(c, systemImage: "barcode").font(.caption2).foregroundStyle(.secondary)
+                    Label(c, systemImage: "barcode").font(.caption2).foregroundStyle(Color.textSecondary)
                 } else {
-                    Text("직접발급").font(.caption2).foregroundStyle(.secondary)
+                    Text("직접발급").font(.caption2).foregroundStyle(Color.textSecondary)
                 }
                 if let v = product.validDays, v > 0 {
-                    Text("유효 \(v)일").font(.caption2).foregroundStyle(.secondary)
+                    Text("유효 \(v)일").font(.caption2).foregroundStyle(Color.textSecondary)
                 }
                 if let m = product.minOrderAmount, m > 0 {
-                    Text("최소 \(formatWon(m))").font(.caption2).foregroundStyle(.secondary)
+                    Text("최소 \(formatWon(m))").font(.caption2).foregroundStyle(Color.textSecondary)
                 }
                 if product.oncePerCustomer {
-                    Text("고객당 1장").font(.caption2).foregroundStyle(.secondary)
+                    Text("고객당 1장").font(.caption2).foregroundStyle(Color.textSecondary)
                 }
             }
         }
@@ -295,16 +295,16 @@ private struct IssuedCouponRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Text(customerName).font(.subheadline.weight(.semibold))
-                Text(coupon.name).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Text(customerName).font(.tasBody.weight(.semibold))
+                Text(coupon.name).font(.caption).foregroundStyle(Color.textSecondary).lineLimit(1)
                 Spacer()
                 Text(coupon.status.label)
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(isActive ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(isActive ? Color.accentColor : Color.textSecondary)
             }
             HStack(spacing: 10) {
                 Text(CouponFormatting.discountText(coupon.discountType, coupon.discountValue, coupon.maxDiscount))
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(Color.textSecondary)
                 Spacer()
                 if isActive {
                     Button("취소", role: .destructive) { Task { await onCancel() } }
@@ -373,7 +373,7 @@ private struct CouponIssueSheet: View {
                                 HStack {
                                     Text(c.name)
                                     Spacer()
-                                    Text(c.formattedTel).font(.caption).foregroundStyle(.secondary)
+                                    Text(c.formattedTel).font(.caption).foregroundStyle(Color.textSecondary)
                                 }
                             }
                             .buttonStyle(.plain)
@@ -391,10 +391,10 @@ private struct CouponIssueSheet: View {
                 }
 
                 if let blockedReason {
-                    Section { Text(blockedReason).font(.footnote).foregroundStyle(.orange) }
+                    Section { Text(blockedReason).font(.footnote).foregroundStyle(Color.warningText) }
                 }
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle("쿠폰 발급")

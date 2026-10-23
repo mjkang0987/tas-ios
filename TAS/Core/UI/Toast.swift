@@ -34,7 +34,7 @@ private struct ToastModifier: ViewModifier {
             if let toast {
                 HStack(spacing: 8) {
                     Image(systemName: toast.icon).accessibilityHidden(true)
-                    Text(toast.text).font(.subheadline.weight(.medium)).fixedSize(horizontal: false, vertical: true)
+                    Text(toast.text).font(.tasBody.weight(.medium)).fixedSize(horizontal: false, vertical: true)
                     Button { self.toast = nil } label: {
                         Image(systemName: "xmark").font(.caption.weight(.bold)).frame(width: 32, height: 32)
                     }

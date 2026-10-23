@@ -117,7 +117,7 @@ struct ReservationInfoCard: View {
             if showDate {
                 Text(reservation.date)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.textSecondary)
                     .monospacedDigit()
             }
             switch timeMode {
@@ -125,16 +125,16 @@ struct ReservationInfoCard: View {
                 EmptyView()
             case .start:
                 Text(reservation.startTime)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.tasBody.weight(.semibold))
                     .monospacedDigit()
             case .range:
                 // 웹은 시작·종료를 같은 굵기·색으로 쌓는다 — 줄바꿈 자체가 범위를 뜻한다.
                 // 종료만 흐리면 "언제 끝나는지"가 부가정보처럼 읽힌다.
                 Text(reservation.startTime)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.tasBody.weight(.semibold))
                     .monospacedDigit()
                 Text(reservation.endTime)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.tasBody.weight(.semibold))
                     .monospacedDigit()
             }
         }
@@ -152,7 +152,7 @@ struct ReservationInfoCard: View {
                 HStack(spacing: 6) {
                     // 웹과 같은 차례 — 배지가 이름 앞에 선다.
                     if isNewCustomer { NewCustomerBadge() }
-                    Text(customerName).font(.subheadline.weight(.semibold))
+                    Text(customerName).font(.tasBody.weight(.semibold))
                 }
             }
             ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false, inactive: isInactive)
@@ -177,7 +177,7 @@ struct ReservationInfoCard: View {
             if showPrice {
                 Text(formatWon(reservation.price ?? 0))
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.textSecondary)
                     .monospacedDigit()
             }
         }

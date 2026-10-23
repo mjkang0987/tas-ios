@@ -46,8 +46,8 @@ struct GuestConsentView: View {
                 .foregroundStyle(Color.accentColor)
             Text("약관 동의").font(.title2.weight(.bold))
             Text("TAS 이용을 위해 아래 약관에 동의해 주세요.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.tasBody)
+                .foregroundStyle(Color.textSecondary)
                 .multilineTextAlignment(.center)
         }
     }
@@ -71,7 +71,7 @@ struct GuestConsentView: View {
                 guest.agreeToTerms()
             } label: {
                 Text("동의하고 시작하기")
-                    .font(.headline)
+                    .font(.tasTitle)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
             }
@@ -80,8 +80,8 @@ struct GuestConsentView: View {
             .disabled(!allAgreed)
 
             Button("동의 안 함") { showDecline = true }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(.tasBody)
+                .foregroundStyle(Color.textSecondary)
         }
         .padding(.horizontal, 24)
         .padding(.top, 12)
@@ -104,12 +104,12 @@ private struct ConsentRow: View {
             HStack(spacing: 12) {
                 Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
-                    .foregroundStyle(isOn ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(isOn ? Color.accentColor : Color.textSecondary)
                 if required {
-                    Text("(필수) ").font(.subheadline.weight(.semibold)).foregroundColor(.accentColor)
-                        + Text(text).font(.subheadline)
+                    Text("(필수) ").font(.tasBody.weight(.semibold)).foregroundColor(.accentColor)
+                        + Text(text).font(.tasBody)
                 } else {
-                    Text(text).font(emphasized ? .body.weight(.bold) : .subheadline)
+                    Text(text).font(emphasized ? Font.tasLarge.weight(.bold) : .tasBody)
                 }
                 Spacer()
             }

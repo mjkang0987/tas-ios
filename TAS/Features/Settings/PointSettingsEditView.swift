@@ -31,7 +31,7 @@ struct PointSettingsEditView: View {
                             TextField("0", value: $serviceRate, format: .number)
                                 .keyboardType(.numberPad)
                                 .multilineTextAlignment(.trailing)
-                            Text("%").foregroundStyle(.secondary)
+                            Text("%").foregroundStyle(Color.textSecondary)
                         }
                     }
                 } header: {
@@ -48,7 +48,7 @@ struct PointSettingsEditView: View {
                         ForEach(Array(rules.enumerated()), id: \.offset) { i, rule in
                             HStack {
                                 Text(formatWon(rule.baseAmount))
-                                Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.tertiary)
+                                Image(systemName: "arrow.right").font(.caption2).foregroundStyle(Color.textTertiary)
                                 Text("+\(formatWon(rule.bonusAmount))").foregroundStyle(.tint)
                                 Spacer()
                             }
@@ -56,7 +56,7 @@ struct PointSettingsEditView: View {
                         .onDelete { rules.remove(atOffsets: $0) }
                         HStack {
                             TextField("충전액", value: $newBase, format: .number).keyboardType(.numberPad)
-                            Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.tertiary)
+                            Image(systemName: "arrow.right").font(.caption2).foregroundStyle(Color.textTertiary)
                             TextField("보너스", value: $newBonus, format: .number).keyboardType(.numberPad)
                             Button("추가", action: addRule).buttonStyle(.borderless)
                         }
@@ -66,7 +66,7 @@ struct PointSettingsEditView: View {
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle("적립금 설정")

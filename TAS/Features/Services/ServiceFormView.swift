@@ -52,18 +52,18 @@ struct ServiceFormView: View {
                         Text("가격")
                         Spacer()
                         TextField("0", value: $price, format: .number).keyboardType(.numberPad).multilineTextAlignment(.trailing)
-                        Text("원").foregroundStyle(.secondary)
+                        Text("원").foregroundStyle(Color.textSecondary)
                     }
                     HStack {
                         Text("소요시간")
                         Spacer()
                         TextField("30", value: $duration, format: .number).keyboardType(.numberPad).multilineTextAlignment(.trailing)
-                        Text("분").foregroundStyle(.secondary)
+                        Text("분").foregroundStyle(Color.textSecondary)
                     }
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle(isEditing ? "\(labels.service) 수정" : "\(labels.service) 추가")

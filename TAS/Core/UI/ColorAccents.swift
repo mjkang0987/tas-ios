@@ -34,7 +34,7 @@ struct HatchPattern: View {
     var noshow: Bool = false
 
     private var tint: Color {
-        noshow ? BadgeTone.noshow.foreground.opacity(0.18) : Color.primary.opacity(0.05)
+        noshow ? BadgeTone.noshow.foreground.opacity(0.18) : Color.textPrimary.opacity(0.05)
     }
 
     var body: some View {

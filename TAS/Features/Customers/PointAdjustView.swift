@@ -38,7 +38,7 @@ struct PointAdjustView: View {
                         TextField("0", value: $amount, format: .number)
                             .keyboardType(.numberPad)
                             .multilineTextAlignment(.trailing)
-                        Text("원").foregroundStyle(.secondary)
+                        Text("원").foregroundStyle(Color.textSecondary)
                     }
                     TextField("사유 (선택)", text: $reason)
                 } header: {
@@ -48,7 +48,7 @@ struct PointAdjustView: View {
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle("적립금 조정")

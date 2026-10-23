@@ -17,7 +17,7 @@ struct ReservationHistoryView: View {
                     Section {
                         let diffs = diffs(entry)
                         if diffs.isEmpty {
-                            Text("세부 변경").font(.subheadline).foregroundStyle(.secondary)
+                            Text("세부 변경").font(.tasBody).foregroundStyle(Color.textSecondary)
                         } else {
                             ForEach(Array(diffs.enumerated()), id: \.offset) { _, d in
                                 diffRow(d)
@@ -31,7 +31,7 @@ struct ReservationHistoryView: View {
                             Spacer()
                             Text(KST.timestampLabel(entry.timestamp))
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.textSecondary)
                         }
                     }
                 }
@@ -45,16 +45,16 @@ struct ReservationHistoryView: View {
         HStack(spacing: 8) {
             Text(d.label)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.textSecondary)
                 .frame(width: 56, alignment: .leading)
             Text(d.before)
                 .strikethrough()
-                .foregroundStyle(.secondary)
-            Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.tertiary)
+                .foregroundStyle(Color.textSecondary)
+            Image(systemName: "arrow.right").font(.caption2).foregroundStyle(Color.textTertiary)
             Text(d.after)
             Spacer()
         }
-        .font(.subheadline)
+        .font(.tasBody)
     }
 
     // MARK: - 전환 태그 / diff

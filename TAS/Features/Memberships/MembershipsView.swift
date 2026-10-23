@@ -230,14 +230,14 @@ struct MembershipsView: View {
                 }
                 .disabled(viewModel.activeProducts.isEmpty)
                 if viewModel.activeProducts.isEmpty {
-                    Text("발급할 활성 회원권 상품이 없습니다.").font(.caption).foregroundStyle(.secondary)
+                    Text("발급할 활성 회원권 상품이 없습니다.").font(.caption).foregroundStyle(Color.textSecondary)
                 }
             }
             if let err = viewModel.actionError {
-                Section { Text(err).font(.footnote).foregroundStyle(.red) }
+                Section { Text(err).font(.footnote).foregroundStyle(Color.dangerText) }
             }
             if viewModel.issued.isEmpty {
-                Section { Text("발급된 회원권이 없습니다.").font(.footnote).foregroundStyle(.secondary) }
+                Section { Text("발급된 회원권이 없습니다.").font(.footnote).foregroundStyle(Color.textSecondary) }
             } else {
                 Section("발급 내역") {
                     ForEach(viewModel.issued) { m in
@@ -263,23 +263,23 @@ private struct MembershipRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 6) {
-                Text(product.name).font(.subheadline.weight(.medium)).lineLimit(1)
+                Text(product.name).font(.tasBody.weight(.medium)).lineLimit(1)
                 if product.status != "active" {
-                    Text("보관").font(.caption2).foregroundStyle(.secondary)
+                    Text("보관").font(.caption2).foregroundStyle(Color.textSecondary)
                 }
                 Spacer()
                 Text(formatWon(product.price)).font(.caption.weight(.semibold))
             }
             HStack(spacing: 8) {
                 if let c = product.totalCount, c > 0 {
-                    Text("\(c)회").font(.caption2).foregroundStyle(.secondary)
+                    Text("\(c)회").font(.caption2).foregroundStyle(Color.textSecondary)
                 } else {
-                    Text("횟수 무제한").font(.caption2).foregroundStyle(.secondary)
+                    Text("횟수 무제한").font(.caption2).foregroundStyle(Color.textSecondary)
                 }
                 if let v = product.validDays, v > 0 {
-                    Text("유효 \(v)일").font(.caption2).foregroundStyle(.secondary)
+                    Text("유효 \(v)일").font(.caption2).foregroundStyle(Color.textSecondary)
                 } else {
-                    Text("무기한").font(.caption2).foregroundStyle(.secondary)
+                    Text("무기한").font(.caption2).foregroundStyle(Color.textSecondary)
                 }
             }
         }
@@ -307,15 +307,15 @@ private struct IssuedMembershipRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Text(customerName).font(.subheadline.weight(.semibold))
-                Text(membership.name).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Text(customerName).font(.tasBody.weight(.semibold))
+                Text(membership.name).font(.caption).foregroundStyle(Color.textSecondary).lineLimit(1)
                 Spacer()
                 Text(membership.status.label)
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(isActive ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(isActive ? Color.accentColor : Color.textSecondary)
             }
             HStack(spacing: 10) {
-                Text(countLabel).font(.caption).monospacedDigit().foregroundStyle(.secondary)
+                Text(countLabel).font(.caption).monospacedDigit().foregroundStyle(Color.textSecondary)
                 Spacer()
                 if isActive && isCountable {
                     Button("차감") { Task { await onUse() } }
@@ -378,7 +378,7 @@ private struct MembershipIssueSheet: View {
                                 HStack {
                                     Text(c.name)
                                     Spacer()
-                                    Text(c.formattedTel).font(.caption).foregroundStyle(.secondary)
+                                    Text(c.formattedTel).font(.caption).foregroundStyle(Color.textSecondary)
                                 }
                             }
                             .buttonStyle(.plain)
@@ -396,7 +396,7 @@ private struct MembershipIssueSheet: View {
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle("회원권 발급")

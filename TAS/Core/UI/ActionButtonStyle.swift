@@ -8,7 +8,7 @@ struct ActionButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.subheadline.weight(kind == .plain ? .medium : .semibold))
+            .font(.tasBody.weight(kind == .plain ? .medium : .semibold))
             .lineLimit(1)
             .padding(.horizontal, 14)
             .frame(minHeight: 44)

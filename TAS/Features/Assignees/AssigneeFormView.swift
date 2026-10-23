@@ -62,12 +62,12 @@ struct AssigneeFormView: View {
                         Text(status == .leave
                              ? "휴직 상태에서는 근무시간 설정을 접어 둡니다. 복귀 후 다시 조정할 수 있어요."
                              : "퇴직 상태에서는 예약 선택이 비활성화되며 근무시간을 표시하지 않습니다.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                            .font(.footnote).foregroundStyle(Color.textSecondary)
                     }
                 }
 
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle(editing == nil ? "\(labels.assignee) 추가" : "\(labels.assignee) 수정")
@@ -111,14 +111,14 @@ struct AssigneeFormView: View {
     private func scheduleRow(_ day: Int) -> some View {
         VStack(spacing: 4) {
             Toggle(isOn: enabledBinding(day)) {
-                Text(KST.weekdayLabels[day]).font(.body.weight(.medium))
+                Text(KST.weekdayLabels[day]).font(.tasLarge.weight(.medium))
             }
             if schedule[day].enabled {
                 HStack {
                     DatePicker("", selection: timeBinding(day, isStart: true), displayedComponents: .hourAndMinute)
                         .environment(\.timeZone, Self.seoul)
                         .labelsHidden()
-                    Text("–").foregroundStyle(.secondary)
+                    Text("–").foregroundStyle(Color.textSecondary)
                     DatePicker("", selection: timeBinding(day, isStart: false), displayedComponents: .hourAndMinute)
                         .environment(\.timeZone, Self.seoul)
                         .labelsHidden()

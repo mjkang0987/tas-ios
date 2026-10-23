@@ -58,16 +58,16 @@ struct ReservationDetailView: View {
                             ReservationHistoryView(entries: history, assigneeName: assigneeName)
                         } label: {
                             Text("변경 이력 (\(history.count))")
-                                .font(.subheadline.weight(.semibold))
+                                .font(.tasBody.weight(.semibold))
                                 .frame(minHeight: 44)
                         }
                     }
                     if isRequested {
                         Text("온라인으로 접수된 예약 신청입니다. 확정하면 예약으로 전환됩니다.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                            .font(.footnote).foregroundStyle(Color.textSecondary)
                     }
                     if let actionError {
-                        Text(actionError).font(.footnote).foregroundStyle(.red)
+                        Text(actionError).font(.footnote).foregroundStyle(Color.dangerText)
                     }
                 }
                 .padding(16)
@@ -145,13 +145,13 @@ struct ReservationDetailView: View {
             row("\(labels.assignee)") { AssigneeBadge(name: assignee?.name ?? "미지정", color: Color(hex: assignee?.color)) }
             row("예약경로") { channelValue }
         }
-        .font(.subheadline)
+        .font(.tasBody)
     }
 
     /// 라벨 | 값 한 줄 — 웹 `dt`/`dd` 2열 그리드.
     private func row<V: View>(_ label: String, @ViewBuilder value: () -> V) -> some View {
         GridRow {
-            Text(label).foregroundStyle(.secondary).gridColumnAlignment(.leading)
+            Text(label).foregroundStyle(Color.textSecondary).gridColumnAlignment(.leading)
             value().frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -163,7 +163,7 @@ struct ReservationDetailView: View {
             ToneBadge(tone: reservation.hasCompletedPayment ? .paid : .unpaid,
                       text: reservation.hasCompletedPayment ? "결제완료" : "미결제")
             if reservation.hasCompletedPayment && entries.isEmpty {
-                Text("미입력").foregroundStyle(.secondary)
+                Text("미입력").foregroundStyle(Color.textSecondary)
             }
             ForEach(Array(entries.enumerated()), id: \.offset) { item in
                 HStack {
@@ -212,7 +212,7 @@ struct ReservationDetailView: View {
                         // 네이버 초록(#03C75A) 위 흰 글자는 2.2:1 — 같은 색을 진하게 깐다(담당자 뱃지와 같은 규칙)
                         .background((Color(hex: "#03C75A") ?? .green).forWhiteText, in: RoundedRectangle(cornerRadius: 4))
                         .foregroundStyle(.white)
-                    Text(bookingId).font(.caption).foregroundStyle(.secondary)
+                    Text(bookingId).font(.caption).foregroundStyle(Color.textSecondary)
                     if let urlString = reservation.naverBookingUrl, let url = URL(string: urlString) {
                         Link("바로가기 ↗", destination: url).font(.caption.weight(.semibold))
                     }
@@ -220,7 +220,7 @@ struct ReservationDetailView: View {
                 Text("네이버예약의 실제 변경/취소는 스마트플레이스 통해서 가능합니다.")
                     .font(.caption)
                     // 웹은 진한 초록 글자 — 다크 모드에서 안 읽혀 글자는 시스템 색, 바탕만 초록으로
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color.textPrimary)
                     .padding(.horizontal, 10).padding(.vertical, 8)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background((Color(hex: "#03C75A") ?? .green).opacity(0.08), in: RoundedRectangle(cornerRadius: 8))

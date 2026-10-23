@@ -9,7 +9,7 @@ struct TelLink: View {
         let digits = customer.tel.filter(\.isNumber)
         if !digits.isEmpty, let url = URL(string: "tel:\(digits)") {
             Link(customer.formattedTel, destination: url)
-                .foregroundStyle(.primary) // 웹처럼 글자색 그대로 — 눌리는 건 VoiceOver 힌트·전화 앱이 알린다
+                .foregroundStyle(Color.textPrimary) // 웹처럼 글자색 그대로 — 눌리는 건 VoiceOver 힌트·전화 앱이 알린다
                 .accessibilityHint("전화 걸기")
         } else {
             Text(customer.formattedTel)

@@ -99,7 +99,7 @@ struct ReservationCreateView: View {
                 paymentSection
                 memoSection
                 if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(.red) }
+                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
                 }
             }
             .navigationTitle(editing == nil ? "예약 추가" : "예약 변경")
@@ -145,10 +145,10 @@ struct ReservationCreateView: View {
                 ForEach(conflicts) { r in
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.warningText)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("\(r.startTime)–\(r.endTime) · \(customerLabel(r.customerId))")
-                                .font(.subheadline.weight(.medium))
+                                .font(.tasBody.weight(.medium))
                             if !r.service.isEmpty {
                                 ServiceChipList(service: r.service, colorMap: serviceColorMap)
                             }
@@ -186,7 +186,7 @@ struct ReservationCreateView: View {
                         HStack {
                             Text(c.name)
                             Spacer()
-                            Text(c.formattedTel).font(.caption).foregroundStyle(.secondary)
+                            Text(c.formattedTel).font(.caption).foregroundStyle(Color.textSecondary)
                         }
                     }
                     .buttonStyle(.plain)
@@ -240,14 +240,14 @@ struct ReservationCreateView: View {
         Section {
             if catalog.isEmpty {
                 Text("등록된 \(labels.service.josa(.iGa)) 없습니다. 설정에서 먼저 추가해주세요.")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(.footnote).foregroundStyle(Color.textSecondary)
             } else {
                 ForEach(serviceRows) { row in
                     switch row {
                     case .header(let category):
                         Text(category)
                             .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.textSecondary)
                     case .item(let item):
                         serviceItemRow(item)
                     }
@@ -259,7 +259,7 @@ struct ReservationCreateView: View {
                 Spacer()
                 if !selectedServices.isEmpty {
                     Text("\(totalDuration)분 · \(formatWon(totalPrice))")
-                        .font(.caption).textCase(nil).foregroundStyle(.secondary)
+                        .font(.caption).textCase(nil).foregroundStyle(Color.textSecondary)
                 }
             }
         }
@@ -275,11 +275,11 @@ struct ReservationCreateView: View {
                 ServiceChip(
                     name: item.name,
                     color: ServiceColor.color(item.name, in: serviceColorMap),
-                    font: .subheadline
+                    font: .tasBody
                 )
                 Spacer()
                 Text("\(formatWon(item.price)) · \(item.durationMinutes)분")
-                    .font(.caption).foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(Color.textSecondary)
             }
         }
         .buttonStyle(.plain)
@@ -353,7 +353,7 @@ struct ReservationCreateView: View {
                     .onChange(of: price) { _, _ in
                         if suppressPriceChange { suppressPriceChange = false } else { isPriceManual = true }
                     }
-                Text("원").foregroundStyle(.secondary)
+                Text("원").foregroundStyle(Color.textSecondary)
             }
         }
     }

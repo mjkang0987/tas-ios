@@ -54,7 +54,7 @@ struct PointManageView: View {
             .sorted { ($0.points ?? 0, $1.name) > ($1.points ?? 0, $0.name) }
         Section {
             if holders.isEmpty {
-                Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(.secondary)
+                Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(Color.textSecondary)
             }
             ForEach(holders) { customer in
                 VStack(alignment: .leading, spacing: 8) {
@@ -64,7 +64,7 @@ struct PointManageView: View {
                             .accessibilityHint("고객 상세 열기")
                         if !customer.formattedTel.isEmpty { TelLink(customer: customer).font(.caption) }
                         Spacer()
-                        Text(formatWon(customer.points ?? 0)).font(.subheadline.weight(.bold)).monospacedDigit()
+                        Text(formatWon(customer.points ?? 0)).font(.tasBody.weight(.bold)).monospacedDigit()
                     }
                     .buttonStyle(.borderless)
                     ForEach((customer.pointHistories ?? []).reversed()) { entry in
@@ -123,7 +123,7 @@ private struct PointAdjustSection: View {
                 .textInputAutocapitalization(.never)
             if let error { Text(error).font(.footnote).foregroundStyle(Color.dangerText) }
             if filtered.isEmpty {
-                Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(.secondary)
+                Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(Color.textSecondary)
             }
             ForEach(filtered) { customer in
                 VStack(alignment: .leading, spacing: 8) {
@@ -131,9 +131,9 @@ private struct PointAdjustSection: View {
                         Button(customer.name) { onOpen(customer.id) }
                             .foregroundStyle(Color.linkText)
                             .accessibilityHint("고객 상세 열기")
-                        Text(customer.formattedTel).font(.caption).foregroundStyle(.secondary)
+                        Text(customer.formattedTel).font(.caption).foregroundStyle(Color.textSecondary)
                         Spacer()
-                        Text(formatWon(customer.points ?? 0)).font(.subheadline.weight(.bold)).monospacedDigit()
+                        Text(formatWon(customer.points ?? 0)).font(.tasBody.weight(.bold)).monospacedDigit()
                     }
                     HStack(spacing: 8) {
                         TextField("금액 입력", text: amountBinding(customer.id))

@@ -184,7 +184,7 @@ struct CalendarView: View {
                 ForEach(Array(KST.calendarWeekdayLabels.enumerated()), id: \.offset) { i, s in
                     Text(s)
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(i == 0 || i == 6 ? Color.secondary : Color.primary)
+                        .foregroundStyle(i == 0 || i == 6 ? Color.textSecondary : Color.textPrimary)
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -232,13 +232,13 @@ struct CalendarView: View {
         } label: {
             VStack(spacing: 2) {
                 Text(inMonth ? "\(day)" : "\(month)/\(day)")
-                    .font(.subheadline.weight(isSelected ? .bold : .regular))
+                    .font(.tasBody.weight(isSelected ? .bold : .regular))
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                     .padding(.horizontal, inMonth ? 0 : 4)
                     .frame(minWidth: 28, minHeight: 28)
                     .background(isSelected ? Color.brandFill : (isToday ? Color.accentColor.opacity(0.18) : Color.clear), in: Capsule())
-                    .foregroundStyle(isSelected ? Color.white : (inMonth ? Color.primary : Color.secondary))
+                    .foregroundStyle(isSelected ? Color.white : (inMonth ? Color.textPrimary : Color.textSecondary))
                 if items.count > 1 {
                     Text("\(items.count)").font(.caption2.weight(.semibold)).foregroundStyle(Color.accentColor)
                 } else if let single {
@@ -271,7 +271,7 @@ struct CalendarView: View {
         return Text(viewModel.customerName(r.customerId))
             .font(.caption2)
             .strikethrough(inactive)
-            .foregroundStyle(inactive ? Color.secondary : Color.primary)
+            .foregroundStyle(inactive ? Color.textSecondary : Color.textPrimary)
             .lineLimit(1)
             .padding(.leading, 5).padding(.trailing, 2).padding(.vertical, 1)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -296,7 +296,7 @@ struct CalendarView: View {
                 Text(selectedDayLabel).font(.footnote.weight(.semibold))
                 Spacer()
                 if summary.count > 0 {
-                    Text("\(summary.count)건 · \(formatWon(summary.total))").font(.caption).foregroundStyle(.secondary)
+                    Text("\(summary.count)건 · \(formatWon(summary.total))").font(.caption).foregroundStyle(Color.textSecondary)
                 }
             }
             .padding(.horizontal, 16)
@@ -304,7 +304,7 @@ struct CalendarView: View {
             .background(Color(.secondarySystemBackground))
             if items.isEmpty {
                 Spacer()
-                Text("\(selectedDayLabel) 예약이 없습니다.").font(.footnote).foregroundStyle(.secondary)
+                Text("\(selectedDayLabel) 예약이 없습니다.").font(.footnote).foregroundStyle(Color.textSecondary)
                 Spacer()
             } else {
                 List(items) { r in
@@ -355,7 +355,7 @@ struct CalendarView: View {
                     .overlay(alignment: .bottom) {
                         Button("자세히") { openMonth(year: year, month: m) }
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.textSecondary)
                             .padding(.horizontal, 10)
                             .frame(minHeight: 24)
                             .contentShape(Capsule())
@@ -374,12 +374,12 @@ struct CalendarView: View {
 
     private func monthCard(month: Int, summary: CalendarViewModel.PeriodSummary?, isSelected: Bool) -> some View {
         VStack(spacing: 3) {
-            Text("\(month)월").font(.subheadline.weight(.semibold))
+            Text("\(month)월").font(.tasBody.weight(.semibold))
             if let s = summary, s.count > 0 {
-                Text("\(s.count)건").font(.caption2).foregroundStyle(.secondary)
-                Text(formatWon(s.total)).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.7)
+                Text("\(s.count)건").font(.caption2).foregroundStyle(Color.textSecondary)
+                Text(formatWon(s.total)).font(.caption2).foregroundStyle(Color.textSecondary).lineLimit(1).minimumScaleFactor(0.7)
             } else {
-                Text("–").font(.caption2).foregroundStyle(.secondary)
+                Text("–").font(.caption2).foregroundStyle(Color.textSecondary)
             }
         }
         .padding(.top, 6)
@@ -423,7 +423,7 @@ struct CalendarView: View {
                 Spacer()
                 // 월 뷰의 같은 자리(선택일 머리줄)는 금액까지 보여준다 — 여기만 건수뿐이면 어긋난다.
                 if let summary, summary.count > 0 {
-                    Text("\(summary.count)건 · \(formatWon(summary.total))").font(.caption).foregroundStyle(.secondary)
+                    Text("\(summary.count)건 · \(formatWon(summary.total))").font(.caption).foregroundStyle(Color.textSecondary)
                 }
             }
             .padding(.horizontal, 16)
@@ -431,7 +431,7 @@ struct CalendarView: View {
             .background(Color(.secondarySystemBackground))
             if items.isEmpty {
                 Spacer()
-                Text("\(month)월 예약이 없습니다.").font(.footnote).foregroundStyle(.secondary)
+                Text("\(month)월 예약이 없습니다.").font(.footnote).foregroundStyle(Color.textSecondary)
                 Spacer()
             } else {
                 // 한 달치를 한 줄로 쌓으면 스크롤 중 지금 보는 게 며칠 건인지 잃는다.
@@ -534,7 +534,7 @@ struct CalendarView: View {
         HStack {
             Text("\(count)건").font(.footnote.weight(.semibold))
             Spacer()
-            Text("매출 \(formatWon(total))").font(.footnote).foregroundStyle(.secondary)
+            Text("매출 \(formatWon(total))").font(.footnote).foregroundStyle(Color.textSecondary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 5)

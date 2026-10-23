@@ -12,7 +12,7 @@ struct FilterChip: View {
         Button(action: action) {
             HStack(spacing: 5) {
                 if let color { ColorDot(color: color, size: 7) }
-                Text(label).font(.subheadline)
+                Text(label).font(.tasBody)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
