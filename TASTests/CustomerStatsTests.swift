@@ -124,6 +124,30 @@ final class CustomerStatsTests: XCTestCase {
                        CustomerStats.EffectiveStatus.allCases.count)
     }
 
+    // MARK: - 그룹
+
+    func testGroupsSkipEmptyBucketsAndKeepWebOrder() {
+        let groups = CustomerStats.groups([
+            reservation(1, "2026-08-24"),                   // 예약
+            reservation(2, "2026-08-01"),                   // 완료
+            reservation(3, "2026-08-02", status: .noshow),  // 노쇼 — 취소는 없음
+        ], today: today)
+
+        XCTAssertEqual(groups.map(\.status), [.booked, .completed, .noshow])
+        XCTAssertEqual(groups.map(\.id), groups.map(\.status))
+    }
+
+    func testGroupItemsAreFutureFirst() {
+        let groups = CustomerStats.groups([
+            reservation(1, "2026-08-01", "09:00"),
+            reservation(2, "2026-08-03", "09:00"),
+            reservation(3, "2026-08-03", "15:00"),
+        ], today: today)
+
+        let completed = groups.first { $0.status == .completed }
+        XCTAssertEqual(completed?.items.map(\.id), [3, 2, 1])
+    }
+
     func testByCustomerSummarisesEachCustomerSeparately() {
         let byCustomer = CustomerStats.byCustomer([
             1: [reservation(1, "2026-08-24")],
