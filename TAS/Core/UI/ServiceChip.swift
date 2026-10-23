@@ -12,16 +12,17 @@ struct ServiceChip: View {
     /// — 웹도 같은 이유로 칩 글자를 죽인다.
     var inactive: Bool = false
 
-    private var tint: Color { inactive ? .secondary : color }
+    private var tint: Color { inactive ? .textTertiary : color }
 
     var body: some View {
         Text(name)
             .font(font.weight(.semibold))
-            .foregroundStyle(tint)
+            // 어두운 화면에서는 같은 색을 밝혀 읽히게(`Theme.swift` tintText·tintFill)
+            .foregroundStyle(tint.tintText)
             .lineLimit(1)
             .padding(.horizontal, 7)
             .padding(.vertical, 3)
-            .background(tint.opacity(0.094), in: Capsule())
+            .background(tint.tintFill, in: Capsule())
     }
 }
 

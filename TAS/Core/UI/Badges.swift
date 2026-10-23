@@ -38,8 +38,38 @@ enum BadgeTone {
     /// 웹이 배경을 rgba로 준 톤만 불투명도를 따로 적용한다.
     var backgroundOpacity: Double { self == .paid ? 0.08 : 1 }
 
-    var foreground: Color { Color(hex: foregroundHex) ?? .gray }
-    var background: Color { (Color(hex: backgroundHex) ?? .gray.opacity(0.15)).opacity(backgroundOpacity) }
+    /// 어두운 화면 — 같은 색을 어두운 바탕에 맞춘 값(지시자 2026-10-24 시안). 글자 7:1 이상, 배지 바탕이 카드(#1C1C1E)와 구분된다.
+    /// 밝은 값을 그대로 쓰면 어두운 화면에 흰 파스텔 덩어리가 박힌다.
+    var darkForegroundHex: String {
+        switch self {
+        case .booked: return "#C2D7FB"
+        case .cancelled: return "#D1D1D6"
+        case .completed: return "#BDE5C8"
+        case .noshow: return "#FFB4AB"
+        case .paid: return "#D0BCFF"
+        case .unpaid: return "#FDE68A"
+        case .requested: return "#F6D860"
+        }
+    }
+
+    var darkBackgroundHex: String {
+        switch self {
+        case .booked: return "#1F3A63"
+        case .cancelled: return "#3A3A3C"
+        case .completed: return "#1D4A2C"
+        case .noshow: return "#5C221E"
+        case .paid: return "#3B2A6B"
+        case .unpaid: return "#574209"
+        case .requested: return "#4D3F0B"
+        }
+    }
+
+    var foreground: Color { .adaptive(light: foregroundHex, dark: darkForegroundHex) }
+    var background: Color {
+        let light = (Color(hex: backgroundHex) ?? .gray).opacity(backgroundOpacity)
+        let dark = Color(hex: darkBackgroundHex) ?? .gray
+        return Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light) })
+    }
 }
 
 /// 배지 한 칸 — 웹 `ReservationStatusBadge` styled span(3/8 패딩, radius 4, 11pt 600) 이식.
@@ -124,8 +154,9 @@ struct NewCustomerBadge: View {
             .font(.caption2.weight(.bold))
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
-            .background((Color(hex: "00A896") ?? .teal).opacity(0.15), in: RoundedRectangle(cornerRadius: 4))
-            .foregroundStyle(Color(hex: "00A896") ?? .teal)
+            // 웹 --new-customer-bg/--new-customer-color — 글자는 대비 4.5:1 이상 되게 진하게(어두운 화면은 밝게)
+            .background((Color(hex: "00A896") ?? .teal).tintFill, in: RoundedRectangle(cornerRadius: 4))
+            .foregroundStyle(Color.newCustomerText)
     }
 }
 
