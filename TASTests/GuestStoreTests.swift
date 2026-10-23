@@ -53,6 +53,63 @@ final class GuestStoreTests: XCTestCase {
         XCTAssertEqual(store.snapshot.history.count, 1)
     }
 
+    // MARK: - 취소·삭제 적립금 환원 (웹 refundPointsOnCancel)
+
+    private func paidReservation(_ id: Int) -> Reservation {
+        var r = reservation(id)
+        r.paymentCompleted = true
+        r.paymentEntries = [PaymentEntry(method: .card, amount: 20000), PaymentEntry(method: .points, amount: 3000)]
+        r.pointEarned = 1000
+        return r
+    }
+
+    func testCancelPaidReservationRefundsPointsAndClearsPayment() {
+        store.upsertCustomer(Customer(id: 1, name: "가온", tel: "", points: 5000))
+        store.createReservation(paidReservation(1))
+        store.setReservationStatus(id: 1, status: .cancelled)
+        let r = store.snapshot.reservations.first
+        XCTAssertNil(r?.paymentEntries)
+        XCTAssertEqual(r?.paymentCompleted, false)
+        XCTAssertEqual(r?.pointEarned, 0)
+        let c = store.snapshot.customers.first
+        XCTAssertEqual(c?.points, 7000) // 사용 3000 반환 − 적립 1000 회수
+        XCTAssertEqual(c?.pointHistories?.first?.type, .paymentAdjust)
+        XCTAssertEqual(c?.pointHistories?.first?.delta, 2000)
+        XCTAssertEqual(c?.pointHistories?.first?.relatedReservationId, 1)
+        // 예약전환 뒤 다시 취소해도 또 돌려주지 않는다(결제를 비웠다)
+        store.setReservationStatus(id: 1, status: .active)
+        store.setReservationStatus(id: 1, status: .cancelled)
+        XCTAssertEqual(store.snapshot.customers.first?.points, 7000)
+    }
+
+    func testDeleteAfterCancelDoesNotRefundTwice() {
+        store.upsertCustomer(Customer(id: 1, name: "가온", tel: "", points: 5000))
+        store.createReservation(paidReservation(1))
+        store.setReservationStatus(id: 1, status: .cancelled)
+        store.deleteReservation(id: 1)
+        XCTAssertEqual(store.snapshot.customers.first?.points, 7000)
+        XCTAssertEqual(store.snapshot.customers.first?.pointHistories?.count, 1)
+    }
+
+    func testNoshowKeepsPaymentAndPoints() {
+        store.upsertCustomer(Customer(id: 1, name: "가온", tel: "", points: 5000))
+        store.createReservation(paidReservation(1))
+        store.setReservationStatus(id: 1, status: .noshow)
+        XCTAssertEqual(store.snapshot.reservations.first?.paymentEntries?.count, 2)
+        XCTAssertEqual(store.snapshot.customers.first?.points, 5000)
+    }
+
+    func testDeletePaidReservationClawsBackEarnedPoints() {
+        store.upsertCustomer(Customer(id: 1, name: "가온", tel: "", points: 500))
+        var r = paidReservation(1)
+        r.paymentEntries = [PaymentEntry(method: .card, amount: 20000)]
+        store.createReservation(r)
+        store.deleteReservation(id: 1)
+        // 적립 1000 회수 — 잔액은 0 아래로 안 내려가고 이력 잔액은 그대로(웹과 같다)
+        XCTAssertEqual(store.snapshot.customers.first?.points, 0)
+        XCTAssertEqual(store.snapshot.customers.first?.pointHistories?.first?.balance, -500)
+    }
+
     func testDeleteReservation() {
         store.createReservation(reservation(1))
         store.createReservation(reservation(2))

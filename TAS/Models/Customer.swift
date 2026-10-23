@@ -30,6 +30,9 @@ struct PointHistoryEntry: Codable, Identifiable, Hashable {
     var description: String
     var createdAt: String
     var relatedReservationId: Int?
+    /// 충전 때 받은 금액(보너스 붙은 적립액 delta 와 다를 수 있다)·결제수단 — 매출로 잡힌다. 그 밖의 이력엔 없다(웹과 같다).
+    var paidAmount: Int? = nil
+    var paymentMethod: PaymentMethod? = nil
 }
 
 /// 고객 메모 태그 — customers/model.ts `CustomerMemoTag`

@@ -171,7 +171,7 @@ struct ReservationPaymentView: View {
                 previousUsed: previouslyUsed, newUsed: newUsed,
                 reservationId: reservation.id,
                 now: ISO8601DateFormatter().string(from: Date()), makeId: { UUID().uuidString }) {
-                _ = try await service.upsertCustomer(updated)
+                try await service.updateCustomer(updated)
             }
             await onCompleted()
             dismiss()

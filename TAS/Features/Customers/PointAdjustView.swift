@@ -84,7 +84,7 @@ struct PointAdjustView: View {
         updated.points = resultPoints
         updated.pointHistories = [entry] + (customer.pointHistories ?? [])
         do {
-            _ = try await service.upsertCustomer(updated)
+            try await service.updateCustomer(updated)
             await onCompleted()
             dismiss()
         } catch {

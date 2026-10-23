@@ -502,9 +502,10 @@ struct ReservationCreateView: View {
                     points: 0,
                     pointHistories: []
                 )
-                _ = try await service.upsertCustomer(newCustomer)
-                resolvedCustomerId = newCustomer.id
-                resolvedCustomer = newCustomer
+                // 서버가 번호를 다시 정할 수 있다 — 돌려받은 고객(번호)으로 예약을 건다
+                let saved = try await service.createCustomer(newCustomer)
+                resolvedCustomerId = saved.id
+                resolvedCustomer = saved
             }
             let trimmedMemo = memo.trimmingCharacters(in: .whitespaces)
             let resolvedMemo = trimmedMemo.isEmpty ? nil : trimmedMemo
@@ -550,7 +551,7 @@ struct ReservationCreateView: View {
                     to: c, previousEarned: 0, newEarned: earned, previousUsed: 0, newUsed: 0,
                     reservationId: reservation.id,
                     now: ISO8601DateFormatter().string(from: Date()), makeId: { UUID().uuidString }) {
-                    _ = try await service.upsertCustomer(updated)
+                    try await service.updateCustomer(updated)
                 }
             }
             onSaved()

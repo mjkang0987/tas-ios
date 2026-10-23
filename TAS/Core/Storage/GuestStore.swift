@@ -118,6 +118,15 @@ final class GuestStore {
             if let i = s.reservations.firstIndex(where: { $0.id == id }) {
                 let before = s.reservations[i]
                 s.reservations[i].status = status
+                // 취소면 결제를 비우고 결제에 쓴 적립금을 돌려준다(그 결제로 준 적립은 회수) — 웹·안드로이드 게스트와 같다.
+                // 결제를 남기면 예약전환 뒤 다시 취소할 때 또 돌려준다.
+                if status == .cancelled, before.status != .cancelled {
+                    s.reservations[i].paymentEntries = nil
+                    s.reservations[i].paymentCompleted = false
+                    s.reservations[i].paymentMethod = nil
+                    s.reservations[i].pointEarned = 0
+                    Self.refundPoints(&s, for: before)
+                }
                 result = s.reservations[i]
                 s.history.append(ReservationHistoryEntry(reservationId: id, before: before, after: s.reservations[i], timestamp: Self.nowISO()))
             }
@@ -128,9 +137,20 @@ final class GuestStore {
     /// 현재 시각 ISO8601 문자열(이력 timestamp용).
     private static func nowISO() -> String { ISO8601DateFormatter().string(from: Date()) }
 
-    /// 예약 영구 삭제.
+    /// 예약 영구 삭제 — 결제한 예약이면 적립금도 되돌린다(웹 `deleteReservation` 게스트 경로와 같다).
     func deleteReservation(id: Int) {
-        mutate { $0.reservations.removeAll { $0.id == id } }
+        mutate { s in
+            if let target = s.reservations.first(where: { $0.id == id }) { Self.refundPoints(&s, for: target) }
+            s.reservations.removeAll { $0.id == id }
+        }
+    }
+
+    /// 결제한 예약을 취소·삭제할 때 고객 적립금 환원(`PointMath.refundOnCancel`). 0 이면 아무것도 안 한다.
+    private static func refundPoints(_ s: inout GuestSnapshot, for reservation: Reservation) {
+        let delta = PointMath.refundOnCancel(reservation)
+        guard delta != 0, let c = s.customers.firstIndex(where: { $0.id == reservation.customerId }) else { return }
+        s.customers[c] = PointLedger.refund(s.customers[c], delta: delta, reservationId: reservation.id,
+                                            now: nowISO(), id: UUID().uuidString)
     }
 
     /// 고객 등록/수정(id 기준 upsert).
