@@ -4,6 +4,8 @@ import SwiftUI
 /// 웹 설정 > 매장관리의 PATCH /api/store 필드 중 앱에서 노출하는 부분만 편집한다.
 /// (업종·예약 슬러그는 재온보딩 영역이라 표시 전용으로 남긴다.)
 struct StoreSettingsEditView: View {
+    /// 저장 뒤 결과 문구(토스트) — 설정 화면이 띄운다(시트가 닫히며 사라지지 않게).
+    var onSaved: (String) -> Void = { _ in }
     @Environment(SessionStore.self) private var session
     @Environment(\.dismiss) private var dismiss
 
@@ -102,6 +104,7 @@ struct StoreSettingsEditView: View {
                 useOnlineBooking: useOnlineBooking
             )
             session.currentStore = updated
+            onSaved("매장 정보가 저장되었습니다.")
             dismiss()
         } catch {
             errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
