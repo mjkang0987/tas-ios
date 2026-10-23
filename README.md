@@ -64,7 +64,7 @@ TAS/
                        ServiceColor(서비스별 색) · Formatting · StoreClosedStyle
     KST.swift          매장 기준(Asia/Seoul) 날짜 유틸 · 요일 라벨(weekdayLabels)
     ReservationOverlap 담당자 중복 예약(겹침) 판정 공용 유틸
-    PointMath          적립금 산식(적립/사용) 공용 유틸
+    PointMath          적립금 산식(적립/사용·취소 환원) 공용 유틸
     NameSort           이름 정렬 규칙(고객 가나다순 · 담당자 영문→한글→기타)
     CustomerStats      고객 예약 집계(예약/완료/취소/노쇼 · 최근 시술) — 지난 예약은 완료로 판정
     RevenueStats       매출 대상·결제완료·신규/재방문 고객 판정(웹 revenue.ts 이식)
