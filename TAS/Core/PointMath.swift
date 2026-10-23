@@ -127,3 +127,23 @@ enum PointRecharge {
         return updated
     }
 }
+
+/// 수동 적립·차감(순수) — 웹 고객 상세 수동 조정·안드로이드 `adjustPoints`. 적립금 관리 '적립' 탭과 조정 화면이 같이 쓴다.
+/// 차감은 잔액까지만(0 아래로 안 간다). 금액이 0 이하이거나 바뀔 게 없으면 nil. 이력은 웹처럼 끝에 붙인다.
+enum PointAdjust {
+    static func adjusted(_ customer: Customer, amount: Int, add: Bool, reason: String = "",
+                         now: String, id: String) -> Customer? {
+        guard amount > 0 else { return nil }
+        let current = customer.points ?? 0
+        let delta = add ? amount : -min(amount, current)
+        guard delta != 0 else { return nil }
+        let trimmed = reason.trimmingCharacters(in: .whitespaces)
+        var updated = customer
+        updated.points = current + delta
+        updated.pointHistories = (customer.pointHistories ?? []) + [PointHistoryEntry(
+            id: id, type: add ? .manualAdd : .manualSubtract, delta: delta, balance: current + delta,
+            description: trimmed.isEmpty ? (add ? "수동 적립" : "수동 차감") : trimmed,
+            createdAt: now, relatedReservationId: nil)]
+        return updated
+    }
+}

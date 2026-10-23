@@ -116,4 +116,22 @@ final class PointLedgerTests: XCTestCase {
         XCTAssertNil(PointRecharge.charged(c, rule: nil, custom: 0, method: .cash, now: "t", id: "h"))
         XCTAssertNil(PointRecharge.charged(c, rule: nil, custom: -5, method: .cash, now: "t", id: "h"))
     }
+
+    // MARK: - 수동 적립·차감(안드로이드 adjustPoints)
+
+    func testAdjustAddsAndSubtractsDownToZeroOnly() {
+        let c = Customer(id: 1, name: "가", tel: "010", points: 1010, pointHistories: [])
+        let added = PointAdjust.adjusted(c, amount: 1000, add: true, now: "t", id: "a")
+        XCTAssertEqual(added?.points, 2010)
+        XCTAssertEqual(added?.pointHistories?.last?.type, .manualAdd)
+        XCTAssertEqual(added?.pointHistories?.last?.description, "수동 적립")
+        // 잔액보다 큰 차감은 잔액까지만
+        let sub = PointAdjust.adjusted(c, amount: 5000, add: false, reason: " 이벤트 ", now: "t", id: "s")
+        XCTAssertEqual(sub?.points, 0)
+        XCTAssertEqual(sub?.pointHistories?.last?.delta, -1010)
+        XCTAssertEqual(sub?.pointHistories?.last?.description, "이벤트")
+        // 0원·잔액 없는 차감은 아무것도 안 한다
+        XCTAssertNil(PointAdjust.adjusted(c, amount: 0, add: true, now: "t", id: "z"))
+        XCTAssertNil(PointAdjust.adjusted(Customer(id: 2, name: "나", tel: "010"), amount: 100, add: false, now: "t", id: "z"))
+    }
 }
