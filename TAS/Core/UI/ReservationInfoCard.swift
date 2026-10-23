@@ -25,6 +25,8 @@ struct ReservationInfoCard: View {
     /// 고객명. nil이면 고객 줄 자체를 그리지 않는다(고객 상세처럼 이미 누구인지 아는 자리).
     var customerName: String? = nil
     var isNewCustomer: Bool = false
+    /// 웹 `onCustomerClick` — 있으면 고객명을 눌러 고객 상세(카드의 나머지는 그대로 예약 상세).
+    var onCustomerTap: (() -> Void)? = nil
     /// 담당자 이름·색. 이름이 nil이면 담당자 표기를 생략한다.
     var assigneeName: String? = nil
     var assigneeColor: Color? = nil
@@ -83,6 +85,30 @@ struct ReservationInfoCard: View {
         // 카드는 통째로 눌리는 한 덩어리다. 묶지 않으면 VoiceOver 가 시간·배지·이름·
         // 시술칩·담당자·상태·금액을 따로 세워, 예약 하나를 지나는 데 여덟 번 넘긴다.
         .accessibilityElement(children: .combine)
+        // 묶인 카드에서 고객명만 따로 누를 수 없으니 VoiceOver 에는 동작으로 준다
+        .accessibilityActions {
+            if let onCustomerTap {
+                Button("고객 상세 열기", action: onCustomerTap)
+            }
+        }
+    }
+
+    /// 웹처럼 색은 그대로(굵은 검정), 취소·노쇼는 취소선. 누를 수 있으면 손가락 크기만큼 위아래로 넓혀 받는다.
+    @ViewBuilder private func customerNameText(_ name: String) -> some View {
+        let text = Text(name)
+            .font(.tasBody.weight(.semibold))
+            .strikethrough(isInactive, color: .textTertiary)
+            .foregroundStyle(isInactive ? Color.textTertiary : Color.textPrimary)
+        if let onCustomerTap {
+            // 카드(예약 상세 버튼) 안이라 Button 을 겹치면 안쪽이 눌리지 않는다 — 안쪽 제스처가 먼저 받는다
+            text
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+                .onTapGesture(perform: onCustomerTap)
+                .padding(.vertical, -12)
+        } else {
+            text
+        }
     }
 
     // MARK: - 카드 표면 (웹 StyledCard 이식)
@@ -152,7 +178,7 @@ struct ReservationInfoCard: View {
                 HStack(spacing: 6) {
                     // 웹과 같은 차례 — 배지가 이름 앞에 선다.
                     if isNewCustomer { NewCustomerBadge() }
-                    Text(customerName).font(.tasBody.weight(.semibold))
+                    customerNameText(customerName)
                 }
             }
             ServiceChipList(service: reservation.service, colorMap: serviceColorMap, wraps: false, inactive: isInactive)

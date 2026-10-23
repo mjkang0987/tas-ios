@@ -131,7 +131,7 @@ private struct PointAdjustSection: View {
                         Button(customer.name) { onOpen(customer.id) }
                             .foregroundStyle(Color.linkText)
                             .accessibilityHint("고객 상세 열기")
-                        Text(customer.formattedTel).font(.caption).foregroundStyle(Color.textSecondary)
+                        TelLink(customer: customer).font(.caption) // 웹 `PointAdjustTab` 처럼 전화
                         Spacer()
                         Text(formatWon(customer.points ?? 0)).font(.tasBody.weight(.bold)).monospacedDigit()
                     }

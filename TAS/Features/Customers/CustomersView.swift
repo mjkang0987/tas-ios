@@ -26,7 +26,9 @@ struct CustomersView: View {
             LoadableView(state: viewModel.state, loadingText: "고객 불러오는 중…") { _ in
                 list
             }
-            .navigationTitle("고객")
+            // 웹 머리처럼 제목은 왼쪽 한 줄(큰 제목 칸 없음) — 그만큼 내용이 더 보인다
+            .navigationTitle("고객 명단")
+            .toolbarTitleDisplayMode(.inlineLarge)
             .searchable(text: $viewModel.searchText, prompt: "이름 또는 전화번호")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -136,13 +138,15 @@ private struct CustomerRow: View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
                 Button(action: onNameTap) {
+                    // 웹 `AddressCustomerSummary` 처럼 굵은 검정 — 눌리는 건 VoiceOver 힌트가 알린다
                     highlightedText(customer.name, range: nameMatchRange)
-                        .font(.tasBody.weight(.medium))
-                        .foregroundStyle(Color.linkText)
+                        .font(.tasBody.weight(.bold))
+                        .foregroundStyle(Color.textPrimary)
                 }
                 .buttonStyle(.plain)
                 .accessibilityHint("고객 상세 열기")
-                Text(customer.formattedTel).font(.caption2).foregroundStyle(Color.textSecondary)
+                // 웹처럼 연락처를 누르면 전화
+                TelLink(customer: customer).font(.tasBody)
                 Spacer(minLength: 0)
                 // 적립금은 웹처럼 라벨과 함께 항상 보인다(0도) — 없다가 생기면 행 높이가 흔들린다.
                 // 단위는 앱 전체가 쓰는 P로 맞춘다(상세·병합·조정 화면 모두 P).
@@ -229,6 +233,9 @@ private struct CustomerExpandedContent: View {
     @State private var paymentMethod: PaymentMethod = .card
     @State private var isSaving = false
     @State private var error: String?
+    /// 적립금 이력 전체(웹 '더보기' 레이어). 그 안에서 예약을 누르면 시트를 닫은 뒤 예약 상세를 연다(시트 위에 또 띄울 수 없다).
+    @State private var showsAllHistories = false
+    @State private var pendingReservation: Reservation?
 
     private var histories: [PointHistoryEntry] { (customer.pointHistories ?? []).reversed() }
 
@@ -238,14 +245,18 @@ private struct CustomerExpandedContent: View {
             if canRecharge { recharge }
             if let latest = histories.first {
                 VStack(alignment: .leading, spacing: 6) {
-                    sectionTitle("적립금 이력 (\(histories.count))")
-                    if let id = latest.relatedReservationId, let reservation = groups.flatMap(\.items).first(where: { $0.id == id }) {
-                        Button { onReservationTap(reservation) } label: { PointHistoryRow(entry: latest) }
-                            .buttonStyle(.plain)
-                            .accessibilityHint("예약 상세 열기")
-                    } else {
-                        PointHistoryRow(entry: latest)
+                    HStack(spacing: 8) {
+                        sectionTitle("적립금 이력 (\(histories.count))")
+                        Spacer(minLength: 0)
+                        if histories.count > 1 {
+                            Button("더보기") { showsAllHistories = true }
+                                .font(.footnote.weight(.semibold))
+                                .buttonStyle(.borderless)
+                                .frame(minHeight: 44)
+                                .accessibilityHint("적립금 이력 전체 보기")
+                        }
                     }
+                    historyRow(latest) { onReservationTap($0) }
                 }
             }
             if let error, draftTags == nil {
@@ -255,6 +266,34 @@ private struct CustomerExpandedContent: View {
         }
         .disabled(isSaving)
         .padding(.bottom, 4)
+        .sheet(isPresented: $showsAllHistories, onDismiss: {
+            if let reservation = pendingReservation {
+                pendingReservation = nil
+                onReservationTap(reservation)
+            }
+        }) {
+            NavigationStack {
+                List(histories) { entry in
+                    historyRow(entry) { pendingReservation = $0; showsAllHistories = false }
+                }
+                .navigationTitle("적립금 이력 (\(histories.count))")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) { Button("닫기") { showsAllHistories = false } }
+                }
+            }
+        }
+    }
+
+    /// 예약에서 생긴 이력은 누르면 그 예약(웹 `AddressCustomerRecharge`), 나머지는 글자만.
+    @ViewBuilder private func historyRow(_ entry: PointHistoryEntry, open: @escaping (Reservation) -> Void) -> some View {
+        if let id = entry.relatedReservationId, let reservation = groups.flatMap(\.items).first(where: { $0.id == id }) {
+            Button { open(reservation) } label: { PointHistoryRow(entry: entry) }
+                .buttonStyle(.plain)
+                .accessibilityHint("예약 상세 열기")
+        } else {
+            PointHistoryRow(entry: entry)
+        }
     }
 
     private func sectionTitle(_ text: String) -> some View {

@@ -23,10 +23,12 @@ struct CalendarView: View {
     /// 예약 변경·고객 상세는 상세 위에 쌓인다(`DetailSheet`).
     private enum ActiveSheet: Identifiable {
         case detail(Int)          // 예약 id
+        case customer(Int)        // 고객 id — 예약 카드의 고객명(웹 `onCustomerClick`)
         case create
         var id: String {
             switch self {
             case .detail(let id): return "detail-\(id)"
+            case .customer(let id): return "customer-\(id)"
             case .create: return "create"
             }
         }
@@ -80,7 +82,7 @@ struct CalendarView: View {
                 // 고객이 보낸 예약 신청·변경·취소 요청함(웹 헤더 벨과 같은 자리).
                 if showsBookingRequests {
                     ToolbarItem(placement: .topBarTrailing) {
-                        BookingRequestsButton(onApplied: { await viewModel.reload() })
+                        BookingRequestsButton(onApplied: { await viewModel.reload() }, onOpenReservation: { activeSheet = .detail($0) })
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -97,6 +99,10 @@ struct CalendarView: View {
                 case .detail(let id):
                     if let data = viewModel.detailData {
                         DetailSheet(route: .reservation(id), data: data, reload: { await viewModel.reload() })
+                    }
+                case .customer(let id):
+                    if let data = viewModel.detailData {
+                        DetailSheet(route: .customer(id), data: data, reload: { await viewModel.reload() })
                     }
                 case .create:
                     ReservationCreateView(
@@ -475,6 +481,7 @@ struct CalendarView: View {
                 serviceColorMap: viewModel.serviceColorMap,
                 customerName: viewModel.customerName(r.customerId),
                 isNewCustomer: viewModel.isNewCustomer(r),
+                onCustomerTap: { activeSheet = .customer(r.customerId) },
                 assigneeName: assignee?.name,
                 assigneeColor: Color(hex: assignee?.color),
                 // 날짜는 섹션 머리줄이 말한다 — 카드에 또 적으면 같은 말이 두 번이다.
@@ -519,6 +526,7 @@ struct CalendarView: View {
                 serviceColorMap: viewModel.serviceColorMap,
                 customerName: viewModel.customerName(reservation.customerId),
                 isNewCustomer: viewModel.isNewCustomer(reservation),
+                onCustomerTap: { activeSheet = .customer(reservation.customerId) },
                 assigneeName: assignee?.name,
                 assigneeColor: Color(hex: assignee?.color),
                 // 웹 목록 카드는 금액까지 보여준다(ReservationListSection 의 showPrice).
@@ -634,7 +642,10 @@ struct CalendarView: View {
             closedKind: { closedKind($0) },
             customerName: { viewModel.customerName($0) },
             color: { timelineColor($0) },
-            onTap: { activeSheet = .detail($0.id) }
+            onTap: { activeSheet = .detail($0.id) },
+            onSelectDay: { key in
+                if let day = KST.dayKey.date(from: key) { selectedDate = day; mode = .day }
+            }
         )
         .refreshable { await viewModel.load() }
     }

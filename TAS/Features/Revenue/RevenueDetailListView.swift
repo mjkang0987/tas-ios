@@ -67,6 +67,7 @@ struct RevenueDetailListView: View {
                             serviceColorMap: viewModel.serviceColorMap,
                             customerName: customer?.name ?? "고객 미지정",
                             isNewCustomer: customer?.isNewCustomerVisit(on: reservation.date) ?? false,
+                            onCustomerTap: customer == nil ? nil : { route = .customer(reservation.customerId) },
                             assigneeName: assignee?.name,
                             assigneeColor: Color(hex: assignee?.color),
                             showDate: true,
