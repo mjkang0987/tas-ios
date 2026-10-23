@@ -53,7 +53,7 @@ struct RevenueDetailListView: View {
     @ViewBuilder private func content(of layer: RevenueViewModel.DetailLayer) -> some View {
         switch layer.content {
         case .reservations(let reservations):
-            if reservations.isEmpty {
+            if reservations.isEmpty && layer.sales.isEmpty {
                 Text(Self.emptyText).font(.footnote).foregroundStyle(.secondary)
             } else {
                 ForEach(reservations) { reservation in
@@ -79,6 +79,17 @@ struct RevenueDetailListView: View {
                 }
             }
 
+            // 충전 매출 — 예약이 아닌 판매(웹 `StyledSaleItem`). 고객명을 누르면 고객 상세.
+            ForEach(layer.sales) { sale in
+                Button {
+                    route = .customer(sale.customerId)
+                } label: {
+                    SaleRow(sale: sale, customerName: viewModel.customer(sale.customerId)?.name)
+                }
+                .buttonStyle(.plain)
+                .disabled(viewModel.customer(sale.customerId) == nil)
+            }
+
         case .customers(let visits):
             if visits.isEmpty {
                 Text(Self.emptyText).font(.footnote).foregroundStyle(.secondary)
@@ -96,6 +107,30 @@ struct RevenueDetailListView: View {
                 }
             }
         }
+    }
+}
+
+/// 충전 한 건 — '적립금 충전' · 고객명 · 결제수단 / 금액.
+private struct SaleRow: View {
+    let sale: RevenueStats.StoreSale
+    let customerName: String?
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("적립금 충전").font(.subheadline.weight(.semibold))
+                HStack(spacing: 6) {
+                    Text(customerName ?? "고객 미지정").foregroundStyle(Color.linkText)
+                    Text(sale.method?.rawValue ?? "결제수단 없음").foregroundStyle(.secondary)
+                }
+                .font(.caption)
+            }
+            Spacer()
+            Text(formatWon(sale.amount)).font(.subheadline.weight(.semibold)).monospacedDigit()
+        }
+        .padding(.vertical, 3)
+        .contentShape(Rectangle())
+        .accessibilityHint(customerName == nil ? "" : "고객 상세 열기")
     }
 }
 
