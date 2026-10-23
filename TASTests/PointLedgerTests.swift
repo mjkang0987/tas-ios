@@ -80,13 +80,13 @@ final class PointLedgerTests: XCTestCase {
         XCTAssertNil(updated)
     }
 
-    func testApplyPrependsNewestFirst() {
+    func testApplyAppendsInOrderLikeWeb() {
         let c = Customer(id: 1, name: "가", tel: "010", points: 8000, pointHistories: [])
-        // 사용 5000 + 적립 1500 → 이력 2건, 최신(적립)이 맨 앞.
+        // 사용 5000 + 적립 1500 → 이력 2건, 웹 appendPointHistories 처럼 일어난 순서대로 끝에 붙는다(화면은 뒤집어 최신부터).
         let updated = PointLedger.apply(
             to: c, previousEarned: 0, newEarned: 1500, previousUsed: 0, newUsed: 5000,
             reservationId: 7, now: "t", makeId: { "id" })
         XCTAssertEqual(updated?.points, 4500)
-        XCTAssertEqual(updated?.pointHistories?.map(\.type), [.paymentEarn, .paymentUse])
+        XCTAssertEqual(updated?.pointHistories?.map(\.type), [.paymentUse, .paymentEarn])
     }
 }

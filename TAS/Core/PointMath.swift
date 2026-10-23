@@ -68,10 +68,10 @@ enum PointLedger {
         let balance = (customer.points ?? 0) + delta
         var updated = customer
         updated.points = max(balance, 0)
-        updated.pointHistories = [PointHistoryEntry(
+        updated.pointHistories = (customer.pointHistories ?? []) + [PointHistoryEntry(
             id: id, type: .paymentAdjust, delta: delta, balance: balance,
             description: delta > 0 ? "예약 취소 — 결제에 쓴 적립금 반환" : "예약 취소 — 결제 적립금 회수",
-            createdAt: now, relatedReservationId: reservationId)] + (customer.pointHistories ?? [])
+            createdAt: now, relatedReservationId: reservationId)]
         return updated
     }
 
@@ -88,9 +88,9 @@ enum PointLedger {
         var updated = customer
         var histories = updated.pointHistories ?? []
         for change in result.changes {
-            histories.insert(PointHistoryEntry(
+            histories.append(PointHistoryEntry(
                 id: makeId(), type: change.type, delta: change.delta, balance: change.balanceAfter,
-                description: change.description, createdAt: now, relatedReservationId: reservationId), at: 0)
+                description: change.description, createdAt: now, relatedReservationId: reservationId))
         }
         updated.points = result.balance
         updated.pointHistories = histories
