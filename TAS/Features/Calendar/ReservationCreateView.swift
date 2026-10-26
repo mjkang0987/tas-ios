@@ -356,32 +356,14 @@ struct ReservationCreateView: View {
     @ViewBuilder private var assigneeSection: some View {
         if !assignees.isEmpty {
             FormField(label: labels.assignee) {
-                selectMenu(assignees.first { $0.id == assigneeId }?.name ?? "선택") {
+                SelectMenu(title: labels.assignee, value: assignees.first { $0.id == assigneeId }?.name ?? "선택") {
                     Picker("\(labels.assignee)", selection: $assigneeId) {
                         ForEach(assignees) { a in Text(a.name).tag(a.id) }
                     }
                 }
-                .accessibilityLabel(labels.assignee)
                 .onChange(of: assigneeId) { _, _ in errorMessage = nil }
             }
         }
-    }
-
-    /// 웹 select처럼 칸 전체가 눌리고 값은 왼쪽, 화살표는 오른쪽 — 고르는 목록은 iOS 메뉴.
-    private func selectMenu<P: View>(_ value: String, @ViewBuilder picker: () -> P) -> some View {
-        Menu {
-            picker()
-        } label: {
-            HStack {
-                Text(value).foregroundStyle(Color.primary)
-                Spacer()
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.tasSmall).foregroundStyle(Color.textSecondary)
-            }
-            .frame(minHeight: 36)
-            .contentShape(Rectangle())
-        }
-        .accessibilityValue(value)
     }
 
     // MARK: - 날짜/시간
@@ -445,12 +427,11 @@ struct ReservationCreateView: View {
                     .tint(.brandFill)
                 if markPaid {
                     FormField(label: "결제수단") {
-                        selectMenu(payMethod.rawValue) {
+                        SelectMenu(title: "결제수단", value: payMethod.rawValue) {
                             Picker("결제수단", selection: $payMethod) {
                                 ForEach(Self.paymentMethods, id: \.self) { Text($0.rawValue).tag($0) }
                             }
                         }
-                        .accessibilityLabel("결제수단")
                     }
                     Group {
                         if pointRate > 0 {
