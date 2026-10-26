@@ -111,6 +111,7 @@
 		C4DA301CABC2EF9488A76AED /* MembershipDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41B6725465CCDF4C2B5FF161 /* MembershipDecodingTests.swift */; };
 		C90824AC42EF1ECB66E7501F /* TimelineLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE2CD3F7B25215BC1C3A6F7A /* TimelineLayout.swift */; };
 		CC0DF281A27D513AECB5A6CD /* StoreClosedKindTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79FED8EF6AEAA8E71BE59ADA /* StoreClosedKindTests.swift */; };
+		CE54A8110A20C2410B15FC43 /* FormField.swift in Sources */ = {isa = PBXBuildFile; fileRef = D92680AEED4412E299A69F67 /* FormField.swift */; };
 		CEEE6EE70E3DB98E43B228D1 /* ShopCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47AD35A2930D324720B6ADC8 /* ShopCatalogTests.swift */; };
 		CFD5F0167B9FEAC2F6A217CE /* AuthDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF32B01D95A70742E22EA58 /* AuthDeepLink.swift */; };
 		D25EF2F1643CDE1DA46F8343 /* StoreClosedStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0512EA40D355CBDEB8419763 /* StoreClosedStyle.swift */; };
@@ -259,6 +260,7 @@
 		D5C683C0FC10BE8233CAFF32 /* CouponFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CouponFormView.swift; sourceTree = "<group>"; };
 		D6A90A59320E939D9B195812 /* AssigneesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssigneesView.swift; sourceTree = "<group>"; };
 		D746F7DFD63340B7179AE3BA /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		D92680AEED4412E299A69F67 /* FormField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormField.swift; sourceTree = "<group>"; };
 		D95164D10CF2DB55D0357C3F /* StoreSettingsEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreSettingsEditView.swift; sourceTree = "<group>"; };
 		DC40D55853F507001EB761E8 /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
 		DC7DF60039AE525848EFB875 /* ServiceRename.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceRename.swift; sourceTree = "<group>"; };
@@ -562,6 +564,7 @@
 				CA5BA520F00C877334F1E45F /* ColorAccents.swift */,
 				8FC21CB6C2888D62B0248663 /* FilterChip.swift */,
 				49CBDB6E8945CB07A4C47224 /* Formatting.swift */,
+				D92680AEED4412E299A69F67 /* FormField.swift */,
 				262FBC19C4518208D2B68F96 /* LoadableView.swift */,
 				DD885A5E97F8304BFD9B75CE /* MemoTagEditor.swift */,
 				4700BCC8AEE04DF358C279AC /* ReservationInfoCard.swift */,
@@ -823,6 +826,7 @@
 				134148B797D05D51D946EB04 /* DayTimelineView.swift in Sources */,
 				A7305A1779BDAE4C3AE95305 /* DetailStack.swift in Sources */,
 				259F64C4805F0AD9DC9621CE /* FilterChip.swift in Sources */,
+				CE54A8110A20C2410B15FC43 /* FormField.swift in Sources */,
 				0C61A4F0920A725EC3DA2130 /* Formatting.swift in Sources */,
 				515053B7E86A8CBFC3CB9529 /* GoogleSignInManager.swift in Sources */,
 				350A8CF3E241E45702B321B2 /* GuestConsentView.swift in Sources */,
