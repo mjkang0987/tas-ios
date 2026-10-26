@@ -185,7 +185,9 @@ struct ReservationCreateView: View {
             FormField(label: "고객명") {
             TextField("고객명 검색 또는 신규 입력", text: $customerName)
                 .focused($focusedField, equals: .name)
-                .onChange(of: customerName) { _, _ in
+                .onChange(of: customerName) { _, name in
+                    // 추천에서 고른 직후의 변경은 그대로 둔다(안 그러면 고른 고객이 바로 풀린다)
+                    if customerId != 0, customers.first(where: { $0.id == customerId })?.name == name { return }
                     if customerId != 0 { customerId = 0; customerTel = "" }  // 이름 재입력 → 신규 전환
                     showSuggestions = true
                     errorMessage = nil
