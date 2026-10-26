@@ -75,4 +75,21 @@ enum TimelineLayout {
     static func maxLanes(_ placed: [Placed]) -> Int {
         placed.map(\.laneCount).max() ?? 1
     }
+
+    /// 날(칼럼)마다 레인 폭 — 칼럼이 다 화면에 들어가면(3일 보기 등) 날마다 같은 폭으로 꽉 채우고(웹 3일처럼 날 칸이 고르게),
+    /// 넘치면(주·바쁜 날) 기본 레인 폭 그대로 가로로 민다. `lanes` 는 날마다 최대 겹침 칸 수(1 이상), 결과도 같은 차례.
+    static func fillLaneWidths(lanes: [Int], viewport: Double, base: Double, laneSpacing: Double, columnSpacing: Double) -> [Double] {
+        let counts = lanes.map { Double(max(1, $0)) }
+        let gaps = columnSpacing * Double(max(0, counts.count - 1))
+        let natural = counts.reduce(0) { $0 + base * $1 + laneSpacing * ($1 - 1) } + gaps
+        guard viewport > natural, !counts.isEmpty else { return counts.map { _ in base } }
+        let dayWidth = (viewport - gaps) / Double(counts.count)
+        // 한 날의 기본 폭이 고른 폭보다 넓으면(그날만 많이 겹침) 고르게 못 나눈다 — 남는 폭을 레인 수대로 나눈다
+        if counts.contains(where: { base * $0 + laneSpacing * ($0 - 1) > dayWidth }) {
+            let fixed = natural - counts.reduce(0) { $0 + base * $1 }
+            let w = (viewport - fixed) / counts.reduce(0, +)
+            return counts.map { _ in w }
+        }
+        return counts.map { (dayWidth - laneSpacing * ($0 - 1)) / $0 }
+    }
 }

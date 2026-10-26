@@ -118,8 +118,7 @@ struct ReservationCreateView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     // 웹 저장 버튼처럼 보라 채움
                     Button("저장") { attemptSave() }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.brandFill)
+                        .primaryToolbarButton()
                         .disabled(isSaving)
                 }
             }

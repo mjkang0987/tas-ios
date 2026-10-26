@@ -98,8 +98,7 @@ struct PointRechargeView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     // 웹 충전 버튼처럼 보라 채움
                     Button("충전") { Task { await save() } }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.brandFill)
+                        .primaryToolbarButton()
                         .disabled(isSaving || amount <= 0)
                 }
             }

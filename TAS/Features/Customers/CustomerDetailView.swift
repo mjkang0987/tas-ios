@@ -196,12 +196,11 @@ struct CustomerDetailView: View {
             empty
         }
         if pointsEnabled {
-            // 큰 글자에서는 두 버튼을 나란히 두면 글자가 잘린다 — 위아래로
-            let buttons = typeSize.isAccessibilitySize
-                ? AnyLayout(VStackLayout(alignment: .trailing, spacing: 0))
-                : AnyLayout(HStackLayout(spacing: 8))
+            // 큰 글자에서는 두 버튼을 나란히 두면 글자가 잘린다 — 왼쪽에서 위아래로
+            let large = typeSize.isAccessibilitySize
+            let buttons = large ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0)) : AnyLayout(HStackLayout(spacing: 8))
             buttons {
-                Spacer(minLength: 0)
+                if !large { Spacer(minLength: 0) }
                 Button("적립금 조정") { showPointAdjust = true }.buttonStyle(.action())
                 if pointSettings?.enableRecharge == true {
                     Button("적립금 충전") { showPointRecharge = true }.buttonStyle(.action())
@@ -277,7 +276,7 @@ struct PointHistoryRow: View {
                 Text(signed(entry.delta))
                     .font(.tasMedium.weight(.semibold))
                     .foregroundStyle(entry.delta >= 0 ? Color.blueText : Color.dangerText)
-                Text("잔액 \(formatWon(entry.balance))").font(.caption2).foregroundStyle(Color.textSecondary)
+                Text("잔액 \(formatWon(entry.balance))").font(.tasXSmall).foregroundStyle(Color.textSecondary)
             }
         }
         .padding(.vertical, 2)

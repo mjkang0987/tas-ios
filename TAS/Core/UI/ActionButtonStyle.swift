@@ -46,3 +46,12 @@ struct ActionButtonStyle: ButtonStyle {
 extension ButtonStyle where Self == ActionButtonStyle {
     static func action(_ kind: ActionButtonStyle.Kind = .plain) -> ActionButtonStyle { ActionButtonStyle(kind: kind) }
 }
+
+extension View {
+    /// 레이어 머리의 주 버튼(저장·충전) — 웹 저장 버튼처럼 보라 채움 + 흰 글자.
+    /// iOS 26 툴바는 어두운 화면에서 채운 버튼 글자를 검게 칠해(foregroundStyle 도 무시) 보라 위 대비가 2:1 로 떨어진다.
+    /// 이 버튼만 밝은 화면으로 그리면 밝은 화면과 같은 흰 글자가 된다(바탕은 어차피 보라 채움).
+    func primaryToolbarButton() -> some View {
+        buttonStyle(.borderedProminent).tint(.brandFill).environment(\.colorScheme, .light)
+    }
+}

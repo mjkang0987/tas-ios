@@ -64,8 +64,7 @@ struct PointAdjustView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") { Task { await save() } }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.brandFill)
+                        .primaryToolbarButton()
                         .disabled(isSaving)
                 }
             }

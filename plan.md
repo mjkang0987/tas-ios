@@ -214,6 +214,10 @@
        검증 중 발견: **큰 글자에서 고객 상세 전체가 화면 밖으로 밀리던 문제**(예약 행의 한 줄 시술 칩 `ServiceChipList(wraps: false)` 가
        `fixedSize` 폭보다 좁아지지 못해 위 화면까지 넓힘) → 칸 폭에 맞추고 넘치는 칩은 잘라냄 + 예약 행에서 금액·상태가 칩보다 먼저 남게.
      - 남김: 결제 줄을 인덱스로 구분하는 구조(줄마다 id 를 두는 게 근본) — 범위 검사로 막아 두었고 바꾸려면 PaymentEntry 를 감싸는 별도 작업.
+     - 묶음(#58·#59·#60) 코드리뷰 3회(지시자 2026-10-26, v0.26.1 `claude/batch-review-fixes`):
+       3일 꽉 채우기 폭 계산을 `TimelineLayout.fillLaneWidths` 로 빼고 세 갈래 테스트 · 메모 태그 입력칸도 FormField · 큰 글자에서 태그 입력줄 위아래 ·
+       적립금 이력 잔액 글자 단계 · **어두운 화면에서 툴바 보라 저장 버튼 글자가 검게 칠해지던 문제**(iOS 26 툴바가 foregroundStyle 도 무시,
+       대비 약 2:1) → `primaryToolbarButton()`(이 버튼만 밝은 화면으로 그려 흰 글자) 한 곳으로 5개 폼.
      - 남김: 새 공용 컴포넌트(FormField·SelectMenu)는 사전 브리핑 규칙 대신 '묻지 말고 진행' 지시로 만들고 PR 에 알림.
 
 ## 🟡 진행 — 예약 알림(기기 알림) (`claude/reservation-reminder`)
