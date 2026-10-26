@@ -89,19 +89,25 @@ struct ReservationCreateView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                customerSection
-                serviceSection
-                priceSection
-                assigneeSection
-                dateTimeSection
-                conflictSection
-                paymentSection
-                memoSection
-                if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
+            // 웹 예약 추가 레이어 — 이름 붙은 입력칸을 위에서 아래로(날짜·시간·담당자는 iOS 고르기 그대로)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    customerSection
+                    serviceSection
+                    priceSection
+                    assigneeSection
+                    dateTimeSection
+                    conflictSection
+                    paymentSection
+                    memoSection
+                    if let errorMessage {
+                        Text(errorMessage).font(.tasMedium).foregroundStyle(Color.dangerText)
+                    }
                 }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(editing == nil ? "예약 추가" : "예약 변경")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -109,7 +115,10 @@ struct ReservationCreateView: View {
                     Button("취소") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
+                    // 웹 저장 버튼처럼 보라 채움
                     Button("저장") { attemptSave() }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.brandFill)
                         .disabled(isSaving)
                 }
             }
@@ -141,7 +150,8 @@ struct ReservationCreateView: View {
     @ViewBuilder private var conflictSection: some View {
         let conflicts = currentConflicts
         if !conflicts.isEmpty {
-            Section {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("\(labels.assignee) 겹침 경고").font(.tasMedium.weight(.bold)).foregroundStyle(Color.warningText)
                 ForEach(conflicts) { r in
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
@@ -155,11 +165,12 @@ struct ReservationCreateView: View {
                         }
                     }
                 }
-            } header: {
-                Text("\(labels.assignee) 겹침 경고")
-            } footer: {
                 Text("선택한 \(labels.assignee)에게 시간이 겹치는 예약이 \(conflicts.count)건 있습니다. 확인 후 저장하세요.")
+                    .font(.tasSmall).foregroundStyle(Color.textSecondary)
             }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.warningText.opacity(0.6)))
         }
     }
 
@@ -170,7 +181,8 @@ struct ReservationCreateView: View {
     // MARK: - 고객
 
     private var customerSection: some View {
-        Section("고객") {
+        VStack(alignment: .leading, spacing: 12) {
+            FormField(label: "고객명") {
             TextField("고객명 검색 또는 신규 입력", text: $customerName)
                 .focused($focusedField, equals: .name)
                 .onChange(of: customerName) { _, _ in
@@ -178,24 +190,36 @@ struct ReservationCreateView: View {
                     showSuggestions = true
                     errorMessage = nil
                 }
-            if showSuggestions && !filteredCustomers.isEmpty {
-                ForEach(filteredCustomers) { c in
-                    Button {
-                        selectCustomer(c)
-                    } label: {
-                        HStack {
-                            Text(c.name)
-                            Spacer()
-                            Text(c.formattedTel).font(.caption).foregroundStyle(Color.textSecondary)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
             }
-            TextField("연락처", text: $customerTel)
-                .keyboardType(.numberPad)
-                .focused($focusedField, equals: .tel)
-                .disabled(customerId != 0)   // 기존 고객이면 자동 채움(수정 불가)
+            if showSuggestions && !filteredCustomers.isEmpty {
+                // 웹 자동완성 목록 — 입력칸 바로 아래 테두리 상자
+                VStack(spacing: 0) {
+                    ForEach(filteredCustomers) { c in
+                        Button {
+                            selectCustomer(c)
+                        } label: {
+                            HStack {
+                                Text(c.name).font(.tasBody)
+                                Spacer()
+                                Text(c.formattedTel).font(.tasSmall).foregroundStyle(Color.textSecondary)
+                            }
+                            .padding(.horizontal, 10)
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        if c.id != filteredCustomers.last?.id { Rectangle().fill(Color.dividerLine).frame(height: 1) }
+                    }
+                }
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.borderLine))
+            }
+            FormField(label: "연락처") {
+                TextField("01012345678", text: $customerTel)
+                    .keyboardType(.numberPad)
+                    .focused($focusedField, equals: .tel)
+                    .disabled(customerId != 0)   // 기존 고객이면 자동 채움(수정 불가)
+                    .foregroundStyle(customerId != 0 ? Color.textSecondary : Color.primary)
+            }
         }
     }
 
@@ -237,31 +261,40 @@ struct ReservationCreateView: View {
     }
 
     private var serviceSection: some View {
-        Section {
-            if catalog.isEmpty {
-                Text("등록된 \(labels.service.josa(.iGa)) 없습니다. 설정에서 먼저 추가해주세요.")
-                    .font(.footnote).foregroundStyle(Color.textSecondary)
-            } else {
-                ForEach(serviceRows) { row in
-                    switch row {
-                    case .header(let category):
-                        Text(category)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Color.textSecondary)
-                    case .item(let item):
-                        serviceItemRow(item)
-                    }
-                }
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("\(labels.service)")
+                Text("\(labels.service)").font(.tasMedium).foregroundStyle(Color.textSecondary)
                 Spacer()
                 if !selectedServices.isEmpty {
                     Text("\(totalDuration)분 · \(formatWon(totalPrice))")
-                        .font(.caption).textCase(nil).foregroundStyle(Color.textSecondary)
+                        .font(.tasSmall).foregroundStyle(Color.textSecondary)
                 }
             }
+            // 웹: 테두리 상자 안에 카테고리별 체크 목록
+            VStack(alignment: .leading, spacing: 0) {
+                if catalog.isEmpty {
+                    Text("등록된 \(labels.service.josa(.iGa)) 없습니다. 설정에서 먼저 추가해주세요.")
+                        .font(.tasMedium).foregroundStyle(Color.textSecondary)
+                        .padding(.vertical, 10)
+                } else {
+                    ForEach(serviceRows) { row in
+                        switch row {
+                        case .header(let category):
+                            Text(category)
+                                .font(.tasSmall.weight(.semibold))
+                                .foregroundStyle(Color.textSecondary)
+                                .padding(.top, 8)
+                                .accessibilityAddTraits(.isHeader)
+                        case .item(let item):
+                            serviceItemRow(item)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.bottom, 4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.borderLine))
         }
     }
 
@@ -272,6 +305,7 @@ struct ReservationCreateView: View {
             HStack(spacing: 10) {
                 Image(systemName: selected ? "checkmark.square.fill" : "square")
                     .foregroundStyle(selected ? Color.accentColor : Color(.tertiaryLabel))
+                    .accessibilityHidden(true)
                 ServiceChip(
                     name: item.name,
                     color: ServiceColor.color(item.name, in: serviceColorMap),
@@ -279,10 +313,13 @@ struct ReservationCreateView: View {
                 )
                 Spacer()
                 Text("\(formatWon(item.price)) · \(item.durationMinutes)분")
-                    .font(.caption).foregroundStyle(Color.textSecondary)
+                    .font(.tasSmall).foregroundStyle(Color.textSecondary)
             }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private func toggleService(_ name: String) {
@@ -315,37 +352,69 @@ struct ReservationCreateView: View {
 
     @ViewBuilder private var assigneeSection: some View {
         if !assignees.isEmpty {
-            Section("\(labels.assignee)") {
-                Picker("\(labels.assignee)", selection: $assigneeId) {
-                    ForEach(assignees) { a in Text(a.name).tag(a.id) }
+            FormField(label: labels.assignee) {
+                selectMenu(assignees.first { $0.id == assigneeId }?.name ?? "선택") {
+                    Picker("\(labels.assignee)", selection: $assigneeId) {
+                        ForEach(assignees) { a in Text(a.name).tag(a.id) }
+                    }
                 }
+                .accessibilityLabel(labels.assignee)
                 .onChange(of: assigneeId) { _, _ in errorMessage = nil }
             }
         }
     }
 
+    /// 웹 select처럼 칸 전체가 눌리고 값은 왼쪽, 화살표는 오른쪽 — 고르는 목록은 iOS 메뉴.
+    private func selectMenu<P: View>(_ value: String, @ViewBuilder picker: () -> P) -> some View {
+        Menu {
+            picker()
+        } label: {
+            HStack {
+                Text(value).foregroundStyle(Color.primary)
+                Spacer()
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.tasSmall).foregroundStyle(Color.textSecondary)
+            }
+            .frame(minHeight: 36)
+            .contentShape(Rectangle())
+        }
+        .accessibilityValue(value)
+    }
+
     // MARK: - 날짜/시간
 
     private var dateTimeSection: some View {
-        Section("일정") {
-            DatePicker("날짜", selection: $date, displayedComponents: .date)
-                .environment(\.timeZone, Self.seoul)
-            DatePicker("시작", selection: $startTime, displayedComponents: .hourAndMinute)
-                .environment(\.timeZone, Self.seoul)
-                .onChange(of: startTime) { _, _ in if !isEndManual { recomputeEndTime() }; errorMessage = nil }
-            DatePicker("종료", selection: $endTime, displayedComponents: .hourAndMinute)
-                .environment(\.timeZone, Self.seoul)
-                .onChange(of: endTime) { _, _ in
-                    if suppressEndChange { suppressEndChange = false } else { isEndManual = true }
-                    errorMessage = nil
+        // 웹: 날짜 한 줄, 시작·종료 나란히
+        VStack(alignment: .leading, spacing: 12) {
+            FormField(label: "날짜", bordered: false) {
+                DatePicker("날짜", selection: $date, displayedComponents: .date)
+                    .labelsHidden()
+                    .environment(\.timeZone, Self.seoul)
+            }
+            HStack(alignment: .top, spacing: 16) {
+                FormField(label: "시작", bordered: false) {
+                    DatePicker("시작", selection: $startTime, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                        .environment(\.timeZone, Self.seoul)
+                        .onChange(of: startTime) { _, _ in if !isEndManual { recomputeEndTime() }; errorMessage = nil }
                 }
+                FormField(label: "종료", bordered: false) {
+                    DatePicker("종료", selection: $endTime, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                        .environment(\.timeZone, Self.seoul)
+                        .onChange(of: endTime) { _, _ in
+                            if suppressEndChange { suppressEndChange = false } else { isEndManual = true }
+                            errorMessage = nil
+                        }
+                }
+            }
         }
     }
 
     // MARK: - 가격 (웹: 서비스 바로 아래)
 
     private var priceSection: some View {
-        Section("가격") {
+        FormField(label: "가격") {
             HStack {
                 TextField("0", value: $price, format: .number)
                     .keyboardType(.numberPad)
@@ -362,22 +431,28 @@ struct ReservationCreateView: View {
 
     @ViewBuilder private var paymentSection: some View {
         if editing == nil {
-            Section {
+            VStack(alignment: .leading, spacing: 12) {
+                Rectangle().fill(Color.dividerLine).frame(height: 1)
                 Toggle("결제완료로 등록", isOn: $markPaid)
+                    .font(.tasBody)
+                    .tint(.brandFill)
                 if markPaid {
-                    Picker("결제수단", selection: $payMethod) {
-                        ForEach(Self.paymentMethods, id: \.self) { Text($0.rawValue).tag($0) }
+                    FormField(label: "결제수단") {
+                        selectMenu(payMethod.rawValue) {
+                            Picker("결제수단", selection: $payMethod) {
+                                ForEach(Self.paymentMethods, id: \.self) { Text($0.rawValue).tag($0) }
+                            }
+                        }
+                        .accessibilityLabel("결제수단")
                     }
-                }
-            } header: {
-                Text("결제")
-            } footer: {
-                if markPaid {
-                    if pointRate > 0 {
-                        Text("결제 \(formatWon(price)) · 적립률 \(pointRate)% → \(formatWon(PointMath.earnedAmount(base: price, rate: pointRate))) 적립")
-                    } else {
-                        Text("결제 \(formatWon(price))로 결제완료 처리됩니다.")
+                    Group {
+                        if pointRate > 0 {
+                            Text("결제 \(formatWon(price)) · 적립률 \(pointRate)% → \(formatWon(PointMath.earnedAmount(base: price, rate: pointRate))) 적립")
+                        } else {
+                            Text("결제 \(formatWon(price))로 결제완료 처리됩니다.")
+                        }
                     }
+                    .font(.tasSmall).foregroundStyle(Color.textSecondary)
                 }
             }
         }
@@ -386,10 +461,11 @@ struct ReservationCreateView: View {
     // MARK: - 메모
 
     private var memoSection: some View {
-        Section("요청사항") {
+        FormField(label: "요청사항") {
             TextField("예약 관련 요청사항", text: $memo, axis: .vertical)
                 .focused($focusedField, equals: .memo)
                 .lineLimit(1...3)
+                .padding(.vertical, 8)
         }
     }
 
