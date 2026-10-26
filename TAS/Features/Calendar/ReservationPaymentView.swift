@@ -150,8 +150,7 @@ struct ReservationPaymentView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     // 웹 저장 버튼처럼 보라 채움
                     Button("저장") { Task { await save() } }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.brandFill)
+                        .primaryToolbarButton()
                         .disabled(isSaving)
                 }
             }
