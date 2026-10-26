@@ -29,11 +29,12 @@ struct MemoTagEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                TextField("메모 태그 입력", text: $text)
-                    .textFieldStyle(.roundedBorder)
-                    .submitLabel(.done)
-                    .onSubmit(onAdd)
-                    .accessibilityLabel("메모 태그 입력")
+                FormField(label: nil) {
+                    TextField("메모 태그 입력", text: $text)
+                        .submitLabel(.done)
+                        .onSubmit(onAdd)
+                        .accessibilityLabel("메모 태그 입력")
+                }
                 Button("추가", action: onAdd)
                     .buttonStyle(.action(.primary))
                     .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
