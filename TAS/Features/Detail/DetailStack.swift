@@ -42,8 +42,9 @@ enum DetailRoute: Hashable, Identifiable {
 
     var isForm: Bool {
         switch self {
-        case .editReservation, .editCustomer: return true
-        case .reservation, .customer: return false
+        case .editReservation: return true
+        // 고객 수정은 칸이 몇 개 안 돼 상세처럼 내용 높이만큼(웹 레이어 안 편집)
+        case .reservation, .customer, .editCustomer: return false
         }
     }
 
@@ -206,21 +207,41 @@ private struct SheetHeightReporter: ViewModifier {
 private let sheetHeaderHeight: CGFloat = 70
 
 /// 시트를 내용 높이 칸 + 전체 칸으로 — 사장님이 끌어 올려 전체로 본 뒤엔 그대로 둔다.
+/// 키보드가 뜨면 전체로 올린다(낮은 칸이면 키보드가 아래 입력칸을 덮는다).
 private struct SheetFitter: UIViewControllerRepresentable {
     let height: CGFloat
 
-    func makeUIViewController(context: Context) -> UIViewController { UIViewController() }
+    func makeUIViewController(context: Context) -> Controller { Controller() }
 
-    func updateUIViewController(_ controller: UIViewController, context: Context) {
-        guard height > 0 else { return }
-        DispatchQueue.main.async {
-            guard let sheet = controller.sheetPresentationController else { return }
-            let fit = UISheetPresentationController.Detent.Identifier("fit")
+    func updateUIViewController(_ controller: Controller, context: Context) {
+        controller.height = height
+        DispatchQueue.main.async { controller.apply() }
+    }
+
+    final class Controller: UIViewController {
+        var height: CGFloat = 0
+        private let fit = UISheetPresentationController.Detent.Identifier("fit")
+
+        override func viewDidLoad() {
+            super.viewDidLoad()
+            NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow),
+                                                   name: UIResponder.keyboardWillShowNotification, object: nil)
+        }
+
+        func apply() {
+            guard height > 0, let sheet = sheetPresentationController else { return }
             let wasFull = sheet.selectedDetentIdentifier == .large
+            let h = height
             sheet.animateChanges {
-                sheet.detents = [.custom(identifier: fit) { context in min(height, context.maximumDetentValue) }, .large()]
+                sheet.detents = [.custom(identifier: fit) { context in min(h, context.maximumDetentValue) }, .large()]
                 if !wasFull { sheet.selectedDetentIdentifier = fit }
             }
+        }
+
+        @objc private func keyboardWillShow() {
+            // 이 시트가 맨 위에 떠 있을 때만(아래 깔린 시트는 그대로)
+            guard let sheet = sheetPresentationController, sheet.presentedViewController.presentedViewController == nil else { return }
+            sheet.animateChanges { sheet.selectedDetentIdentifier = .large }
         }
     }
 }
