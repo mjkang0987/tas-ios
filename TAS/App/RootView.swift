@@ -81,12 +81,22 @@ struct MainTabView: View {
                 .tabItem { Label("설정", systemImage: "gearshape") }
                 .tag(Tab.settings)
         }
+        // 넓은 화면(펼친 iPhone Duo·iPad) = 왼쪽 사이드바, 좁은 화면 = 아래 탭바 — 웹 641px 이상 왼쪽 메뉴(Aside)와 같은 갈림.
+        // 직접 그리지 않고 iOS 기본 사이드바를 쓴다(지시자 2026-10-26: iOS 에서 어긋나지 않는 선에서 웹처럼).
+        .sidebarAdaptableTabs()
         // 예약 알림은 기본이 켜짐(30분 전)이라 처음 한 번 권한을 묻는다 — 안 물으면 조용히 안 울린다
         .task { await reminders.requestAuthorizationIfNeeded() }
         // 예약 알림을 눌러 들어오면 캘린더 탭으로 — 상세는 캘린더가 연다
         .onChange(of: reminders.pendingReservationId) { _, id in
             if id != nil { tab = .calendar }
         }
+    }
+}
+
+private extension View {
+    /// iOS 18 부터 — 17 은 지금처럼 탭바(iPad 는 위쪽 탭).
+    @ViewBuilder func sidebarAdaptableTabs() -> some View {
+        if #available(iOS 18.0, *) { tabViewStyle(.sidebarAdaptable) } else { self }
     }
 }
 
