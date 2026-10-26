@@ -30,6 +30,9 @@ struct DayColumnsTimelineView: View {
     private let minBlockHeight: CGFloat = 22
     private let headerHeight: CGFloat = 44     // 머리가 버튼이라 손가락 크기
 
+    /// 가로 스크롤 칸의 보이는 폭 — 칼럼이 다 들어가면 남는 폭만큼 넓혀 꽉 채운다(3일 보기).
+    @State private var viewportWidth: CGFloat = 0
+
     private var ptPerMin: CGFloat { hourHeight / 60 }
     private var axisStartMin: Int { startHour * 60 }
     private var totalHeight: CGFloat { CGFloat(max(1, endHour - startHour)) * hourHeight }
@@ -41,6 +44,7 @@ struct DayColumnsTimelineView: View {
 
     var body: some View {
         let placed = placedByDay
+        let lanes = laneWidths(placed)
         // ponytail: 날짜 헤더가 세로 스크롤과 함께 밀려 올라간다. 영업시간 전체가 대체로
         // 한 화면에 들어와(12시간 x 56pt) 실제로 밀리는 일이 드물어 고정하지 않았다.
         // 영업시간이 길어 세로 스크롤이 길어지면 헤더를 고정하는 쪽으로 바꾼다.
@@ -51,11 +55,12 @@ struct DayColumnsTimelineView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(alignment: .top, spacing: columnSpacing) {
                             ForEach(Array(dayKeys.enumerated()), id: \.element) { index, key in
-                                dayColumn(key, index: index, placed: placed[key] ?? [])
+                                dayColumn(key, index: index, placed: placed[key] ?? [], laneWidth: lanes[key] ?? laneWidth)
                                     .id(key)
                             }
                         }
                     }
+                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { viewportWidth = $0 }
                     // 열 때 오늘 칸을 가운데로. 안 하면 늘 일요일부터라 주 후반엔 매번 밀어야 한다.
                     .onAppear {
                         guard dayKeys.contains(todayKey) else { return }
@@ -82,7 +87,23 @@ struct DayColumnsTimelineView: View {
         .frame(width: gutterWidth, alignment: .trailing)
     }
 
-    private func dayColumn(_ key: String, index: Int, placed: [TimelineLayout.Placed]) -> some View {
+    /// 칼럼이 다 화면에 들어가면(3일 보기 등) 날마다 같은 폭으로 꽉 채우고(웹 3일과 같이 날 칸이 고르게),
+    /// 넘치면(주·바쁜 날) 기본 레인 폭 그대로 가로로 민다. 날 key → 레인 폭.
+    private func laneWidths(_ placed: [String: [TimelineLayout.Placed]]) -> [String: CGFloat] {
+        let lanes = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, CGFloat(TimelineLayout.maxLanes(placed[$0] ?? []))) })
+        let natural = lanes.values.reduce(0) { $0 + laneWidth * $1 + laneSpacing * ($1 - 1) } + columnSpacing * CGFloat(max(0, dayKeys.count - 1))
+        guard viewportWidth > natural, !dayKeys.isEmpty else { return lanes.mapValues { _ in laneWidth } }
+        let dayWidth = (viewportWidth - columnSpacing * CGFloat(dayKeys.count - 1)) / CGFloat(dayKeys.count)
+        // 한 날의 기본 폭이 고른 폭보다 넓으면(그날만 많이 겹침) 고르게 못 나눈다 — 남는 폭을 레인 수대로 나눈다
+        if lanes.values.contains(where: { laneWidth * $0 + laneSpacing * ($0 - 1) > dayWidth }) {
+            let fixed = natural - lanes.values.reduce(0) { $0 + laneWidth * $1 }
+            let w = (viewportWidth - fixed) / lanes.values.reduce(0, +)
+            return lanes.mapValues { _ in w }
+        }
+        return lanes.mapValues { (dayWidth - laneSpacing * ($0 - 1)) / $0 }
+    }
+
+    private func dayColumn(_ key: String, index: Int, placed: [TimelineLayout.Placed], laneWidth: CGFloat) -> some View {
         let lanes = TimelineLayout.maxLanes(placed)
         let width = laneWidth * CGFloat(lanes) + laneSpacing * CGFloat(lanes - 1)
         return VStack(spacing: 0) {
@@ -108,7 +129,7 @@ struct DayColumnsTimelineView: View {
                         .offset(y: CGFloat(i) * hourHeight)
                 }
                 ForEach(placed, id: \.reservation.id) { p in
-                    block(p, laneCount: lanes)
+                    block(p, laneCount: lanes, laneWidth: laneWidth)
                 }
                 if key == todayKey {
                     TimelineNowLine(startHour: startHour, endHour: endHour, ptPerMin: ptPerMin)
@@ -120,7 +141,7 @@ struct DayColumnsTimelineView: View {
         }
     }
 
-    private func block(_ p: TimelineLayout.Placed, laneCount: Int) -> some View {
+    private func block(_ p: TimelineLayout.Placed, laneCount: Int, laneWidth: CGFloat) -> some View {
         // 칼럼 폭은 그날 최대 겹침으로 잡혀 있다. 덜 겹친 묶음은 제 칸 수에 맞춰 넓게 쓴다.
         let span = CGFloat(laneCount) / CGFloat(p.laneCount)
         let w = laneWidth * span + laneSpacing * (span - 1)
