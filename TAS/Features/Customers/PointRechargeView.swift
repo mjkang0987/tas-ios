@@ -32,59 +32,50 @@ struct PointRechargeView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                if !rules.isEmpty {
-                    Section("충전 규칙") {
-                        ForEach(Array(rules.enumerated()), id: \.offset) { index, rule in
-                            Button {
-                                selectedRule = index
-                            } label: {
-                                HStack {
-                                    Text(formatWon(rule.baseAmount))
-                                    if rule.bonusAmount > 0 {
-                                        Text("+ \(formatWon(rule.bonusAmount))")
-                                            .font(.caption)
-                                            .foregroundStyle(.tint)
+            // 웹 AddressCustomerRecharge — 현재 잔액, 충전 금액 고르기(규칙 + 직접입력), 결제수단
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("현재 잔액 \(formatWon(currentPoints))")
+                        .font(.tasBody.weight(.semibold)).foregroundStyle(Color.blueText)
+                    if !rules.isEmpty {
+                        FormField(label: "충전 금액") {
+                            SelectMenu(title: "충전 금액 선택", value: rule.map(Self.label) ?? "직접입력") {
+                                Picker("충전 금액", selection: $selectedRule) {
+                                    ForEach(Array(rules.enumerated()), id: \.offset) { index, rule in
+                                        Text(Self.label(rule)).tag(Optional(index))
                                     }
-                                    Spacer()
-                                    if selectedRule == index {
-                                        Image(systemName: "checkmark").foregroundStyle(.tint)
-                                    }
+                                    Text("직접입력").tag(Int?.none)
                                 }
-                                .contentShape(Rectangle())
                             }
-                            .buttonStyle(.plain)
                         }
                     }
-                }
-
-                Section {
-                    HStack {
-                        Text("금액")
-                        Spacer()
-                        TextField("0", value: $customAmount, format: .number)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                            .onChange(of: customAmount) { selectedRule = nil }
-                        Text("원").foregroundStyle(Color.textSecondary)
+                    if selectedRule == nil {
+                        FormField(label: rules.isEmpty ? "충전 금액" : "직접 입력") {
+                            HStack(spacing: 4) {
+                                TextField("충전금액", value: $customAmount, format: .number)
+                                    .keyboardType(.numberPad)
+                                Text("원").foregroundStyle(Color.textSecondary)
+                            }
+                        }
                     }
-                } header: {
-                    Text("직접 입력")
-                } footer: {
-                    Text("현재 \(formatWon(currentPoints)) → 충전 후 \(formatWon(resultPoints))")
-                }
-
-                Section {
-                    Picker("결제수단", selection: $paymentMethod) {
-                        ForEach(PaymentMethod.received, id: \.self) { Text($0.rawValue).tag($0) }
+                    FormField(label: "결제수단") {
+                        SelectMenu(title: "충전 결제수단", value: paymentMethod.rawValue) {
+                            Picker("결제수단", selection: $paymentMethod) {
+                                ForEach(PaymentMethod.received, id: \.self) { Text($0.rawValue).tag($0) }
+                            }
+                        }
                     }
-                } footer: {
-                    Text("받은 금액 \(formatWon(paidAmount))이 매출로 잡힙니다.")
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("현재 \(formatWon(currentPoints)) → 충전 후 \(formatWon(resultPoints))")
+                        Text("받은 금액 \(formatWon(paidAmount))이 매출로 잡힙니다.")
+                    }
+                    .font(.tasSmall).foregroundStyle(Color.textSecondary)
+                    if let errorMessage {
+                        Text(errorMessage).font(.tasMedium).foregroundStyle(Color.dangerText)
+                    }
                 }
-
-                if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
-                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .navigationTitle("적립금 충전")
             .navigationBarTitleDisplayMode(.inline)
@@ -93,11 +84,19 @@ struct PointRechargeView: View {
                     Button("취소") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
+                    // 웹 충전 버튼처럼 보라 채움
                     Button("충전") { Task { await save() } }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.brandFill)
                         .disabled(isSaving || amount <= 0)
                 }
             }
         }
+    }
+
+    /// 웹 충전 옵션 이름 — "기준금액 + 보너스".
+    private static func label(_ rule: RechargeRule) -> String {
+        "\(formatWon(rule.baseAmount)) + \(formatWon(rule.bonusAmount))"
     }
 
     private func save() async {
