@@ -184,15 +184,14 @@ struct ReservationCreateView: View {
     private var customerSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             FormField(label: "고객명") {
-            TextField("고객명 검색 또는 신규 입력", text: $customerName)
-                .focused($focusedField, equals: .name)
-                .onChange(of: customerName) { _, name in
-                    // 추천에서 고른 직후의 변경은 그대로 둔다(안 그러면 고른 고객이 바로 풀린다)
-                    if customerId != 0, customers.first(where: { $0.id == customerId })?.name == name { return }
-                    if customerId != 0 { customerId = 0; customerTel = "" }  // 이름 재입력 → 신규 전환
-                    showSuggestions = true
-                    errorMessage = nil
-                }
+                TextField("고객명 검색 또는 신규 입력", text: $customerName)
+                    .focused($focusedField, equals: .name)
+                    .onChange(of: customerName) { _, name in
+                        if Self.keepsSelectedCustomer(id: customerId, name: name, in: customers) { return }
+                        if customerId != 0 { customerId = 0; customerTel = "" }  // 이름 재입력 → 신규 전환
+                        showSuggestions = true
+                        errorMessage = nil
+                    }
             }
             // 고객 전체를 거르고 정렬하는 값이라 한 번만 계산
             let suggestions = showSuggestions ? filteredCustomers : []
@@ -226,6 +225,12 @@ struct ReservationCreateView: View {
                     .foregroundStyle(customerId != 0 ? Color.textSecondary : Color.primary)
             }
         }
+    }
+
+    /// 이름이 바뀌어도 고른 고객을 그대로 둘지 — 추천을 고르거나 변경 화면을 채우며 이름이 그 고객 이름이 된 경우.
+    /// (안 그러면 고른 고객이 바로 신규로 풀려 연락처가 비었다)
+    static func keepsSelectedCustomer(id: Int, name: String, in customers: [Customer]) -> Bool {
+        id != 0 && customers.first { $0.id == id }?.name == name
     }
 
     private func selectCustomer(_ c: Customer) {

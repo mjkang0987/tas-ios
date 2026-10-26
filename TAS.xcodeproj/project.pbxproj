@@ -55,6 +55,7 @@
 		4EF5BA2D307F45D70F9F2790 /* TASApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73770FD2D24C7A0EABEFC3E /* TASApp.swift */; };
 		510547EACB112C3B7D76BD37 /* ReservationReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A619A7CC9188F9D0E1395A7 /* ReservationReminder.swift */; };
 		515053B7E86A8CBFC3CB9529 /* GoogleSignInManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F82486F8ECE5C22233EA8BA /* GoogleSignInManager.swift */; };
+		51B5960E20D3CA71FFB4A55E /* ReservationCreateRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7FA9768D1E4C8C482543D56 /* ReservationCreateRulesTests.swift */; };
 		52A4DC9CE16031CCCE28E1E9 /* Assignee.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0847DD986F4388D8E1E0BA1 /* Assignee.swift */; };
 		53EDAA6A23E45485F5E7B6F4 /* GuestStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE3032986950DC3F02D3691A /* GuestStoreTests.swift */; };
 		5495B71D60C7D59621D97F92 /* ServicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C94F2F799BD46C7058AF873 /* ServicesView.swift */; };
@@ -239,6 +240,7 @@
 		AC8EA856083CD6EE9C9D5250 /* ReservationPaymentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationPaymentView.swift; sourceTree = "<group>"; };
 		AE25BD9C6BC2C011F0A8BF3B /* Coupon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Coupon.swift; sourceTree = "<group>"; };
 		B331F6FA4115DF71589C5D3F /* WrapLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrapLayout.swift; sourceTree = "<group>"; };
+		B7FA9768D1E4C8C482543D56 /* ReservationCreateRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationCreateRulesTests.swift; sourceTree = "<group>"; };
 		BA3DF5093A72A7E4625DB310 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
 		BB1C6F0A9C0D34DBA598E6CA /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		BBB05BDAA690E17246FA3E5B /* chair-purple.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "chair-purple.png"; sourceTree = "<group>"; };
@@ -479,6 +481,7 @@
 				26934AF8F7CB34F5FE2C508E /* NoticeTests.swift */,
 				340111E07CA667E86FB1FCDE /* PointLedgerTests.swift */,
 				56D04C70208D730C54D4914D /* PointMathTests.swift */,
+				B7FA9768D1E4C8C482543D56 /* ReservationCreateRulesTests.swift */,
 				5B1F15E1A1E8180A342C3566 /* ReservationOverlapTests.swift */,
 				7172449E52DD28D2239F1F9E /* ReservationReminderTests.swift */,
 				DF91E10214D3A6C3D96DD306 /* RevenueStatsTests.swift */,
@@ -774,6 +777,7 @@
 				8C0132640D8E321F1CC9334D /* NoticeTests.swift in Sources */,
 				F4647F5BF3A3FF884EA2122A /* PointLedgerTests.swift in Sources */,
 				0225CD49781CE424484FAEB6 /* PointMathTests.swift in Sources */,
+				51B5960E20D3CA71FFB4A55E /* ReservationCreateRulesTests.swift in Sources */,
 				D8959835934F4F15BC75F99D /* ReservationOverlapTests.swift in Sources */,
 				1B6DEDD5B3CBC045D86E8814 /* ReservationReminderTests.swift in Sources */,
 				4983FECF1BCCFEFC8CF1F7FE /* RevenueStatsTests.swift in Sources */,
