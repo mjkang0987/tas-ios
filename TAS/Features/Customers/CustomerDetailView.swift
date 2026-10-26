@@ -41,6 +41,8 @@ struct CustomerDetailView: View {
     /// 웹은 최신 이력부터.
     private var histories: [PointHistoryEntry] { (customer.pointHistories ?? []).reversed() }
 
+    @State private var contentHeight: CGFloat = 0
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -52,7 +54,9 @@ struct CustomerDetailView: View {
                 }
                 .padding(.horizontal, 16)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
             }
+            .reportsSheetHeight(content: contentHeight)
             .navigationTitle(customer.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

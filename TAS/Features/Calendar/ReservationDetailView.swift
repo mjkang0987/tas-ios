@@ -47,6 +47,9 @@ struct ReservationDetailView: View {
     }
     private var isRequested: Bool { reservation.status == .requested }
 
+    @State private var contentHeight: CGFloat = 0
+    @State private var barHeight: CGFloat = 0
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -72,9 +75,13 @@ struct ReservationDetailView: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
             }
             // 웹 레이어처럼 아래에 붙는 버튼 줄 — 채운 색은 주 동작 하나만
-            .safeAreaInset(edge: .bottom) { actionBar }
+            .safeAreaInset(edge: .bottom) {
+                actionBar.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { barHeight = $0 }
+            }
+            .reportsSheetHeight(content: contentHeight, bottomBar: barHeight)
             // 웹 레이어 머리처럼 제목은 고객 이름
             .navigationTitle(customer?.name ?? "예약 상세")
             .navigationBarTitleDisplayMode(.inline)
@@ -235,11 +242,12 @@ struct ReservationDetailView: View {
     private var actionBar: some View {
         // 웹처럼 오른쪽 정렬, 버튼이 많아 안 들어가면(큰 글씨 설정 등) 가로로 민다
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) { Spacer(minLength: 0); actionButtons }
-                .padding(.horizontal, 16).padding(.vertical, 10)
+            // 버튼이 위아래 6 씩 안 보이는 누름 여백을 가져 줄 여백은 그만큼 줄인다(웹 footer padding 10 14 14)
+            HStack(spacing: 6) { Spacer(minLength: 0); actionButtons }
+                .padding(.horizontal, 14).padding(.top, 4).padding(.bottom, 8)
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) { actionButtons }
-                    .padding(.horizontal, 16).padding(.vertical, 10)
+                HStack(spacing: 6) { actionButtons }
+                    .padding(.horizontal, 14).padding(.top, 4).padding(.bottom, 8)
             }
         }
         .background(.bar)
