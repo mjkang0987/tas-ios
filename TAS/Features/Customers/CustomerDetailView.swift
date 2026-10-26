@@ -33,6 +33,7 @@ struct CustomerDetailView: View {
     private static let emptyText = "등록된 데이터가 없습니다"
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var showPointAdjust = false
     @State private var showPointRecharge = false
     @State private var showMerge = false
@@ -195,7 +196,11 @@ struct CustomerDetailView: View {
             empty
         }
         if pointsEnabled {
-            HStack(spacing: 8) {
+            // 큰 글자에서는 두 버튼을 나란히 두면 글자가 잘린다 — 위아래로
+            let buttons = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .trailing, spacing: 0))
+                : AnyLayout(HStackLayout(spacing: 8))
+            buttons {
                 Spacer(minLength: 0)
                 Button("적립금 조정") { showPointAdjust = true }.buttonStyle(.action())
                 if pointSettings?.enableRecharge == true {
