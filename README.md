@@ -85,8 +85,8 @@ TAS/
     Assignees/         담당자 CRUD · 병합 · 근무시간
     Services/          서비스 카탈로그
     Notices/ Coupons/ Memberships/   설정 하위 관리 화면
-    Revenue/           매출(월/년 · KPI 5종 · 추세 차트 · 담당자별) — 집계를 탭하면 근거 목록(RevenueDetailListView)
-    Settings/          매장 정보(기능 토글) · 영업시간 · 적립금 설정 · 온라인예약 설정 · 로그아웃
+    Revenue/           매출(웹 휴대폰 배치 — 오늘·7일·30일·기간 · 담당자 · 예약완료/예약매출 · 숫자 카드 2열 · 일별 목록 펼치기 · 아래 추이·담당자별) — 숫자 카드를 누르면 근거 목록(RevenueDetailListView)
+    Settings/          웹 /menu 모양 — 머리 카드 · 매장 관리 · 영업시간·휴무 · 적립금 · 회원권 · 쿠폰 · 고객 예약 설정 · 공지 · 서비스 · 담당자 · 고객센터 · 로그아웃(게스트는 확인) · 예약 알림
   Resources/           Assets.xcassets (AppIcon, AccentColor)
 TASTests/              유닛 테스트 (XCTest, @testable import TAS)
 ```

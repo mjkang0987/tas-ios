@@ -40,6 +40,13 @@ enum DetailRoute: Hashable, Identifiable {
 
     var id: Self { self }
 
+    var isForm: Bool {
+        switch self {
+        case .editReservation, .editCustomer: return true
+        case .reservation, .customer: return false
+        }
+    }
+
     /// 바로 아래 레이어와 같은 것을 열면 새로 쌓지 않고 그리로 돌아간다(안드로이드 `DetailStack` 과 같은 동선 —
     /// 고객 → 예약 → 같은 고객 이름을 누르면 고객 상세가 두 겹이 되지 않는다).
     static func shouldReturn(opening next: DetailRoute, parent: DetailRoute?) -> Bool { next == parent }
@@ -63,6 +70,10 @@ struct DetailSheet: View {
 
     var body: some View {
         content
+            // 웹 상세 레이어처럼 화면 6할 높이로 올라와 뒤 화면이 보인다 — 끌어 올리면 전체. 수정 폼은 처음부터 전체.
+            .presentationDetents(route.isForm ? [.large] : [.fraction(0.6), .large])
+            // iOS 26 은 낮은 높이 시트를 유리처럼 비춰 뒤 달력 글자가 겹친다 — 불투명 바탕으로 글자 대비를 지킨다
+            .presentationBackground(Color(.systemBackground))
             .sheet(item: $next) { nextRoute in
                 DetailSheet(route: nextRoute, data: data, reload: reload, parent: route)
             }

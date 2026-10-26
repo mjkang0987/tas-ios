@@ -9,9 +9,9 @@ enum RevenueStats {
     /// 매출 대상 판정 기준 — 웹 `RevenueFilterMode`.
     enum FilterMode: String, CaseIterable {
         /// 예약완료된 건만 — 웹 `isCompletedReservationTarget`.
-        case completed = "완료"
+        case completed = "예약완료매출"
         /// 취소·노쇼·신청을 뺀 모든 건 — 웹 `isBookedReservationTarget`.
-        case booked = "예약"
+        case booked = "예약매출"
     }
 
     /// 웹 `isRevenueReservationTarget`.

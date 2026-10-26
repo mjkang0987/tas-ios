@@ -13,6 +13,8 @@ final class RevenueViewModelTests: XCTestCase {
             assigneesById: [:],
             servicePriceByName: prices
         ))
+        m.period = .month   // 시험은 달 단위로 짠다(앱 기본은 웹처럼 기간)
+        m.mode = .completed
         return m
     }
 

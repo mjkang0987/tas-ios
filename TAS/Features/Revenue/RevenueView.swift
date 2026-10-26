@@ -114,8 +114,9 @@ final class RevenueViewModel {
 
     var state: Loadable<Data> = .idle
     var selectedDate = Date()
-    var mode: RevenueStats.FilterMode = .completed
-    var period: Period = .month
+    // 웹 기본 — 예약매출, 이번 달 1일 ~ 오늘(웹 매출 화면엔 월·년 보기가 없다; 월·년은 집계 시험용으로 남는다)
+    var mode: RevenueStats.FilterMode = .booked
+    var period: Period = .range
     /// 담당자 필터 — nil 이면 전체(웹 `RevenueFilters` 담당자 칩).
     var assigneeId: Int?
     /// '기간' 보기의 시작·종료(시작이 더 늦어도 그대로 두고 계산만 앞뒤를 바꾼다 — 웹과 같다). 기본 이번 달 1일 ~ 오늘.
@@ -493,62 +494,32 @@ struct RevenueView: View {
             .task { await viewModel.load() }
     }
 
+    /// 웹 `RevenueFilters` 의 보기 탭 — 휴대폰 웹엔 '매출 그래프' 탭이 없다(전체·일별목록 둘).
+    private enum ViewTab: String, CaseIterable {
+        case all = "전체"
+        case list = "매출 일별목록"
+    }
+
+    @State private var viewTab: ViewTab = .all
+    @State private var showsCriteria = false
+    /// 펼친 날 — 웹 `RevenueDailyList` 처럼 여럿 동시에.
+    @State private var expandedDays: Set<String> = []
+    /// 펼친 날 안의 예약·고객 → 상세(드릴다운 시트와 같은 `DetailSheet`).
+    @State private var route: DetailRoute?
+
     private var content: some View {
-        @Bindable var viewModel = viewModel
-        return LoadableView(state: viewModel.state, loadingText: "매출 불러오는 중…") { _ in
-            List {
-                Section {
-                    Picker("기간", selection: $viewModel.period) {
-                        ForEach(RevenueViewModel.Period.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    if viewModel.period == .range { rangeControls } else { periodNav }
-                    Picker("기준", selection: $viewModel.mode) {
-                        ForEach(RevenueStats.FilterMode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    assigneeChips
+        LoadableView(state: viewModel.state, loadingText: "매출 불러오는 중…") { _ in
+            // 웹 휴대폰 화면 차례: 거르기 → 숫자 카드 → 일별 목록. 웹은 휴대폰에서 차트를 숨기지만
+            // 앱은 막대를 눌러 그날로 가는 길이 있어 맨 아래에 남긴다.
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    filters
+                    if viewTab == .all { kpiGrid }
+                    dailyList
+                    if viewTab == .all { extraCharts }
                 }
-
-                metricSection
-
-                Section(viewModel.period == .year ? "월별 매출" : "일별 매출") {
-                    RevenueTrendChart(
-                        points: viewModel.trend,
-                        unitLabel: viewModel.period == .year ? "월" : "일",
-                        label: trendLabel,
-                        onSelect: { index in detailKey = viewModel.trendKey(index: index) }
-                    )
-                    .frame(height: 180)
-                    .listRowInsets(EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12))
-                }
-
-                // 웹·안드로이드 `RevenueDailyList` — 예약·충전이 있는 날만, 최신부터. 누르면 그날 예약·충전 목록.
-                Section("일별 목록") {
-                    let rows = viewModel.dailyRows
-                    if rows.isEmpty {
-                        Text("등록된 데이터가 없습니다").font(.footnote).foregroundStyle(Color.textSecondary)
-                    }
-                    ForEach(rows) { row in
-                        Button { detailKey = .day(row.date) } label: { DailyRevenueRow(row: row) }
-                            .buttonStyle(.plain)
-                            .accessibilityHint("그날 매출 상세 열기")
-                    }
-                }
-
-                let byAssignee = viewModel.byAssignee
-                if !byAssignee.isEmpty {
-                    Section("\(session.labels.assignee)별") {
-                        ForEach(Array(byAssignee.enumerated()), id: \.offset) { item in
-                            Button {
-                                detailKey = .assignee(item.element.assignee?.id)
-                            } label: {
-                                AssigneeRevenueRow(row: item.element)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
             }
         }
         // 탭 루트라 @State 뷰모델이 앱 수명 내내 산다 — 로드가 실패하면 .task 가 다시 돌지
@@ -566,61 +537,64 @@ struct RevenueView: View {
         }
     }
 
-    /// 웹 `RevenueKpiGrid` — 5칸 모두 탭하면 근거 목록이 열린다.
-    private var metricSection: some View {
-        let metrics = viewModel.metrics
-        return Section("합계") {
-            metricRow(.sales, value: formatWon(metrics.total),
-                      note: metrics.salesTotal > 0 ? "회원권·충전 \(formatWon(metrics.salesTotal)) 포함" : nil)
-            metricRow(.count, value: "\(metrics.count)건")
-            metricRow(.new, value: "\(metrics.newCustomers.count)명")
-            metricRow(.returning, value: "\(metrics.returningCustomers.count)명")
-            metricRow(.paid, value: formatWon(metrics.paidTotal))
-        }
-    }
+    // MARK: 거르기 (웹 `RevenueFilters`)
 
-    private func metricRow(_ key: RevenueViewModel.MetricKey, value: String, note: String? = nil) -> some View {
-        Button {
-            detailKey = .metric(key)
-        } label: {
-            HStack {
-                Text(key.label)
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(value).foregroundStyle(Color.textSecondary).monospacedDigit()
-                    if let note { Text(note).font(.caption2).foregroundStyle(Color.textSecondary) }
-                }
-                Image(systemName: "chevron.right")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Color.textTertiary)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("\(key.label) 상세 목록 열기")
-    }
-
-    /// '기간' — 빠른 선택(오늘·7일·30일) + 시작일·종료일 + 앞뒤 이동(웹 `RevenueFilters`).
-    @ViewBuilder private var rangeControls: some View {
+    @ViewBuilder private var filters: some View {
         @Bindable var viewModel = viewModel
-        HStack(spacing: 8) {
-            ForEach(RevenueStats.QuickRange.allCases, id: \.self) { q in
-                FilterChip(label: q.rawValue, isSelected: viewModel.quickRange == q) { viewModel.applyQuick(q) }
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                ForEach(RevenueStats.QuickRange.allCases, id: \.self) { q in
+                    FilterChip(label: q.rawValue, isSelected: viewModel.quickRange == q) { viewModel.applyQuick(q) }
+                }
+            }
+            HStack(spacing: 4) {
+                Button { viewModel.shift(-1) } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
+                    .accessibilityLabel("이전 기간")
+                DatePicker("시작일", selection: $viewModel.rangeStart, displayedComponents: .date).labelsHidden()
+                Text("~").foregroundStyle(Color.textSecondary)
+                DatePicker("종료일", selection: $viewModel.rangeEnd, displayedComponents: .date).labelsHidden()
+                Spacer(minLength: 0)
+                Button { viewModel.shift(1) } label: { Image(systemName: "chevron.right").frame(width: 44, height: 44) }
+                    .accessibilityLabel("다음 기간")
+            }
+            .buttonStyle(.borderless)
+            .onChange(of: viewModel.rangeStart) { _, _ in viewModel.clampRange() }
+            .onChange(of: viewModel.rangeEnd) { _, _ in viewModel.clampRange() }
+            assigneeChips
+            // 웹은 한 줄(보기 탭 왼쪽 · 기준 오른쪽) — 폭이 모자라면(좁은 기기·큰 글자) 두 줄로
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 6) { viewTabs; Spacer(minLength: 0); modeTabs }
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) { viewTabs }
+                    HStack(spacing: 6) { modeTabs }
+                }
+            }
+            if showsCriteria {
+                Text(viewModel.mode == .completed
+                     ? "예약완료 매출은 예약상태가 예약완료인 건만 집계합니다. 결제완료 금액은 결제수단과 금액이 입력된 내역만 합산됩니다."
+                     : "예약매출은 취소, 노쇼를 제외한 전체 예약 기준으로 집계합니다. 결제완료 금액은 예약완료 기준으로만 집계됩니다.")
+                    .font(.tasSmall)
+                    .foregroundStyle(Color.textSecondary)
             }
         }
-        HStack(spacing: 4) {
-            Button { viewModel.shift(-1) } label: { Image(systemName: "chevron.left") }
-                .accessibilityLabel("이전 기간")
-            DatePicker("시작일", selection: $viewModel.rangeStart, displayedComponents: .date).labelsHidden()
-            Text("~").foregroundStyle(Color.textSecondary)
-            DatePicker("종료일", selection: $viewModel.rangeEnd, displayedComponents: .date).labelsHidden()
-            Spacer(minLength: 0)
-            Button { viewModel.shift(1) } label: { Image(systemName: "chevron.right") }
-                .accessibilityLabel("다음 기간")
+    }
+
+    @ViewBuilder private var viewTabs: some View {
+        ForEach(ViewTab.allCases, id: \.self) { tab in
+            FilterChip(label: tab.rawValue, isSelected: viewTab == tab) { viewTab = tab }
+        }
+    }
+
+    @ViewBuilder private var modeTabs: some View {
+        ForEach(RevenueStats.FilterMode.allCases, id: \.self) { mode in
+            FilterChip(label: mode.rawValue, isSelected: viewModel.mode == mode) { viewModel.mode = mode }
+        }
+        Button { showsCriteria.toggle() } label: {
+            Image(systemName: "info.circle").frame(width: 44, height: 44)
         }
         .buttonStyle(.borderless)
-        .onChange(of: viewModel.rangeStart) { _, _ in viewModel.clampRange() }
-        .onChange(of: viewModel.rangeEnd) { _, _ in viewModel.clampRange() }
+        .accessibilityLabel("집계기준 설명")
+        .accessibilityValue(showsCriteria ? "펼침" : "접힘")
     }
 
     /// 담당자 필터 — 전체 + 담당자(캘린더 필터와 같은 칩).
@@ -640,24 +614,157 @@ struct RevenueView: View {
         }
     }
 
-    /// 차트 칸 이름 — 기간 보기는 실제 날짜(M/d), 아니면 숫자.
+    // MARK: 숫자 카드 (웹 `RevenueKpiGrid` — 2열, 누르면 근거 목록)
+
+    private var kpiGrid: some View {
+        let metrics = viewModel.metrics
+        return LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+            kpiCard(.sales, value: formatWon(metrics.total),
+                    note: metrics.salesTotal > 0 ? "회원권·충전 \(formatWon(metrics.salesTotal)) 포함" : nil)
+            kpiCard(.count, value: "\(metrics.count)건")
+            kpiCard(.new, value: "\(metrics.newCustomers.count)명")
+            kpiCard(.returning, value: "\(metrics.returningCustomers.count)명")
+            kpiCard(.paid, value: formatWon(metrics.paidTotal))
+        }
+    }
+
+    private func kpiCard(_ key: RevenueViewModel.MetricKey, value: String, note: String? = nil) -> some View {
+        Button {
+            detailKey = .metric(key)
+        } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(key.label).font(.tasSmall).foregroundStyle(Color.textSecondary)
+                Text(value).font(.tasTitle.weight(.bold)).foregroundStyle(Color.textPrimary).monospacedDigit()
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                if let note { Text(note).font(.tasXSmall).foregroundStyle(Color.textSecondary) }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Color(.systemBackground)))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.borderLine))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("\(key.label) 상세 목록 열기")
+    }
+
+    // MARK: 일별 목록 (웹 `RevenueDailyList` — 날 머리를 누르면 그 자리에서 펼침)
+
+    private var dailyList: some View {
+        let rows = viewModel.dailyRows
+        return VStack(spacing: 0) {
+            if rows.isEmpty {
+                Text("등록된 데이터가 없습니다")
+                    .font(.tasBody).foregroundStyle(Color.textSecondary)
+                    .frame(maxWidth: .infinity, minHeight: 80)
+            }
+            ForEach(rows) { row in
+                dayGroup(row)
+                Divider().overlay(Color.dividerLine)
+            }
+            if !rows.isEmpty {
+                let total = viewModel.metrics
+                HStack {
+                    Text("\(total.count)건").font(.tasBody).foregroundStyle(Color.textSecondary)
+                    Spacer()
+                    Text(formatWon(total.total)).font(.tasTitle.weight(.bold)).foregroundStyle(Color.blueText).monospacedDigit()
+                }
+                .padding(12)
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.borderLine))
+                .padding(.top, 12)
+            }
+        }
+        .padding(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.borderLine))
+        .sheet(item: $route) { route in
+            if let data = viewModel.detailData {
+                DetailSheet(route: route, data: data, reload: { await viewModel.load() })
+            }
+        }
+    }
+
+    @ViewBuilder private func dayGroup(_ row: RevenueViewModel.DayRow) -> some View {
+        let expanded = expandedDays.contains(row.date)
+        Button {
+            if expanded { expandedDays.remove(row.date) } else { expandedDays.insert(row.date) }
+        } label: {
+            DailyRevenueRow(row: row, expanded: expanded)
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(expanded ? "펼침" : "접힘")
+        .accessibilityHint("그날 예약 펼치기")
+        if expanded {
+            let layer = viewModel.dayLayer(row.date)
+            VStack(spacing: 6) {
+                if case .reservations(let reservations) = layer.content {
+                    ForEach(reservations) { reservation in
+                        let customer = viewModel.customer(reservation.customerId)
+                        let assignee = viewModel.assignee(reservation.assigneeId)
+                        Button { route = .reservation(reservation.id) } label: {
+                            ReservationInfoCard(
+                                reservation: reservation,
+                                serviceColorMap: viewModel.serviceColorMap,
+                                customerName: customer?.name ?? "고객 미지정",
+                                isNewCustomer: customer?.isNewCustomerVisit(on: reservation.date) ?? false,
+                                onCustomerTap: customer == nil ? nil : { route = .customer(reservation.customerId) },
+                                assigneeName: assignee?.name,
+                                assigneeColor: Color(hex: assignee?.color),
+                                showPrice: true
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                ForEach(layer.sales) { sale in
+                    Button { route = .customer(sale.customerId) } label: {
+                        SaleRow(sale: sale, customerName: viewModel.customer(sale.customerId)?.name)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.customer(sale.customerId) == nil)
+                }
+            }
+            .padding(.bottom, 10)
+        }
+    }
+
+    // MARK: 차트 (웹 데스크톱 `RevenueChartGrid` 의 추이·담당자별 — 휴대폰 웹엔 없다)
+
+    @ViewBuilder private var extraCharts: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("기간별 매출 추이").font(.tasMedium.weight(.semibold)).foregroundStyle(Color.textSecondary)
+                .accessibilityAddTraits(.isHeader)
+            RevenueTrendChart(
+                points: viewModel.trend,
+                unitLabel: "일",
+                label: trendLabel,
+                onSelect: { index in detailKey = viewModel.trendKey(index: index) }
+            )
+            .frame(height: 180)
+        }
+        let byAssignee = viewModel.byAssignee
+        if !byAssignee.isEmpty {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(session.labels.assignee)별 매출").font(.tasMedium.weight(.semibold)).foregroundStyle(Color.textSecondary)
+                    .accessibilityAddTraits(.isHeader)
+                ForEach(Array(byAssignee.enumerated()), id: \.offset) { item in
+                    Button {
+                        detailKey = .assignee(item.element.assignee?.id)
+                    } label: {
+                        AssigneeRevenueRow(row: item.element).frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    /// 차트 칸 이름 — 기간의 실제 날짜(M/d).
     private func trendLabel(_ index: Int) -> String {
-        guard viewModel.period == .range,
-              let from = KST.dayKey.date(from: viewModel.bounds.from),
+        guard let from = KST.dayKey.date(from: viewModel.bounds.from),
               let d = KST.calendar.date(byAdding: .day, value: index - 1, to: from) else { return "\(index)" }
         let c = KST.calendar.dateComponents([.month, .day], from: d)
         return "\(c.month ?? 0)/\(c.day ?? 0)"
-    }
-
-    private var periodNav: some View {
-        HStack {
-            Button { viewModel.shift(-1) } label: { Image(systemName: "chevron.left") }
-            Spacer()
-            Text(viewModel.periodLabel).font(.tasTitle).monospacedDigit()
-            Spacer()
-            Button { viewModel.shift(1) } label: { Image(systemName: "chevron.right") }
-        }
-        .buttonStyle(.borderless)
     }
 }
 
@@ -728,6 +835,7 @@ private struct RevenueTrendChart: View {
 /// 일별 목록 한 줄 — 날짜(요일) · 건수 · 금액.
 private struct DailyRevenueRow: View {
     let row: RevenueViewModel.DayRow
+    var expanded = false
 
     var body: some View {
         HStack {
@@ -738,10 +846,13 @@ private struct DailyRevenueRow: View {
             Spacer()
             Text("\(row.count)건").font(.caption).foregroundStyle(Color.textSecondary)
             Text(formatWon(row.total)).font(.tasBody.weight(.semibold)).monospacedDigit()
-            Image(systemName: "chevron.right")
+            // 웹 StyledExpandIcon — 펼치면 위로
+            Image(systemName: "chevron.down")
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(Color.textTertiary)
+                .rotationEffect(.degrees(expanded ? 180 : 0))
         }
+        .frame(minHeight: 52)
         .contentShape(Rectangle())
     }
 

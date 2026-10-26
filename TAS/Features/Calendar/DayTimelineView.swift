@@ -12,6 +12,8 @@ struct DayTimelineView: View {
     /// 서비스명 → hex. 기본값 없음 — 빠뜨리면 칩이 조용히 폴백 회색이 된다.
     let serviceColorMap: [String: String]
     var onTap: (Reservation) -> Void = { _ in }
+    /// 웹 타임라인 카드처럼 이름 앞 '신규' 배지.
+    var isNewCustomer: (Reservation) -> Bool = { _ in false }
     /// 오늘이면 현재 시각 선을 얹는다.
     var isToday: Bool = false
 
@@ -85,7 +87,10 @@ struct DayTimelineView: View {
         } label: {
             VStack(alignment: .leading, spacing: 1) {
                 Text(p.reservation.startTime).font(.caption2.weight(.semibold)).monospacedDigit()
-                Text(customerName(p.reservation.customerId)).font(.caption2).lineLimit(1)
+                HStack(spacing: 3) {
+                    if isNewCustomer(p.reservation) { NewCustomerBadge() }
+                    Text(customerName(p.reservation.customerId)).font(.caption2).lineLimit(1)
+                }
                 // 칩은 평문보다 위아래 패딩만큼 높다. 임계값을 그대로 두면 60분(56pt)보다
                 // 짧은 블록에서 칩 줄이 잘린다.
                 if p.height > 54 {

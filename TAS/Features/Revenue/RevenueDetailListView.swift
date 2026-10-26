@@ -112,7 +112,7 @@ struct RevenueDetailListView: View {
 }
 
 /// 충전 한 건 — '적립금 충전' · 고객명 · 결제수단 / 금액.
-private struct SaleRow: View {
+struct SaleRow: View {
     let sale: RevenueStats.StoreSale
     let customerName: String?
 
