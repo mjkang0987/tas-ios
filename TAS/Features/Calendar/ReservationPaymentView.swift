@@ -66,14 +66,14 @@ struct ReservationPaymentView: View {
                         HStack(spacing: 8) {
                             FormField(label: nil) {
                                 SelectMenu(title: "결제종류 \(i + 1)", value: entries[i].method.rawValue) {
-                                    Picker("결제종류", selection: $entries[i].method) {
+                                    Picker("결제종류", selection: entryBinding(i, \.method, fallback: .card)) {
                                         ForEach(Self.methods, id: \.self) { Text($0.rawValue).tag($0) }
                                     }
                                 }
                             }
                             FormField(label: nil) {
                                 HStack(spacing: 4) {
-                                    TextField("금액", value: $entries[i].amount, format: .number)
+                                    TextField("금액", value: entryBinding(i, \.amount, fallback: 0), format: .number)
                                         .keyboardType(.numberPad)
                                         .multilineTextAlignment(.trailing)
                                         .accessibilityLabel("결제 금액 \(i + 1)")
@@ -93,10 +93,11 @@ struct ReservationPaymentView: View {
                     .buttonStyle(.action())
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("합계 \(formatWon(enteredTotal)) · 예약가 \(formatWon(reservation.price ?? 0))")
+                        Text("합계 \(formatWon(enteredTotal))")
                             .foregroundStyle(enteredTotal == (reservation.price ?? 0) ? Color.textSecondary : Color.warningText)
                         if pointsUsedNow > 0 || (customer?.points ?? 0) > 0 {
-                            Text("적립금 사용 \(formatWon(pointsUsedNow)) · 보유 \(formatWon(availablePoints))")
+                            // 위 알약은 고객 잔액, 여기는 이 예약에 쓸 수 있는 몫(잔액 + 이 예약이 이미 쓴 적립금)
+                            Text("적립금 사용 \(formatWon(pointsUsedNow)) · 사용 가능 \(formatWon(availablePoints))")
                                 .foregroundStyle(pointsUsedNow > availablePoints ? Color.dangerText : Color.textSecondary)
                         }
                     }
@@ -151,6 +152,14 @@ struct ReservationPaymentView: View {
         }
     }
 
+    /// 줄을 지운 뒤에도 포커스가 풀리며 그 줄 칸이 값을 다시 쓸 수 있다 — 범위 밖이면 버린다(안 그러면 Index out of range).
+    private func entryBinding<T>(_ i: Int, _ key: WritableKeyPath<PaymentEntry, T>, fallback: T) -> Binding<T> {
+        Binding(
+            get: { entries.indices.contains(i) ? entries[i][keyPath: key] : fallback },
+            set: { if entries.indices.contains(i) { entries[i][keyPath: key] = $0 } }
+        )
+    }
+
     private func setup() {
         guard entries.isEmpty else { return }
         if let existing = reservation.paymentEntries, !existing.isEmpty {
@@ -177,7 +186,7 @@ struct ReservationPaymentView: View {
             return
         }
         if newUsed > availablePoints {
-            errorMessage = "적립금 잔액이 부족합니다. (사용 \(formatWon(newUsed)) / 보유 \(formatWon(availablePoints)))"
+            errorMessage = "적립금 잔액이 부족합니다. (사용 \(formatWon(newUsed)) / 사용 가능 \(formatWon(availablePoints)))"
             return
         }
         isSaving = true
