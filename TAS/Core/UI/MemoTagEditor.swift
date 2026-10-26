@@ -3,6 +3,7 @@ import SwiftUI
 /// 메모 태그 편집 — 웹 `AddressCustomerTags`(편집)·`CustomerMemoTagSection` 이식. 고객 수정 폼·고객 명단 펼친 행이 같이 쓴다.
 /// 웹 차례: 입력 + '추가'(엔터도 추가) [+ '완료'] → 색 8개 → 태그(누르면 삭제).
 struct MemoTagEditor: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
     let tags: [CustomerMemoTag]
     @Binding var text: String
     @Binding var color: String
@@ -27,8 +28,12 @@ struct MemoTagEditor: View {
     }
 
     var body: some View {
+        // 큰 글자에서는 버튼이 입력칸을 눌러 글자가 안 보인다 — 입력칸 한 줄, 버튼은 그 아래로
+        let inputRow = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+            : AnyLayout(HStackLayout(spacing: 6))
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
+            inputRow {
                 FormField(label: nil) {
                     TextField("메모 태그 입력", text: $text)
                         .submitLabel(.done)
@@ -68,7 +73,7 @@ struct MemoTagEditor: View {
             }
 
             if let error {
-                Text(error).font(.footnote).foregroundStyle(Color.dangerText)
+                Text(error).font(.tasMedium).foregroundStyle(Color.dangerText)
             }
         }
     }
