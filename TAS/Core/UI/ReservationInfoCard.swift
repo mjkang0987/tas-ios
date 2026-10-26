@@ -65,7 +65,8 @@ struct ReservationInfoCard: View {
             main
             Spacer(minLength: 0)
             if showStatus || showPrice {
-                trailing
+                // 좁으면(큰 글자) 금액·상태가 아니라 시술 칩이 먼저 잘리게
+                trailing.layoutPriority(1)
             }
         }
         .padding(6)
