@@ -30,6 +30,7 @@ struct ReservationCreateView: View {
     let onSaved: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     // 고객
     @State private var customerId = 0          // 0 = 신규
@@ -393,7 +394,11 @@ struct ReservationCreateView: View {
                     .labelsHidden()
                     .environment(\.timeZone, Self.seoul)
             }
-            HStack(alignment: .top, spacing: 16) {
+            // 큰 글자에서는 나란히 두면 잘린다 — 위아래로
+            let pair = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+                : AnyLayout(HStackLayout(alignment: .top, spacing: 16))
+            pair {
                 FormField(label: "시작", bordered: false) {
                     DatePicker("시작", selection: $startTime, displayedComponents: .hourAndMinute)
                         .labelsHidden()
