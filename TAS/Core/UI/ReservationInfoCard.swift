@@ -49,8 +49,8 @@ struct ReservationInfoCard: View {
     // 좌측 칸 폭은 글자 크기를 따라간다 — 고정폭이면 손쉬운 사용의 큰 글자에서
     // "2026-08-31"이 칸에 안 들어가 말줄임된다. (기본값 있는 private 저장 프로퍼티라
     //  memberwise init 에는 나타나지 않는다 — 호출부는 그대로다.)
-    @ScaledMetric(relativeTo: .caption2) private var dateColumnWidth: CGFloat = 76
-    @ScaledMetric(relativeTo: .subheadline) private var timeColumnWidth: CGFloat = 44
+    @ScaledMetric(relativeTo: .caption2) private var dateColumnWidth: CGFloat = 68
+    @ScaledMetric(relativeTo: .subheadline) private var timeColumnWidth: CGFloat = 38
 
     /// 취소·노쇼는 담당자 색을 버리고 무채색 + 빗금으로 간다(웹 `.inactive` 와 같다).
     private var isInactive: Bool { reservation.isInactive }
@@ -96,7 +96,7 @@ struct ReservationInfoCard: View {
     /// 웹처럼 색은 그대로(굵은 검정), 취소·노쇼는 취소선. 누를 수 있으면 손가락 크기만큼 위아래로 넓혀 받는다.
     @ViewBuilder private func customerNameText(_ name: String) -> some View {
         let text = Text(name)
-            .font(.tasBody.weight(.semibold))
+            .font(.tasSmall.weight(.bold)) // 웹 StyledCustomerName 12 굵게
             .strikethrough(isInactive, color: .textTertiary)
             .foregroundStyle(isInactive ? Color.textTertiary : Color.textPrimary)
         if let onCustomerTap {
@@ -142,7 +142,7 @@ struct ReservationInfoCard: View {
         VStack(alignment: .leading, spacing: 1) {
             if showDate {
                 Text(reservation.date)
-                    .font(.caption2)
+                    .font(.tasXSmall) // 웹 StyledCompactDateLabel 11
                     .foregroundStyle(Color.textSecondary)
                     .monospacedDigit()
             }
@@ -151,16 +151,17 @@ struct ReservationInfoCard: View {
                 EmptyView()
             case .start:
                 Text(reservation.startTime)
-                    .font(.tasBody.weight(.semibold))
+                    .font(.tasSmall.weight(.bold))
                     .monospacedDigit()
             case .range:
                 // 웹은 시작·종료를 같은 굵기·색으로 쌓는다 — 줄바꿈 자체가 범위를 뜻한다.
                 // 종료만 흐리면 "언제 끝나는지"가 부가정보처럼 읽힌다.
+                // 웹 StyledLeft — 12 굵게
                 Text(reservation.startTime)
-                    .font(.tasBody.weight(.semibold))
+                    .font(.tasSmall.weight(.bold))
                     .monospacedDigit()
                 Text(reservation.endTime)
-                    .font(.tasBody.weight(.semibold))
+                    .font(.tasSmall.weight(.bold))
                     .monospacedDigit()
             }
         }
@@ -202,8 +203,8 @@ struct ReservationInfoCard: View {
             }
             if showPrice {
                 Text(formatWon(reservation.price ?? 0))
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Color.textSecondary)
+                    .font(.tasMedium.weight(.bold)) // 웹 StyledPrice 13 굵게
+                    .foregroundStyle(Color.textPrimary)
                     .monospacedDigit()
             }
         }
