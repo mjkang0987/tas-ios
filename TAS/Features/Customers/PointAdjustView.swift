@@ -13,7 +13,9 @@ struct PointAdjustView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var isAdd = true
-    @State private var amount = 0
+    /// 비어 있으면 nil — 웹처럼 빈 칸에 "금액 입력"이 보이게.
+    @State private var amountInput: Int?
+    private var amount: Int { amountInput ?? 0 }
     @State private var reason = ""
     @State private var errorMessage: String?
     @State private var isSaving = false
@@ -37,13 +39,13 @@ struct PointAdjustView: View {
                     .pickerStyle(.segmented)
                     FormField(label: "금액") {
                         HStack(spacing: 4) {
-                            TextField("금액 입력", value: $amount, format: .number)
+                            TextField("금액", value: $amountInput, format: .number, prompt: Text("금액 입력"))
                                 .keyboardType(.numberPad)
                             Text("원").foregroundStyle(Color.textSecondary)
                         }
                     }
                     FormField(label: "사유 (선택)") {
-                        TextField("예: 이벤트 적립", text: $reason)
+                        TextField("사유", text: $reason, prompt: Text("예: 이벤트 적립"))
                     }
                     Text("현재 \(formatWon(currentPoints)) → 조정 후 \(formatWon(resultPoints))")
                         .font(.tasSmall).foregroundStyle(Color.textSecondary)

@@ -17,7 +17,9 @@ struct PointRechargeView: View {
 
     /// 선택한 규칙 index. nil이면 직접 입력.
     @State private var selectedRule: Int?
-    @State private var customAmount = 0
+    /// 비어 있으면 nil — 웹처럼 빈 칸에 "충전금액"이 보이게.
+    @State private var customInput: Int?
+    private var customAmount: Int { customInput ?? 0 }
     /// 충전은 받은 돈이라 매출로 잡힌다 — 어떻게 받았는지(웹 `AddressCustomerRecharge` 와 같은 기본값 카드).
     @State private var paymentMethod: PaymentMethod = .card
     @State private var errorMessage: String?
@@ -52,7 +54,7 @@ struct PointRechargeView: View {
                     if selectedRule == nil {
                         FormField(label: rules.isEmpty ? "충전 금액" : "직접 입력") {
                             HStack(spacing: 4) {
-                                TextField("충전금액", value: $customAmount, format: .number)
+                                TextField("충전 금액", value: $customInput, format: .number, prompt: Text("충전금액"))
                                     .keyboardType(.numberPad)
                                 Text("원").foregroundStyle(Color.textSecondary)
                             }
