@@ -87,20 +87,13 @@ struct DayColumnsTimelineView: View {
         .frame(width: gutterWidth, alignment: .trailing)
     }
 
-    /// 칼럼이 다 화면에 들어가면(3일 보기 등) 날마다 같은 폭으로 꽉 채우고(웹 3일과 같이 날 칸이 고르게),
-    /// 넘치면(주·바쁜 날) 기본 레인 폭 그대로 가로로 민다. 날 key → 레인 폭.
+    /// 날 key → 레인 폭(`TimelineLayout.fillLaneWidths`).
     private func laneWidths(_ placed: [String: [TimelineLayout.Placed]]) -> [String: CGFloat] {
-        let lanes = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, CGFloat(TimelineLayout.maxLanes(placed[$0] ?? []))) })
-        let natural = lanes.values.reduce(0) { $0 + laneWidth * $1 + laneSpacing * ($1 - 1) } + columnSpacing * CGFloat(max(0, dayKeys.count - 1))
-        guard viewportWidth > natural, !dayKeys.isEmpty else { return lanes.mapValues { _ in laneWidth } }
-        let dayWidth = (viewportWidth - columnSpacing * CGFloat(dayKeys.count - 1)) / CGFloat(dayKeys.count)
-        // 한 날의 기본 폭이 고른 폭보다 넓으면(그날만 많이 겹침) 고르게 못 나눈다 — 남는 폭을 레인 수대로 나눈다
-        if lanes.values.contains(where: { laneWidth * $0 + laneSpacing * ($0 - 1) > dayWidth }) {
-            let fixed = natural - lanes.values.reduce(0) { $0 + laneWidth * $1 }
-            let w = (viewportWidth - fixed) / lanes.values.reduce(0, +)
-            return lanes.mapValues { _ in w }
-        }
-        return lanes.mapValues { (dayWidth - laneSpacing * ($0 - 1)) / $0 }
+        let widths = TimelineLayout.fillLaneWidths(
+            lanes: dayKeys.map { TimelineLayout.maxLanes(placed[$0] ?? []) },
+            viewport: viewportWidth, base: laneWidth, laneSpacing: laneSpacing, columnSpacing: columnSpacing
+        )
+        return Dictionary(uniqueKeysWithValues: zip(dayKeys, widths.map { CGFloat($0) }))
     }
 
     private func dayColumn(_ key: String, index: Int, placed: [TimelineLayout.Placed], laneWidth: CGFloat) -> some View {

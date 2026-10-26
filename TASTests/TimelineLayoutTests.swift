@@ -76,3 +76,36 @@ final class TimelineLayoutTests: XCTestCase {
         XCTAssertEqual(TimelineLayout.maxLanes([]), 1)
     }
 }
+
+/// 3일 보기 꽉 채우기 — 세 갈래(넘침·고르게·한 날만 많이 겹침).
+final class FillLaneWidthsTests: XCTestCase {
+    private func total(_ lanes: [Int], _ widths: [Double]) -> Double {
+        zip(lanes, widths).reduce(0) { $0 + $1.1 * Double($1.0) + 2 * Double($1.0 - 1) } + Double(lanes.count - 1)
+    }
+
+    func testOverflowKeepsBaseWidth() {
+        // 7일 × 64 > 320 — 기본 폭 그대로 가로 스크롤
+        let w = TimelineLayout.fillLaneWidths(lanes: Array(repeating: 1, count: 7), viewport: 320, base: 64, laneSpacing: 2, columnSpacing: 1)
+        XCTAssertEqual(w, Array(repeating: 64, count: 7))
+    }
+
+    func testEvenDaysFillViewport() {
+        let lanes = [1, 2, 1]
+        let w = TimelineLayout.fillLaneWidths(lanes: lanes, viewport: 500, base: 64, laneSpacing: 2, columnSpacing: 1)
+        XCTAssertEqual(total(lanes, w), 500, accuracy: 0.001)
+        // 날 칸 폭이 고르다
+        XCTAssertEqual(w[0], w[1] * 2 + 2, accuracy: 0.001)
+    }
+
+    func testOneBusyDayStillFillsWithoutOverflow() {
+        // 셋째 날만 4칸 — 고른 폭(약 113)에 64×4 가 안 들어가 남는 폭을 레인 수대로
+        let lanes = [1, 1, 4]
+        let w = TimelineLayout.fillLaneWidths(lanes: lanes, viewport: 400, base: 64, laneSpacing: 2, columnSpacing: 1)
+        XCTAssertEqual(total(lanes, w), 400, accuracy: 0.001)
+        XCTAssertTrue(w.allSatisfy { $0 >= 64 })
+    }
+
+    func testNoDays() {
+        XCTAssertEqual(TimelineLayout.fillLaneWidths(lanes: [], viewport: 300, base: 64, laneSpacing: 2, columnSpacing: 1), [])
+    }
+}
