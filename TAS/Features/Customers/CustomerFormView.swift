@@ -34,14 +34,14 @@ struct CustomerFormView: View {
             // 웹 CustomerDetail 편집 모드 — 흰 바탕에 이름 붙은 입력칸(고객명·연락처) · 적립금 · 고객 메모
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    field("고객명") {
+                    FormField(label: "고객명") {
                         TextField("이름 입력", text: $name)
                             .focused($focusedField, equals: .name)
                             .submitLabel(.next)
                             .onSubmit { focusedField = .tel }
                     }
-                    field("연락처") {
-                        TextField("01012345678", text: $tel)
+                    FormField(label: "연락처") {
+                        TextField("연락처", text: $tel, prompt: Text("01012345678"))
                             .keyboardType(.numberPad)
                             .focused($focusedField, equals: .tel)
                     }
@@ -84,19 +84,6 @@ struct CustomerFormView: View {
                 }
             }
             .onAppear(perform: setup)
-        }
-    }
-
-    /// 웹 formControl — 이름(13, 진회색) 위에 입력칸(높이 36, 1px 옅은 테두리, 6 둥글게).
-    private func field<F: View>(_ label: String, @ViewBuilder input: () -> F) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label).font(.tasMedium).foregroundStyle(Color.textSecondary)
-            input()
-                .font(.tasBody)
-                .padding(.horizontal, 10)
-                .frame(minHeight: 36)
-                .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 6))
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.borderLine))
         }
     }
 

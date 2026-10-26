@@ -13,7 +13,9 @@ struct PointAdjustView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var isAdd = true
-    @State private var amount = 0
+    /// 비어 있으면 nil — 웹처럼 빈 칸에 "금액 입력"이 보이게.
+    @State private var amountInput: Int?
+    private var amount: Int { amountInput ?? 0 }
     @State private var reason = ""
     @State private var errorMessage: String?
     @State private var isSaving = false
@@ -25,31 +27,34 @@ struct PointAdjustView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
+            // 웹 적립금 조정 — 현재 잔액, 이름 붙은 입력칸, 조정 후 잔액
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("현재 잔액 \(formatWon(currentPoints))")
+                        .font(.tasBody.weight(.semibold)).foregroundStyle(Color.blueText)
                     Picker("구분", selection: $isAdd) {
                         Text("적립").tag(true)
                         Text("차감").tag(false)
                     }
                     .pickerStyle(.segmented)
-                    HStack {
-                        Text("금액")
-                        Spacer()
-                        TextField("0", value: $amount, format: .number)
-                            .keyboardType(.numberPad)
-                            .multilineTextAlignment(.trailing)
-                        Text("원").foregroundStyle(Color.textSecondary)
+                    FormField(label: "금액") {
+                        HStack(spacing: 4) {
+                            TextField("금액", value: $amountInput, format: .number, prompt: Text("금액 입력"))
+                                .keyboardType(.numberPad)
+                            Text("원").foregroundStyle(Color.textSecondary)
+                        }
                     }
-                    TextField("사유 (선택)", text: $reason)
-                } header: {
-                    Text("적립금 조정")
-                } footer: {
+                    FormField(label: "사유 (선택)") {
+                        TextField("사유", text: $reason, prompt: Text("예: 이벤트 적립"))
+                    }
                     Text("현재 \(formatWon(currentPoints)) → 조정 후 \(formatWon(resultPoints))")
+                        .font(.tasSmall).foregroundStyle(Color.textSecondary)
+                    if let errorMessage {
+                        Text(errorMessage).font(.tasMedium).foregroundStyle(Color.dangerText)
+                    }
                 }
-
-                if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
-                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .navigationTitle("적립금 조정")
             .navigationBarTitleDisplayMode(.inline)
@@ -59,6 +64,8 @@ struct PointAdjustView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") { Task { await save() } }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.brandFill)
                         .disabled(isSaving)
                 }
             }

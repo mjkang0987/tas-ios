@@ -16,6 +16,7 @@ struct ReservationPaymentView: View {
     let onCompleted: () async -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var entries: [PaymentEntry] = []
     @State private var pointAwardEnabled = false
@@ -43,67 +44,103 @@ struct ReservationPaymentView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    ForEach(entries.indices, id: \.self) { i in
-                        HStack {
-                            Picker("결제종류", selection: $entries[i].method) {
-                                ForEach(Self.methods, id: \.self) { Text($0.rawValue).tag($0) }
-                            }
-                            .labelsHidden()
-                            Spacer()
-                            TextField("금액", value: $entries[i].amount, format: .number)
-                                .keyboardType(.numberPad)
-                                .multilineTextAlignment(.trailing)
-                            Text("원").foregroundStyle(Color.textSecondary)
+            // 웹 결제 레이어 — 안내·보유 적립금, 서비스 금액, [결제종류 | 금액 | 삭제] 줄, 결제수단 추가, 적립 적용
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 8) {
+                        Text("결제 종류와 금액을 입력해 주세요.")
+                            .font(.tasMedium).foregroundStyle(Color.textSecondary)
+                        Spacer(minLength: 0)
+                        if let customer {
+                            Text("보유 적립금 \(formatWon(customer.points ?? 0))")
+                                .font(.tasSmall.weight(.semibold))
+                                .foregroundStyle(Color.warningText)
+                                .padding(.horizontal, 10)
+                                .frame(minHeight: 28)
+                                .background(Color.warningText.opacity(0.12), in: Capsule())
                         }
                     }
-                    .onDelete { offsets in
-                        // 최소 1개는 유지.
-                        if entries.count > 1 { entries.remove(atOffsets: offsets) }
+                    Text("서비스 금액 \(formatWon(reservation.price ?? 0))")
+                        .font(.tasBody.weight(.semibold))
+
+                    // 큰 글자에서는 세 칸을 나란히 두면 잘린다 — 위아래로
+                    let row = typeSize.isAccessibilitySize
+                        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+                        : AnyLayout(HStackLayout(spacing: 8))
+                    ForEach(entries.indices, id: \.self) { i in
+                        row {
+                            FormField(label: nil) {
+                                SelectMenu(title: "결제종류 \(i + 1)", value: entries[i].method.rawValue) {
+                                    Picker("결제종류", selection: entryBinding(i, \.method, fallback: .card)) {
+                                        ForEach(Self.methods, id: \.self) { Text($0.rawValue).tag($0) }
+                                    }
+                                }
+                            }
+                            FormField(label: nil) {
+                                HStack(spacing: 4) {
+                                    TextField("금액", value: entryBinding(i, \.amount, fallback: 0), format: .number)
+                                        .keyboardType(.numberPad)
+                                        .multilineTextAlignment(.trailing)
+                                        .accessibilityLabel("결제 금액 \(i + 1)")
+                                    Text("원").foregroundStyle(Color.textSecondary)
+                                }
+                            }
+                            // 최소 1개는 유지. 빠르게 두 번 누르면 다시 그리기 전 같은 i 가 또 올 수 있어 범위도 본다.
+                            Button("삭제") {
+                                if entries.indices.contains(i), entries.count > 1 { entries.remove(at: i) }
+                            }
+                                .buttonStyle(.action())
+                                .disabled(entries.count <= 1)
+                                .accessibilityLabel("결제 \(i + 1) 삭제")
+                        }
                     }
                     Button("결제수단 추가") {
                         entries.append(PaymentEntry(method: .card, amount: 0))
                     }
-                } header: {
-                    Text("결제 종류·금액")
-                } footer: {
+                    .buttonStyle(.action())
+
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("합계 \(formatWon(enteredTotal)) · 예약가 \(formatWon(reservation.price ?? 0))")
+                        Text("합계 \(formatWon(enteredTotal))")
                             .foregroundStyle(enteredTotal == (reservation.price ?? 0) ? Color.textSecondary : Color.warningText)
                         if pointsUsedNow > 0 || (customer?.points ?? 0) > 0 {
-                            Text("적립금 사용 \(formatWon(pointsUsedNow)) · 보유 \(formatWon(availablePoints))")
+                            // 위 알약은 고객 잔액, 여기는 이 예약에 쓸 수 있는 몫(잔액 + 이 예약이 이미 쓴 적립금)
+                            Text("적립금 사용 \(formatWon(pointsUsedNow)) · 사용 가능 \(formatWon(availablePoints))")
                                 .foregroundStyle(pointsUsedNow > availablePoints ? Color.dangerText : Color.textSecondary)
                         }
                     }
-                }
+                    .font(.tasSmall)
 
-                if pointRate > 0 || (reservation.pointEarned ?? 0) > 0 {
-                    Section {
-                        Toggle("적립", isOn: $pointAwardEnabled)
-                        if pointAwardEnabled {
-                            HStack {
-                                Text("적립금")
-                                Spacer()
-                                TextField("0", value: $pointAward, format: .number)
-                                    .keyboardType(.numberPad)
-                                    .multilineTextAlignment(.trailing)
-                                Text("원").foregroundStyle(Color.textSecondary)
+                    if pointRate > 0 || (reservation.pointEarned ?? 0) > 0 {
+                        // 웹: 체크 + 적립 금액 칸(끄면 칸이 잠긴다)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Toggle("적립 적용", isOn: $pointAwardEnabled)
+                                .font(.tasBody)
+                                .tint(.brandFill)
+                            FormField(label: nil) {
+                                HStack(spacing: 4) {
+                                    TextField("적립 금액", value: $pointAward, format: .number)
+                                        .keyboardType(.numberPad)
+                                        .accessibilityLabel("적립 금액")
+                                    Text("원").foregroundStyle(Color.textSecondary)
+                                }
+                            }
+                            .disabled(!pointAwardEnabled)
+                            .opacity(pointAwardEnabled ? 1 : 0.5)
+                            if pointAwardEnabled, pointRate > 0 {
+                                Text("적립률 \(pointRate)% 기준 \(formatWon(nonPointTotal))의 \(formatWon(defaultAward))")
+                                    .font(.tasSmall).foregroundStyle(Color.textSecondary)
                             }
                         }
-                    } header: {
-                        Text("적립")
-                    } footer: {
-                        if pointAwardEnabled, pointRate > 0 {
-                            Text("적립률 \(pointRate)% 기준 \(formatWon(nonPointTotal))의 \(formatWon(defaultAward))")
-                        }
+                    }
+
+                    if let errorMessage {
+                        Text(errorMessage).font(.tasMedium).foregroundStyle(Color.dangerText)
                     }
                 }
-
-                if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
-                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle(reservation.hasCompletedPayment ? "결제수단 변경" : "결제완료")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -111,12 +148,23 @@ struct ReservationPaymentView: View {
                     Button("취소") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
+                    // 웹 저장 버튼처럼 보라 채움
                     Button("저장") { Task { await save() } }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.brandFill)
                         .disabled(isSaving)
                 }
             }
             .onAppear(perform: setup)
         }
+    }
+
+    /// 줄을 지운 뒤에도 포커스가 풀리며 그 줄 칸이 값을 다시 쓸 수 있다 — 범위 밖이면 버린다(안 그러면 Index out of range).
+    private func entryBinding<T>(_ i: Int, _ key: WritableKeyPath<PaymentEntry, T>, fallback: T) -> Binding<T> {
+        Binding(
+            get: { entries.indices.contains(i) ? entries[i][keyPath: key] : fallback },
+            set: { if entries.indices.contains(i) { entries[i][keyPath: key] = $0 } }
+        )
     }
 
     private func setup() {
@@ -145,7 +193,7 @@ struct ReservationPaymentView: View {
             return
         }
         if newUsed > availablePoints {
-            errorMessage = "적립금 잔액이 부족합니다. (사용 \(formatWon(newUsed)) / 보유 \(formatWon(availablePoints)))"
+            errorMessage = "적립금 잔액이 부족합니다. (사용 \(formatWon(newUsed)) / 사용 가능 \(formatWon(availablePoints)))"
             return
         }
         isSaving = true
