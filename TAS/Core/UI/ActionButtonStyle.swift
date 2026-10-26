@@ -1,25 +1,27 @@
 import SwiftUI
 
 /// 레이어 하단 버튼 — 웹 `StyledActionButton`(ModalStyles) 이식. 채운 색은 주 동작 하나만, 나머지는 테두리.
-/// 높이는 iOS 터치 기준(44pt) — 웹 값(40px)보다 조금 높다.
+/// 보이는 크기는 웹(높이 32·글자 13·둥글기 8 — 짧은 글자도 가로로 긴 버튼), 누르는 자리는 iOS 기준 44pt(위아래 6 은 안 보이는 여백).
 struct ActionButtonStyle: ButtonStyle {
     enum Kind { case primary, dangerOutline, plain }
     var kind: Kind = .plain
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.tasBody.weight(kind == .plain ? .medium : .semibold))
+            .font(.tasMedium.weight(kind == .plain ? .medium : .semibold))
             .lineLimit(1)
-            .padding(.horizontal, 14)
-            .frame(minHeight: 44)
+            .padding(.horizontal, 12)
+            .frame(minHeight: 32)
             .foregroundStyle(foreground)
-            .background(background, in: RoundedRectangle(cornerRadius: 10))
+            .background(background, in: RoundedRectangle(cornerRadius: 8))
             .overlay {
                 if kind != .primary {
-                    RoundedRectangle(cornerRadius: 10).strokeBorder(border, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 8).strokeBorder(border, lineWidth: 1)
                 }
             }
             .opacity(configuration.isPressed ? 0.7 : 1)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
     }
 
     private var foreground: Color {

@@ -65,13 +65,21 @@ struct DetailSheet: View {
     @Environment(SessionStore.self) private var session
     @Environment(\.dismiss) private var dismiss
     @State private var next: DetailRoute?
+    /// 상세가 알려준 내용 높이 — 웹 레이어처럼 내용만큼만 올라온다(아래가 비지 않게). 0 이면 아직 모름.
+    @State private var fitHeight: CGFloat = 0
 
     private var store: Store? { session.currentStore }
 
+
     var body: some View {
         content
-            // 웹 상세 레이어처럼 화면 6할 높이로 올라와 뒤 화면이 보인다 — 끌어 올리면 전체. 수정 폼은 처음부터 전체.
+            // 웹 상세 레이어처럼 내용 높이만큼 올라와 뒤 화면이 보인다 — 끌어 올리면 전체. 수정 폼은 처음부터 전체.
+            .environment(\.reportSheetHeight) { height in
+                if !route.isForm, abs(height - fitHeight) > 1 { fitHeight = height }
+            }
             .presentationDetents(route.isForm ? [.large] : [.fraction(0.6), .large])
+            // SwiftUI 는 띄운 뒤 바뀐 높이를 시트에 반영하지 않는다(iOS 26 실측) — UIKit 시트에 직접 내용 높이 칸을 넣는다
+            .background { if !route.isForm { SheetFitter(height: fitHeight) } }
             // iOS 26 은 낮은 높이 시트를 유리처럼 비춰 뒤 달력 글자가 겹친다 — 불투명 바탕으로 글자 대비를 지킨다
             .presentationBackground(Color(.systemBackground))
             .sheet(item: $next) { nextRoute in
@@ -168,6 +176,51 @@ struct DetailSheet: View {
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) { Button("닫기") { dismiss() } }
                 }
+        }
+    }
+}
+
+/// 상세 시트가 내용만큼 올라오게 — 상세 화면이 (본문 + 아래 버튼 줄 + 머리) 높이를 시트에 알린다.
+/// 프리퍼런스는 안쪽 NavigationStack 에서 끊겨 환경값(알림 함수)으로 내려준다.
+extension EnvironmentValues {
+    @Entry var reportSheetHeight: (CGFloat) -> Void = { _ in }
+}
+
+extension View {
+    /// [content]·[bottomBar] 는 재어 둔 높이, 머리(끌기 손잡이 + 제목 줄)는 시트마다 같아 상수.
+    /// 홈 표시줄 자리는 더하지 않는다 — UIKit 시트 높이 칸은 아래 안전 영역을 뺀 값이다.
+    func reportsSheetHeight(content: CGFloat, bottomBar: CGFloat = 0) -> some View {
+        modifier(SheetHeightReporter(total: content > 0 ? content + bottomBar + sheetHeaderHeight : 0))
+    }
+}
+
+private struct SheetHeightReporter: ViewModifier {
+    let total: CGFloat
+    @Environment(\.reportSheetHeight) private var report
+    func body(content: Content) -> some View {
+        content.onChange(of: total, initial: true) { _, value in if value > 0 { report(value) } }
+    }
+}
+
+/// 시트 머리 — 끌기 손잡이 자리 + 가운데 제목 줄(iOS 26 시트 실측 70).
+private let sheetHeaderHeight: CGFloat = 70
+
+/// 시트를 내용 높이 칸 + 전체 칸으로 — 사장님이 끌어 올려 전체로 본 뒤엔 그대로 둔다.
+private struct SheetFitter: UIViewControllerRepresentable {
+    let height: CGFloat
+
+    func makeUIViewController(context: Context) -> UIViewController { UIViewController() }
+
+    func updateUIViewController(_ controller: UIViewController, context: Context) {
+        guard height > 0 else { return }
+        DispatchQueue.main.async {
+            guard let sheet = controller.sheetPresentationController else { return }
+            let fit = UISheetPresentationController.Detent.Identifier("fit")
+            let wasFull = sheet.selectedDetentIdentifier == .large
+            sheet.animateChanges {
+                sheet.detents = [.custom(identifier: fit) { context in min(height, context.maximumDetentValue) }, .large()]
+                if !wasFull { sheet.selectedDetentIdentifier = fit }
+            }
         }
     }
 }
