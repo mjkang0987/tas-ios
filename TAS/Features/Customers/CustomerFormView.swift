@@ -27,25 +27,48 @@ struct CustomerFormView: View {
     private enum Field { case name, tel }
     private static let telPattern = "^01[016789]\\d{7,8}$"
 
+    @State private var contentHeight: CGFloat = 0
+
     var body: some View {
         NavigationStack {
-            Form {
-                Section("고객") {
-                    TextField("이름", text: $name)
-                        .focused($focusedField, equals: .name)
-                        .submitLabel(.next)
-                        .onSubmit { focusedField = .tel }
-                    TextField("연락처 (01012345678)", text: $tel)
-                        .keyboardType(.numberPad)
-                        .focused($focusedField, equals: .tel)
+            // 웹 CustomerDetail 편집 모드 — 흰 바탕에 이름 붙은 입력칸(고객명·연락처) · 적립금 · 고객 메모
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    field("고객명") {
+                        TextField("이름 입력", text: $name)
+                            .focused($focusedField, equals: .name)
+                            .submitLabel(.next)
+                            .onSubmit { focusedField = .tel }
+                    }
+                    field("연락처") {
+                        TextField("01012345678", text: $tel)
+                            .keyboardType(.numberPad)
+                            .focused($focusedField, equals: .tel)
+                    }
+                    if let editing {
+                        // 웹: 적립금은 편집 칸이 아니라 파란 글자로 보여만 준다(조정·충전은 상세에서)
+                        Text("적립금 \(formatWon(editing.points ?? 0))")
+                            .font(.tasMedium.weight(.semibold)).foregroundStyle(Color.blueText)
+                    }
+                    Rectangle().fill(Color.dividerLine).frame(height: 1)
+                    Text("고객 메모").font(.tasBody.weight(.bold)).accessibilityAddTraits(.isHeader)
+                    MemoTagEditor(
+                        tags: memoTags,
+                        text: $newTagText,
+                        color: $selectedColor,
+                        onAdd: addTag,
+                        onRemove: { tag in memoTags.removeAll { $0.text == tag.text } }
+                    )
+                    if let errorMessage {
+                        Text(errorMessage).font(.tasMedium).foregroundStyle(Color.dangerText)
+                    }
                 }
-
-                memoTagSection
-
-                if let errorMessage {
-                    Section { Text(errorMessage).font(.footnote).foregroundStyle(Color.dangerText) }
-                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
             }
+            // 상세에서 열면 내용 높이만큼(고객 상세와 같은 시트)
+            .reportsSheetHeight(content: contentHeight)
             .navigationTitle(editing == nil ? "고객 등록" : "고객 수정")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -53,7 +76,10 @@ struct CustomerFormView: View {
                     Button("취소") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
+                    // 웹 저장 버튼처럼 보라 채움
                     Button("저장") { Task { await save() } }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.brandFill)
                         .disabled(isSaving)
                 }
             }
@@ -61,20 +87,20 @@ struct CustomerFormView: View {
         }
     }
 
-    // MARK: - 메모 태그
-
-    private var memoTagSection: some View {
-        Section("고객 메모") {
-            MemoTagEditor(
-                tags: memoTags,
-                text: $newTagText,
-                color: $selectedColor,
-                onAdd: addTag,
-                onRemove: { tag in memoTags.removeAll { $0.text == tag.text } }
-            )
-            .padding(.vertical, 4)
+    /// 웹 formControl — 이름(13, 진회색) 위에 입력칸(높이 36, 1px 옅은 테두리, 6 둥글게).
+    private func field<F: View>(_ label: String, @ViewBuilder input: () -> F) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label).font(.tasMedium).foregroundStyle(Color.textSecondary)
+            input()
+                .font(.tasBody)
+                .padding(.horizontal, 10)
+                .frame(minHeight: 36)
+                .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.borderLine))
         }
     }
+
+    // MARK: - 메모 태그
 
     private func addTag() {
         let result = MemoTagEditor.adding(newTagText, color: selectedColor, to: memoTags)
