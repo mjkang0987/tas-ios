@@ -358,7 +358,9 @@ struct ReservationCreateView: View {
     @ViewBuilder private var assigneeSection: some View {
         if !assignees.isEmpty {
             FormField(label: labels.assignee) {
-                SelectMenu(title: labels.assignee, value: assignees.first { $0.id == assigneeId }?.name ?? "선택") {
+                // 편집 대상의 담당자가 재직 목록에 없으면(퇴사) 그대로 저장된다 — 비어 보이지 않게 알린다
+                SelectMenu(title: labels.assignee, value: assignees.first { $0.id == assigneeId }?.name
+                           ?? (assigneeId == 0 ? "선택" : "기존 \(labels.assignee) 유지")) {
                     Picker("\(labels.assignee)", selection: $assigneeId) {
                         ForEach(assignees) { a in Text(a.name).tag(a.id) }
                     }
