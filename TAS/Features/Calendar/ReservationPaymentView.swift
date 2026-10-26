@@ -16,6 +16,7 @@ struct ReservationPaymentView: View {
     let onCompleted: () async -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     @State private var entries: [PaymentEntry] = []
     @State private var pointAwardEnabled = false
@@ -62,8 +63,12 @@ struct ReservationPaymentView: View {
                     Text("서비스 금액 \(formatWon(reservation.price ?? 0))")
                         .font(.tasBody.weight(.semibold))
 
+                    // 큰 글자에서는 세 칸을 나란히 두면 잘린다 — 위아래로
+                    let row = typeSize.isAccessibilitySize
+                        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+                        : AnyLayout(HStackLayout(spacing: 8))
                     ForEach(entries.indices, id: \.self) { i in
-                        HStack(spacing: 8) {
+                        row {
                             FormField(label: nil) {
                                 SelectMenu(title: "결제종류 \(i + 1)", value: entries[i].method.rawValue) {
                                     Picker("결제종류", selection: entryBinding(i, \.method, fallback: .card)) {
@@ -80,8 +85,10 @@ struct ReservationPaymentView: View {
                                     Text("원").foregroundStyle(Color.textSecondary)
                                 }
                             }
-                            // 최소 1개는 유지.
-                            Button("삭제") { entries.remove(at: i) }
+                            // 최소 1개는 유지. 빠르게 두 번 누르면 다시 그리기 전 같은 i 가 또 올 수 있어 범위도 본다.
+                            Button("삭제") {
+                                if entries.indices.contains(i), entries.count > 1 { entries.remove(at: i) }
+                            }
                                 .buttonStyle(.action())
                                 .disabled(entries.count <= 1)
                                 .accessibilityLabel("결제 \(i + 1) 삭제")
