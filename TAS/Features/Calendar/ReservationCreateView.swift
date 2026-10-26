@@ -194,10 +194,12 @@ struct ReservationCreateView: View {
                     errorMessage = nil
                 }
             }
-            if showSuggestions && !filteredCustomers.isEmpty {
+            // 고객 전체를 거르고 정렬하는 값이라 한 번만 계산
+            let suggestions = showSuggestions ? filteredCustomers : []
+            if !suggestions.isEmpty {
                 // 웹 자동완성 목록 — 입력칸 바로 아래 테두리 상자
                 VStack(spacing: 0) {
-                    ForEach(filteredCustomers) { c in
+                    ForEach(suggestions) { c in
                         Button {
                             selectCustomer(c)
                         } label: {
@@ -211,13 +213,13 @@ struct ReservationCreateView: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        if c.id != filteredCustomers.last?.id { Rectangle().fill(Color.dividerLine).frame(height: 1) }
+                        if c.id != suggestions.last?.id { Rectangle().fill(Color.dividerLine).frame(height: 1) }
                     }
                 }
                 .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.borderLine))
             }
             FormField(label: "연락처") {
-                TextField("01012345678", text: $customerTel)
+                TextField("연락처", text: $customerTel, prompt: Text("01012345678"))
                     .keyboardType(.numberPad)
                     .focused($focusedField, equals: .tel)
                     .disabled(customerId != 0)   // 기존 고객이면 자동 채움(수정 불가)
@@ -405,7 +407,7 @@ struct ReservationCreateView: View {
     private var priceSection: some View {
         FormField(label: "가격") {
             HStack {
-                TextField("0", value: $price, format: .number)
+                TextField("가격", value: $price, format: .number, prompt: Text("0"))
                     .keyboardType(.numberPad)
                     .focused($focusedField, equals: .price)
                     .onChange(of: price) { _, _ in

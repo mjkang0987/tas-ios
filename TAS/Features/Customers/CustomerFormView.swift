@@ -41,7 +41,7 @@ struct CustomerFormView: View {
                             .onSubmit { focusedField = .tel }
                     }
                     FormField(label: "연락처") {
-                        TextField("01012345678", text: $tel)
+                        TextField("연락처", text: $tel, prompt: Text("01012345678"))
                             .keyboardType(.numberPad)
                             .focused($focusedField, equals: .tel)
                     }
