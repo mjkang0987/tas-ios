@@ -50,9 +50,9 @@ struct CustomerDetailView: View {
                     section { infoRows }
                     section { memoSection }
                     section { pointHistorySection }
-                    reservationSection.padding(.vertical, 12)
+                    reservationSection.padding(.vertical, 10)
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 14) // 웹 --modal-body-padding 좌우 14
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
             }
@@ -116,26 +116,28 @@ struct CustomerDetailView: View {
 
     /// 웹 `StyledCustomerContent` 한 칸 — 위아래 여백 + 아래 옅은 선.
     private func section<V: View>(@ViewBuilder _ content: () -> V) -> some View {
-        VStack(alignment: .leading, spacing: 10) { content() }
-            .padding(.vertical, 12)
+        // 웹 StyledCustomerContent — 위아래 8, 칸 안 간격 8, 아래 옅은 선
+        VStack(alignment: .leading, spacing: 8) { content() }
+            .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .overlay(alignment: .bottom) { Divider() }
+            .overlay(alignment: .bottom) { Rectangle().fill(Color.dividerLine).frame(height: 1) }
     }
 
     private func title(_ text: String) -> some View {
-        Text(text).font(.tasBody.weight(.semibold)).accessibilityAddTraits(.isHeader)
+        Text(text).font(.tasBody.weight(.bold)).foregroundStyle(Color.textPrimary).accessibilityAddTraits(.isHeader)
     }
 
     private var empty: some View {
         Text(Self.emptyText)
-            .font(.footnote).foregroundStyle(Color.textSecondary)
-            .frame(maxWidth: .infinity).padding(.vertical, 8)
+            .font(.tasMedium).foregroundStyle(Color.textSecondary)
+            .frame(maxWidth: .infinity).padding(.vertical, 6)
     }
 
     /// 연락처·적립금·노쇼(웹 `StyledInfoList`) + 방문 통계·첫 방문(웹엔 없는 iOS 정보 — 작게 유지, 지시자 2026-10-23).
     private var infoRows: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
+            // 웹 StyledInfoList — 13 글자, 줄 간격 4, 이름 칸 고정 폭
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 4) {
                 GridRow {
                     label("연락처")
                     if customer.formattedTel.isEmpty { Text("-") } else { TelLink(customer: customer) }
@@ -149,13 +151,13 @@ struct CustomerDetailView: View {
                         .foregroundStyle(stats.noshow > 0 ? CustomerStats.EffectiveStatus.noshow.tone.foreground : .primary)
                 }
             }
-            .font(.tasBody)
+            .font(.tasMedium)
 
             // 웹과 같은 4버킷 — 상태 없는 지난 예약은 '완료'로 친다.
             let counts = stats.total > 0 ? CustomerStats.EffectiveStatus.allCases.map { "\($0.label) \(stats.count($0))" } : []
             let first = customer.firstVisitDate.flatMap { $0.isEmpty ? nil : ["첫 방문 \($0)"] } ?? []
             if !(counts + first).isEmpty {
-                Text((counts + first).joined(separator: " · ")).font(.caption).foregroundStyle(Color.textSecondary)
+                Text((counts + first).joined(separator: " · ")).font(.tasSmall).foregroundStyle(Color.textSecondary)
             }
         }
     }
@@ -181,8 +183,9 @@ struct CustomerDetailView: View {
             Spacer(minLength: 0)
             if histories.count > 1 {
                 NavigationLink("더보기") { allHistories }
-                    .font(.footnote.weight(.semibold))
-                    .frame(minHeight: 44)
+                    .font(.tasMedium.weight(.semibold))
+                    // 누르는 자리는 44, 줄 높이는 글자만큼(제목 줄이 불어나지 않게)
+                    .padding(.vertical, 12).contentShape(Rectangle()).padding(.vertical, -12)
                     .accessibilityHint("적립금 이력 전체 보기")
             }
         }
@@ -260,14 +263,14 @@ struct PointHistoryRow: View {
     var body: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.type.label).font(.tasBody)
-                Text(entry.description).font(.caption).foregroundStyle(Color.textSecondary)
-                Text(KST.timestampLabel(entry.createdAt)).font(.caption2).foregroundStyle(Color.textSecondary)
+                Text(entry.type.label).font(.tasMedium)
+                Text(entry.description).font(.tasSmall).foregroundStyle(Color.textSecondary)
+                Text(KST.timestampLabel(entry.createdAt)).font(.tasXSmall).foregroundStyle(Color.textSecondary)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text(signed(entry.delta))
-                    .font(.tasBody.weight(.semibold))
+                    .font(.tasMedium.weight(.semibold))
                     .foregroundStyle(entry.delta >= 0 ? Color.blueText : Color.dangerText)
                 Text("잔액 \(formatWon(entry.balance))").font(.caption2).foregroundStyle(Color.textSecondary)
             }

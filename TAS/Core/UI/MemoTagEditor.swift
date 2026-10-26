@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 메모 태그 편집 — 웹 `AddressCustomerTags`(편집)·`CustomerMemoTagSection` 이식. 고객 수정 폼·고객 명단 펼친 행이 같이 쓴다.
-/// 태그(누르면 삭제) → 색 8개 → 입력 + '추가'(엔터도 추가) [+ '완료'].
+/// 웹 차례: 입력 + '추가'(엔터도 추가) [+ '완료'] → 색 8개 → 태그(누르면 삭제).
 struct MemoTagEditor: View {
     let tags: [CustomerMemoTag]
     @Binding var text: String
@@ -28,11 +28,17 @@ struct MemoTagEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if !tags.isEmpty {
-                WrapLayout(spacing: 6) {
-                    ForEach(Array(tags.enumerated()), id: \.offset) { item in
-                        removableTag(item.element)
-                    }
+            HStack(spacing: 6) {
+                TextField("메모 태그 입력", text: $text)
+                    .textFieldStyle(.roundedBorder)
+                    .submitLabel(.done)
+                    .onSubmit(onAdd)
+                    .accessibilityLabel("메모 태그 입력")
+                Button("추가", action: onAdd)
+                    .buttonStyle(.action(.primary))
+                    .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
+                if let onDone {
+                    Button("완료", action: onDone).buttonStyle(.action())
                 }
             }
 
@@ -52,17 +58,11 @@ struct MemoTagEditor: View {
                 }
             }
 
-            HStack(spacing: 6) {
-                TextField("태그 입력", text: $text)
-                    .textFieldStyle(.roundedBorder)
-                    .submitLabel(.done)
-                    .onSubmit(onAdd)
-                    .accessibilityLabel("메모 태그 입력")
-                Button("추가", action: onAdd)
-                    .buttonStyle(.action())
-                    .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
-                if let onDone {
-                    Button("완료", action: onDone).buttonStyle(.action())
+            if !tags.isEmpty {
+                WrapLayout(spacing: 6) {
+                    ForEach(Array(tags.enumerated()), id: \.offset) { item in
+                        removableTag(item.element)
+                    }
                 }
             }
 
