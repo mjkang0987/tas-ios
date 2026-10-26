@@ -5,6 +5,8 @@ import SwiftUI
 struct ActionButtonStyle: ButtonStyle {
     enum Kind { case primary, dangerOutline, plain }
     var kind: Kind = .plain
+    // 직접 만든 버튼 모양은 .disabled 를 그려 주지 않는다 — 못 누르는 버튼이 눌리는 것처럼 보이지 않게
+    @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -19,7 +21,7 @@ struct ActionButtonStyle: ButtonStyle {
                     RoundedRectangle(cornerRadius: 8).strokeBorder(border, lineWidth: 1)
                 }
             }
-            .opacity(configuration.isPressed ? 0.7 : 1)
+            .opacity(isEnabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
             .padding(.vertical, 6)
             .contentShape(Rectangle())
     }
