@@ -13,6 +13,16 @@ struct PointRechargeView: View {
     /// 저장 후: 상위(고객 목록) 리로드 + 상세 닫기.
     let onCompleted: () async -> Void
 
+    init(customer: Customer, rules: [RechargeRule], service: TASService = TASService(),
+         onCompleted: @escaping () async -> Void) {
+        self.customer = customer
+        self.rules = rules
+        self.service = service
+        self.onCompleted = onCompleted
+        // 웹처럼 첫 충전 규칙이 골라진 채로 연다(규칙이 없으면 직접 입력)
+        _selectedRule = State(initialValue: rules.isEmpty ? nil : 0)
+    }
+
     @Environment(\.dismiss) private var dismiss
 
     /// 선택한 규칙 index. nil이면 직접 입력.
