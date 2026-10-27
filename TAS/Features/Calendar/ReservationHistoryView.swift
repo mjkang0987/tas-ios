@@ -92,6 +92,13 @@ struct ReservationHistoryView: View {
         if (b.price ?? 0) != (a.price ?? 0) {
             out.append((label: "가격", before: formatWon(b.price ?? 0), after: formatWon(a.price ?? 0)))
         }
+        // 웹 reservationDetailUtils 와 같은 두 칸 — 빠져 있어 바꿔도 이력에 안 남았다
+        if (b.memo ?? "") != (a.memo ?? "") {
+            out.append((label: "요청사항", before: b.memo ?? "", after: a.memo ?? ""))
+        }
+        // 경로가 없던 옛 예약은 전화예약으로 본다(폼 기본값과 같게) — 안 그러면 안 바꿔도 '→ 전화예약'이 잡힌다
+        let bc = (b.channel ?? .phone).rawValue, ac = (a.channel ?? .phone).rawValue
+        if bc != ac { out.append((label: "예약경로", before: bc, after: ac)) }
         return out
     }
 }
