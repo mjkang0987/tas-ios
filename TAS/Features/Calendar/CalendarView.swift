@@ -11,6 +11,8 @@ struct CalendarView: View {
     @State private var selectedAssigneeId: Int?
     @State private var mode: Mode = .day
     @State private var activeSheet: ActiveSheet?
+    /// 알림 종의 예약 요청 — 툴바 버튼의 `.task` 는 안 돌 때가 있어(UIKit 바 버튼 호스팅) 캘린더가 들고 읽는다.
+    @State private var bookingRequests = BookingRequestsViewModel()
     /// 월 뷰에서 앞뒤 달 날짜를 누르면 아래 목록만 그날로 — 달력은 보던 달 그대로(안드로이드 `listDateKey`). nil 이면 선택한 날.
     @State private var monthListDate: Date?
     private var listDate: Date { monthListDate ?? selectedDate }
@@ -25,11 +27,13 @@ struct CalendarView: View {
         case detail(Int)          // 예약 id
         case customer(Int)        // 고객 id — 예약 카드의 고객명(웹 `onCustomerClick`)
         case create
+        case notifications
         var id: String {
             switch self {
             case .detail(let id): return "detail-\(id)"
             case .customer(let id): return "customer-\(id)"
             case .create: return "create"
+            case .notifications: return "notifications"
             }
         }
     }
@@ -79,10 +83,13 @@ struct CalendarView: View {
                     DatePicker("", selection: $selectedDate, displayedComponents: .date)
                         .labelsHidden()
                 }
-                // 고객이 보낸 예약 신청·변경·취소 요청함(웹 헤더 벨과 같은 자리).
-                if showsBookingRequests {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        BookingRequestsButton(onApplied: { await viewModel.reload() }, onOpenReservation: { activeSheet = .detail($0) })
+                // 알림 종(웹 헤더와 같은 자리) — 곧 시작은 게스트도 보여 늘 둔다. 1분마다 다시 센다.
+                ToolbarItem(placement: .topBarTrailing) {
+                    TimelineView(.everyMinute) { context in
+                        let soon = UpcomingReservations.compute(viewModel.allReservations, now: context.date).soon.count
+                        let todo = showsBookingRequests ? bookingRequests.pendingCount : 0
+                        let indicator = UpcomingReservations.bellIndicator(todo: todo, soon: soon)
+                        NotificationBellButton(count: indicator.count, dot: indicator.dot) { activeSheet = .notifications }
                     }
                 }
             }
@@ -96,6 +103,22 @@ struct CalendarView: View {
                     if let data = viewModel.detailData {
                         DetailSheet(route: .customer(id), data: data, reload: { await viewModel.reload() })
                     }
+                case .notifications:
+                    NotificationCenterView(
+                        requests: showsBookingRequests ? bookingRequests : nil,
+                        reservations: viewModel.allReservations,
+                        customersById: viewModel.state.value?.customersById ?? [:],
+                        assigneesById: viewModel.state.value?.assigneesById ?? [:],
+                        onApplied: { await viewModel.reload() },
+                        // 시트를 상세로 바꿔 띄운다(같은 `.sheet(item:)` — 알림을 닫고 상세가 올라온다).
+                        // 불러온 뒤 들어온 요청이면 목록에 없으니 다시 읽고 연다(웹 openRequestReservation).
+                        onOpen: { id in
+                            Task {
+                                if !viewModel.allReservations.contains(where: { $0.id == id }) { await viewModel.reload() }
+                                activeSheet = .detail(id)
+                            }
+                        }
+                    )
                 case .create:
                     ReservationCreateView(
                         service: TASService(),
@@ -114,6 +137,7 @@ struct CalendarView: View {
             }
         }
         .task { await viewModel.load() }
+        .task(id: showsBookingRequests) { if showsBookingRequests { await bookingRequests.load() } }
         // 날짜를 옮기거나(이전·다음·오늘·날짜 선택) 뷰를 바꾸면 앞뒤 달 목록 고르기는 풀린다
         .onChange(of: selectedDate) { _, _ in monthListDate = nil }
         .onChange(of: mode) { _, _ in monthListDate = nil }

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0225CD49781CE424484FAEB6 /* PointMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D04C70208D730C54D4914D /* PointMathTests.swift */; };
 		033ED8CF89C06527535755BA /* guest-seed.json in Resources */ = {isa = PBXBuildFile; fileRef = 7B60114B9CFF3934D85F501C /* guest-seed.json */; };
+		04161CD7F6FFE3AB64567616 /* UpcomingReservationsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA0C03F28DE0EA73F8728158 /* UpcomingReservationsTests.swift */; };
 		06C3D4846283DFD9D873C22F /* MemoTagEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD885A5E97F8304BFD9B75CE /* MemoTagEditor.swift */; };
 		07DEDC4F637E6F8DF0BD0075 /* CustomerMergePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F79019AC369D68AA13E1DF61 /* CustomerMergePicker.swift */; };
 		090C395C290950FE1476962A /* BookingSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BDE70C5C3ACBA48F331CFA /* BookingSettingsTests.swift */; };
@@ -29,6 +30,7 @@
 		1D548C9EDE1A45747B953E69 /* ReservationInfoCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4700BCC8AEE04DF358C279AC /* ReservationInfoCard.swift */; };
 		217109D7F0F38933E19FF834 /* RevenueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F669FC46E7A3354DA52710 /* RevenueView.swift */; };
 		223D56BA56F54F9E75B7176D /* WeekdayLabelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 059A19B44DD79D4C892071E8 /* WeekdayLabelTests.swift */; };
+		2242BD9FCC779836D8D5804B /* UpcomingReservations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 789EAFBC9A0056F8F1E80CA8 /* UpcomingReservations.swift */; };
 		24B6D91ED6EAAE007BC72C21 /* BookingRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBEA56189BC0D40AC67F0150 /* BookingRequest.swift */; };
 		259F64C4805F0AD9DC9621CE /* FilterChip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FC21CB6C2888D62B0248663 /* FilterChip.swift */; };
 		27C23799DD44BFD5512ECD84 /* chair-purple.png in Resources */ = {isa = PBXBuildFile; fileRef = BBB05BDAA690E17246FA3E5B /* chair-purple.png */; };
@@ -84,6 +86,7 @@
 		8C0132640D8E321F1CC9334D /* NoticeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26934AF8F7CB34F5FE2C508E /* NoticeTests.swift */; };
 		8E34F199703A8243036A0005 /* StoreSettingsEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D95164D10CF2DB55D0357C3F /* StoreSettingsEditView.swift */; };
 		8FEA795FB3D749FFD94C243B /* ServiceRenameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5BAA195D7E51148F41F2BCC /* ServiceRenameTests.swift */; };
+		906F2A283C1062468498F1B9 /* NotificationCenterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3F0351B0627677B7929B775 /* NotificationCenterView.swift */; };
 		911E4F62F8ECAD25D0B7B83F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97CCFF3BC11879CFF36EA585 /* SettingsView.swift */; };
 		9628E95DFC090B9E59449D5C /* NoticesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57DE55BC32AC382DF8BAD5E /* NoticesView.swift */; };
 		9B5E6EEA1946C82BC0900E8B /* Coupon.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE25BD9C6BC2C011F0A8BF3B /* Coupon.swift */; };
@@ -134,7 +137,6 @@
 		F480B7D2BCF2972300016E18 /* CustomerStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91156A41378FEE2418108FF0 /* CustomerStats.swift */; };
 		F6880DFF82246134274EE68D /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1614F9F7CD06DED9BDA9417A /* APIClient.swift */; };
 		FAF8ED06FD8AAC8BCC72E0D4 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1C6F0A9C0D34DBA598E6CA /* CalendarView.swift */; };
-		FC24FB2714C575D84A375528 /* BookingRequestsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85C14CFF1B8BF392EF0EA5D4 /* BookingRequestsView.swift */; };
 		FD323BF443E46781F7810D34 /* BookingSettingsEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94351DE366FFFDEF2A694141 /* BookingSettingsEditView.swift */; };
 		FEAC5ECF8EFF363116FC857D /* MemoTagEditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5491FFCBE0E54798ABD7011E /* MemoTagEditorTests.swift */; };
 		FF1B3C31A131EA725F126C8C /* ChosungTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D1090403226F21B8208A0C /* ChosungTests.swift */; };
@@ -208,6 +210,7 @@
 		7116065DD27F67F4639D0F61 /* SearchHighlight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchHighlight.swift; sourceTree = "<group>"; };
 		7166A5CAD053D006FEFFCD79 /* GuestSeedTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestSeedTests.swift; sourceTree = "<group>"; };
 		7172449E52DD28D2239F1F9E /* ReservationReminderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationReminderTests.swift; sourceTree = "<group>"; };
+		789EAFBC9A0056F8F1E80CA8 /* UpcomingReservations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpcomingReservations.swift; sourceTree = "<group>"; };
 		79FED8EF6AEAA8E71BE59ADA /* StoreClosedKindTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreClosedKindTests.swift; sourceTree = "<group>"; };
 		7B60114B9CFF3934D85F501C /* guest-seed.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "guest-seed.json"; sourceTree = "<group>"; };
 		7B73C5BB1819BC03B3623483 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -217,7 +220,6 @@
 		811AE97D844DE7D95B3C4A4E /* CalendarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModel.swift; sourceTree = "<group>"; };
 		81ACDA8EFA9FB096F37B0912 /* PointAdjustView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointAdjustView.swift; sourceTree = "<group>"; };
 		82D5EBE5EF5D294612FE15E4 /* GuestStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestStore.swift; sourceTree = "<group>"; };
-		85C14CFF1B8BF392EF0EA5D4 /* BookingRequestsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookingRequestsView.swift; sourceTree = "<group>"; };
 		8A619A7CC9188F9D0E1395A7 /* ReservationReminder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationReminder.swift; sourceTree = "<group>"; };
 		8DFC031F031A2C7743D8AA0E /* TelLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelLink.swift; sourceTree = "<group>"; };
 		8FC21CB6C2888D62B0248663 /* FilterChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterChip.swift; sourceTree = "<group>"; };
@@ -250,8 +252,10 @@
 		BF6DA9456A6095443D5C4D36 /* CustomerStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerStatsTests.swift; sourceTree = "<group>"; };
 		BFFC9F153269AE4FF6C7A605 /* PointManageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointManageView.swift; sourceTree = "<group>"; };
 		C35B233C8966E45F530E48D9 /* PointMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointMath.swift; sourceTree = "<group>"; };
+		C3F0351B0627677B7929B775 /* NotificationCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterView.swift; sourceTree = "<group>"; };
 		C8430AA115B850BB10351285 /* WebAuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAuthSession.swift; sourceTree = "<group>"; };
 		C962E4F20D8566F76883BB7F /* CustomerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDetailView.swift; sourceTree = "<group>"; };
+		CA0C03F28DE0EA73F8728158 /* UpcomingReservationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpcomingReservationsTests.swift; sourceTree = "<group>"; };
 		CA5BA520F00C877334F1E45F /* ColorAccents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorAccents.swift; sourceTree = "<group>"; };
 		CA8515899316850D4F446B73 /* CustomersViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomersViewModelTests.swift; sourceTree = "<group>"; };
 		CCF5F2C4E2A9CF15FB170D7B /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
@@ -314,6 +318,7 @@
 				7116065DD27F67F4639D0F61 /* SearchHighlight.swift */,
 				DC7DF60039AE525848EFB875 /* ServiceRename.swift */,
 				FE2CD3F7B25215BC1C3A6F7A /* TimelineLayout.swift */,
+				789EAFBC9A0056F8F1E80CA8 /* UpcomingReservations.swift */,
 				0CE7A94BD3B2B86E7AE3437E /* Config */,
 				FABBB73CD4902177AECDCE6A /* Networking */,
 				62525286755D3BA4DBB07CE9 /* Notifications */,
@@ -422,11 +427,11 @@
 		44E1AAE56343691A2A39F703 /* Calendar */ = {
 			isa = PBXGroup;
 			children = (
-				85C14CFF1B8BF392EF0EA5D4 /* BookingRequestsView.swift */,
 				BB1C6F0A9C0D34DBA598E6CA /* CalendarView.swift */,
 				811AE97D844DE7D95B3C4A4E /* CalendarViewModel.swift */,
 				F00E26774B2A78180AADAAFD /* DayColumnsTimelineView.swift */,
 				4D9D11CE025721C279EE2257 /* DayTimelineView.swift */,
+				C3F0351B0627677B7929B775 /* NotificationCenterView.swift */,
 				3AC837C1A5663DE0346A608D /* ReservationCreateView.swift */,
 				5421C4C9BDF2249773CBDE68 /* ReservationDetailView.swift */,
 				1A1E6E96BC207F687A481FF1 /* ReservationHistoryView.swift */,
@@ -493,6 +498,7 @@
 				79FED8EF6AEAA8E71BE59ADA /* StoreClosedKindTests.swift */,
 				D38FA995866932174DBFA12F /* StoreLabelsTests.swift */,
 				D1D84647E0906FA30D34B929 /* TimelineLayoutTests.swift */,
+				CA0C03F28DE0EA73F8728158 /* UpcomingReservationsTests.swift */,
 				059A19B44DD79D4C892071E8 /* WeekdayLabelTests.swift */,
 				3B54A96E9E5C0E5202149C89 /* Fixtures */,
 			);
@@ -789,6 +795,7 @@
 				CC0DF281A27D513AECB5A6CD /* StoreClosedKindTests.swift in Sources */,
 				59F16FB7992C14AD6EC0F88E /* StoreLabelsTests.swift in Sources */,
 				9F1EDAF2961D26B25656F461 /* TimelineLayoutTests.swift in Sources */,
+				04161CD7F6FFE3AB64567616 /* UpcomingReservationsTests.swift in Sources */,
 				223D56BA56F54F9E75B7176D /* WeekdayLabelTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -807,7 +814,6 @@
 				CFD5F0167B9FEAC2F6A217CE /* AuthDeepLink.swift in Sources */,
 				5AFB3FAB6ECA14F91EC096FB /* Badges.swift in Sources */,
 				24B6D91ED6EAAE007BC72C21 /* BookingRequest.swift in Sources */,
-				FC24FB2714C575D84A375528 /* BookingRequestsView.swift in Sources */,
 				7BE48AD3CFC4FD2F85B53E51 /* BookingSettings.swift in Sources */,
 				FD323BF443E46781F7810D34 /* BookingSettingsEditView.swift in Sources */,
 				FAF8ED06FD8AAC8BCC72E0D4 /* CalendarView.swift in Sources */,
@@ -852,6 +858,7 @@
 				2A7BECC23C689BF80FA68EB0 /* Notice.swift in Sources */,
 				18C3297E19520DAE0FDC11BD /* NoticeFormView.swift in Sources */,
 				9628E95DFC090B9E59449D5C /* NoticesView.swift in Sources */,
+				906F2A283C1062468498F1B9 /* NotificationCenterView.swift in Sources */,
 				C0B3B4A087BC8F34DC95A973 /* PointAdjustView.swift in Sources */,
 				122D104886F6A1E1A03A45BE /* PointManageView.swift in Sources */,
 				4E3E07943311225E12744298 /* PointMath.swift in Sources */,
@@ -890,6 +897,7 @@
 				B8ABB70728152235A7718360 /* Theme.swift in Sources */,
 				C90824AC42EF1ECB66E7501F /* TimelineLayout.swift in Sources */,
 				0BB45E2B1674898EBD20641C /* Toast.swift in Sources */,
+				2242BD9FCC779836D8D5804B /* UpcomingReservations.swift in Sources */,
 				FFF600EE2856527CF23557C7 /* WebAuthSession.swift in Sources */,
 				EE72E34EC6AA21EBD86C0045 /* WrapLayout.swift in Sources */,
 			);
@@ -953,7 +961,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.27.0;
+				MARKETING_VERSION = 0.28.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1035,7 +1043,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.27.0;
+				MARKETING_VERSION = 0.28.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
