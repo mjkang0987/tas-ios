@@ -164,14 +164,6 @@ final class GuestStoreTests: XCTestCase {
 
     // MARK: - 담당자
 
-    func testMergeAssignees() {
-        _ = store.saveAssignees([assignee(1, name: "A"), assignee(2, name: "B")])
-        store.createReservation(reservation(1, assigneeId: 1))
-        XCTAssertTrue(store.mergeAssignees(sourceId: 1, targetId: 2))
-        XCTAssertEqual(store.snapshot.assignees.map(\.id), [2])
-        XCTAssertEqual(store.snapshot.reservations.first?.assigneeId, 2)
-    }
-
     func testDeleteAssigneeDetachesReservations() {
         _ = store.saveAssignees([assignee(1, name: "A"), assignee(2, name: "B")])
         store.createReservation(reservation(1, assigneeId: 1))

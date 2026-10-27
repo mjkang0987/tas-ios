@@ -83,7 +83,7 @@ TAS/
                        웹과 같은 링크: 예약 카드 고객명 → 고객 · 주/3일 날짜 머리 → 일 · 예약 요청 → 예약 · 연락처 → 전화
     Calendar/          일(타임라인)/주/월/년 · 예약 생성·수정·결제·이력 · 알림 종(곧 시작하는 예약·온라인 예약 요청)
     Customers/         고객 CRUD · 병합 · 적립금 조정
-    Assignees/         담당자 CRUD · 병합 · 근무시간
+    Assignees/         담당자 CRUD · 근무시간
     Services/          서비스 카탈로그
     Notices/ Coupons/ Memberships/   설정 하위 관리 화면
     Revenue/           매출(웹 휴대폰 배치 — 오늘·7일·30일·기간 · 담당자 · 예약완료/예약매출 · 숫자 카드 2열 · 일별 목록 펼치기 · 아래 추이·담당자별) — 숫자 카드를 누르면 근거 목록(RevenueDetailListView)
@@ -126,7 +126,7 @@ TASTests/              유닛 테스트 (XCTest, @testable import TAS)
 |--------|-----------|--------|
 | 예약   | `/api/reservations` | GET · POST · PUT · PATCH · DELETE |
 | 고객   | `/api/customers`, `/api/customers/merge` | GET · POST |
-| 담당자 | `/api/assignees`, `/api/assignees/merge` | GET · PUT · POST · DELETE |
+| 담당자 | `/api/assignees` | GET · PUT · DELETE |
 | 서비스 | `/api/services` | GET · PUT |
 | 공지·쿠폰·회원권 | `/api/{notices,coupons,memberships}` | GET · POST · PUT · DELETE |
 | 쿠폰·회원권 발급 | `/api/{coupon-issue,membership-issue}`, `/api/membership-use` | POST · DELETE (로그인 전용) |
