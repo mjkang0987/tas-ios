@@ -68,3 +68,18 @@ extension DaySchedule {
 struct AssigneesResponse: Codable {
     var assignees: [Assignee]
 }
+
+/// 게스트 이관으로 새로 생긴 담당자와 이름이 같은 기존 담당자 한 쌍 — 웹 `GuestMigrationLayer` MergePair.
+struct AssigneeMergePair: Equatable, Identifiable {
+    var newAssignee: Assignee
+    var existingAssignee: Assignee
+    var id: Int { newAssignee.id }
+
+    /// 새 담당자마다 이름이 같은 첫 기존 담당자를 짝짓는다(웹과 같은 규칙 — 정확히 같은 이름만).
+    static func pairs(in assignees: [Assignee], newIds: Set<Int>) -> [AssigneeMergePair] {
+        let existing = assignees.filter { !newIds.contains($0.id) }
+        return assignees.filter { newIds.contains($0.id) }.compactMap { new in
+            existing.first { $0.name == new.name }.map { AssigneeMergePair(newAssignee: new, existingAssignee: $0) }
+        }
+    }
+}

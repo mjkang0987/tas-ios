@@ -26,6 +26,14 @@ final class SessionStore {
     var pendingMigration = false
     /// 이관 관련 안내/오류 메시지(비차단). RootView가 알럿 표시.
     var migrationMessage: String?
+    /// 이관 뒤 기존 담당자와 이름이 같은 새 담당자 쌍 — 맨 앞 쌍부터 RootView 알럿으로 병합/따로 유지를 묻는다.
+    var assigneeMergePairs: [AssigneeMergePair] = []
+    /// 병합 요청 중 — 끝날 때까지 다음 쌍 알럿을 띄우지 않는다.
+    private(set) var isMergingAssignee = false
+    /// 쌍을 다 물은 뒤 '이관했습니다' 안내를 띄울지(알럿이 겹치지 않게 미룬다).
+    private var announceAfterAssigneeMerge = false
+    /// 이관·병합이 끝날 때마다 올린다 — RootView 가 메인 화면을 새로 만들어 서버 데이터를 다시 받게(웹은 페이지 새로고침).
+    private(set) var dataEpoch = 0
 
     private let service: TASService
     private let keychain = KeychainTokenStore.shared
@@ -155,7 +163,7 @@ final class SessionStore {
         guard isSignedIn, GuestStore.shared.snapshot.hasData else { return }
         do {
             switch try await service.migrateLocal(GuestStore.shared.snapshot, confirm: false) {
-            case .migrated: await finishMigration(announce: false)
+            case let .migrated(newIds): await finishMigration(announce: false, newAssigneeIds: newIds)
             case .alreadySetup: pendingMigration = true
             }
         } catch APIError.forbidden {
@@ -171,8 +179,8 @@ final class SessionStore {
         guard GuestStore.shared.snapshot.hasData else { return }
         do {
             switch try await service.migrateLocal(GuestStore.shared.snapshot, confirm: true) {
-            case .migrated:
-                await finishMigration(announce: true)
+            case let .migrated(newIds):
+                await finishMigration(announce: true, newAssigneeIds: newIds)
             case .alreadySetup:
                 // confirm:true인데도 서버가 진행하지 않음 → 로컬 데이터는 절대 삭제하지 않는다.
                 migrationMessage = "게스트 데이터를 이관하지 못했습니다. 로컬 데이터는 보존됩니다."
@@ -188,17 +196,68 @@ final class SessionStore {
     }
 
     /// 이관 성공 후: 로컬 게스트 데이터 제거 + 매장 재로드로 이관 결과 반영.
-    private func finishMigration(announce: Bool) async {
+    /// 게스트 데이터는 병합 확인 전에 지운다 — 확인 도중 앱이 꺼져도 다시 이관되어 겹치지 않게(데이터는 이미 서버에 있다).
+    private func finishMigration(announce: Bool, newAssigneeIds: [Int]) async {
         GuestStore.shared.reset()
         GuestStore.shared.deactivate()
-        if announce { migrationMessage = "게스트 데이터를 계정으로 이관했습니다." }
         await loadSession()
+        let pairs = await findAssigneeMergePairs(newIds: newAssigneeIds)
+        if pairs.isEmpty {
+            endMigration(announce: announce)
+        } else {
+            announceAfterAssigneeMerge = announce
+            assigneeMergePairs = pairs
+        }
+    }
+
+    /// 웹 `GuestMigrationLayer` — 담당자 목록을 다시 받아 새 담당자 중 기존과 이름이 같은 쌍을 찾는다.
+    /// 목록을 못 받으면 묻지 않는다(이관 자체는 끝났다).
+    private func findAssigneeMergePairs(newIds: [Int]) async -> [AssigneeMergePair] {
+        guard let account = user, !newIds.isEmpty,
+              let assignees = try? await service.fetchAssignees().assignees,
+              user == account else { return [] } // 받는 사이 로그아웃·다른 계정이면 묻지 않는다
+        return AssigneeMergePair.pairs(in: assignees, newIds: Set(newIds))
+    }
+
+    /// 맨 앞 쌍 답 — 병합이면 새 담당자 예약을 기존 담당자로 옮기고 새 담당자를 지운다(`/api/assignees/merge`).
+    /// 실패하면 남은 쌍은 묻지 않고 안내한다.
+    func resolveAssigneeMerge(merge: Bool) async {
+        guard !isMergingAssignee, !assigneeMergePairs.isEmpty, let account = user else { return }
+        let pair = assigneeMergePairs.removeFirst()
+        if merge {
+            isMergingAssignee = true
+            defer { isMergingAssignee = false }
+            do {
+                try await service.mergeAssignees(sourceId: pair.newAssignee.id, targetId: pair.existingAssignee.id)
+            } catch {
+                guard user == account else { return } // 요청 중 로그아웃·계정 바뀜 — 다른 화면에 안내를 띄우지 않는다
+                assigneeMergePairs = []
+                announceAfterAssigneeMerge = false
+                dataEpoch += 1 // 앞서 성공한 병합은 반영
+                migrationMessage = "\(labels.assignee) 병합에 실패했습니다. 같은 이름 \(labels.assignee.josa(.iGa)) 따로 남아 있어요."
+                return
+            }
+            guard user == account else { return }
+        }
+        if assigneeMergePairs.isEmpty {
+            endMigration(announce: announceAfterAssigneeMerge)
+            announceAfterAssigneeMerge = false
+        }
+    }
+
+
+    /// 이관(과 병합 확인)이 다 끝났을 때 — 화면을 다시 받게 하고, 확인을 거친 이관이면 안내.
+    private func endMigration(announce: Bool) {
+        dataEpoch += 1
+        if announce { migrationMessage = "게스트 데이터를 계정으로 이관했습니다." }
     }
 
     func signOut() {
         ReminderScheduler.shared.clearAll() // 이 기기에서 나간 계정의 예약 알림이 울리지 않게
         keychain.clear()
         currentStore = nil
+        assigneeMergePairs = [] // 묻던 병합 쌍은 그 계정 것 — 로그인 화면에 남기지 않는다
+        announceAfterAssigneeMerge = false
         state = .signedOut
     }
 
