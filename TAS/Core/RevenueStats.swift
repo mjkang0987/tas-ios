@@ -153,6 +153,20 @@ enum RevenueStats {
             .reduce(0) { $0 + (priceByName[$1] ?? 0) }
     }
 
+    /// 가격이 없는 예약(옛 데이터·게스트)을 서비스 합계로 채운다 — 불러올 때 한 번 해 두면 상세·결제·변경·캘린더 합계가
+    /// 같은 값을 본다(웹은 쓰는 자리마다 `resolveReservationPrice`). 합계가 0이면(카탈로그에 없음) 비워 둔다.
+    static func withResolvedPrices(_ reservations: [Reservation], catalog: [ServiceItem]) -> [Reservation] {
+        var prices: [String: Int] = [:]
+        for item in catalog { prices[item.name] = item.price }
+        return reservations.map { r in
+            guard r.price == nil else { return r }
+            var r = r
+            let sum = price(r, priceByName: prices)
+            if sum > 0 { r.price = sum }
+            return r
+        }
+    }
+
     /// 예약 매출 — 서비스 금액에서 할인·적립금·회원권으로 낸 만큼 뺀 값, 0 아래로 안 간다(웹 `getReservationRevenue`).
     static func revenue(_ r: Reservation, price: Int) -> Int {
         let deducted = (r.paymentEntries ?? [])

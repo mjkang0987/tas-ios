@@ -85,7 +85,7 @@ final class CalendarViewModel {
             let key = String(r.date.prefix(keyLength))
             var s = out[key] ?? PeriodSummary(count: 0, total: 0)
             s.count += 1
-            if Self.countsAsBooked(r) { s.total += r.price ?? 0 }
+            if Self.countsAsBooked(r) { s.total += Self.revenue(r) }
             out[key] = s
         }
         return out
@@ -101,10 +101,13 @@ final class CalendarViewModel {
         let items = reservations(on: dateKey, assigneeId: assigneeId)
         let total = items
             .filter(Self.countsAsBooked)
-            .compactMap(\.price)
-            .reduce(0, +)
+            .reduce(0) { $0 + Self.revenue($1) }
         return (items.count, total)
     }
+
+    /// 캘린더 합계의 한 건 — 웹 `resolveRevenue`: 할인·적립금·회원권으로 낸 만큼 뺀다(매출 탭과 같은 값).
+    /// 가격 없는 예약은 불러올 때 서비스 합계로 채워 둔다(`RevenueStats.withResolvedPrices`).
+    private static func revenue(_ r: Reservation) -> Int { RevenueStats.revenue(r, price: r.price ?? 0) }
 
     func customer(_ id: Int) -> Customer? { state.value?.customersById[id] }
     func assignee(_ id: Int?) -> Assignee? { id.flatMap { state.value?.assigneesById[$0] } }
@@ -138,6 +141,7 @@ final class CalendarViewModel {
             async let services = service.fetchServices()
 
             let (res, cus, asg, svc) = try await (reservations, customers, assignees, services)
+            let all = RevenueStats.withResolvedPrices(res.reservations, catalog: svc.services)
 
             let customersById = Dictionary(cus.customers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             let assigneesById = Dictionary(asg.assignees.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
@@ -149,14 +153,14 @@ final class CalendarViewModel {
             )
 
             state = .loaded(Data(
-                reservations: res.reservations,
+                reservations: all,
                 customersById: customersById,
                 assigneesById: assigneesById,
                 serviceColorMap: serviceColorMap,
                 services: svc.services,
                 history: res.history ?? []
             ))
-            detailData = DetailData(reservations: res.reservations, customersById: customersById, assigneesById: assigneesById,
+            detailData = DetailData(reservations: all, customersById: customersById, assigneesById: assigneesById,
                                     services: svc.services, serviceColorMap: serviceColorMap, history: res.history ?? [])
             // 예약 알림을 지금 예약에 맞춘다 — 추가·변경·취소 뒤 reload 도 여기를 지난다
             await ReminderScheduler.shared.sync(reservations: res.reservations, customerNames: customersById.mapValues(\.name))

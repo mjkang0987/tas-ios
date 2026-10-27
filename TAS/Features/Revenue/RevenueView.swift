@@ -453,6 +453,7 @@ final class RevenueViewModel {
             async let services = service.fetchServices()
             async let customers = service.fetchCustomers()
             let (res, asg, svc, cus) = try await (reservations, assignees, services, customers)
+            let all = RevenueStats.withResolvedPrices(res.reservations, catalog: svc.services)
 
             let assigneesById = Dictionary(asg.assignees.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             let customersById = Dictionary(cus.customers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
@@ -461,14 +462,14 @@ final class RevenueViewModel {
             let serviceColorMap = ServiceColor.buildServiceColorMap(catalog: svc.services, storeMap: svc.categoryBaseColors)
 
             state = .loaded(Data(
-                reservations: res.reservations,
+                reservations: all,
                 assigneesById: assigneesById,
                 customersById: customersById,
                 servicePriceByName: prices,
                 serviceColorMap: serviceColorMap,
                 today: KST.dayKey.string(from: Date())
             ))
-            detailData = DetailData(reservations: res.reservations, customersById: customersById, assigneesById: assigneesById,
+            detailData = DetailData(reservations: all, customersById: customersById, assigneesById: assigneesById,
                                     services: svc.services, serviceColorMap: serviceColorMap, history: res.history ?? [])
         } catch {
             state = .failed((error as? APIError)?.errorDescription ?? error.localizedDescription)
