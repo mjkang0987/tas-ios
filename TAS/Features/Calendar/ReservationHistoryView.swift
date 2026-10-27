@@ -81,24 +81,8 @@ struct ReservationHistoryView: View {
         } else if a.status == .active && (b.status == .cancelled || b.status == .noshow) {
             out.append((label: "상태", before: b.status == .cancelled ? "취소" : "노쇼", after: "예약"))
         }
-        // 필드 변경
-        if b.date != a.date { out.append((label: "날짜", before: b.date, after: a.date)) }
-        if b.startTime != a.startTime { out.append((label: "시작시간", before: b.startTime, after: a.startTime)) }
-        if b.endTime != a.endTime { out.append((label: "종료시간", before: b.endTime, after: a.endTime)) }
-        if b.service != a.service { out.append((label: "\(labels.service)", before: b.service, after: a.service)) }
-        if (b.assigneeId ?? 0) != (a.assigneeId ?? 0) {
-            out.append((label: "\(labels.assignee)", before: assigneeName(b.assigneeId), after: assigneeName(a.assigneeId)))
-        }
-        if (b.price ?? 0) != (a.price ?? 0) {
-            out.append((label: "가격", before: formatWon(b.price ?? 0), after: formatWon(a.price ?? 0)))
-        }
-        // 웹 reservationDetailUtils 와 같은 두 칸 — 빠져 있어 바꿔도 이력에 안 남았다
-        if (b.memo ?? "") != (a.memo ?? "") {
-            out.append((label: "요청사항", before: b.memo ?? "", after: a.memo ?? ""))
-        }
-        // 경로가 없던 옛 예약은 전화예약으로 본다(폼 기본값과 같게) — 안 그러면 안 바꿔도 '→ 전화예약'이 잡힌다
-        let bc = (b.channel ?? .phone).rawValue, ac = (a.channel ?? .phone).rawValue
-        if bc != ac { out.append((label: "예약경로", before: bc, after: ac)) }
+        out += ReservationDiff.fields(before: b, after: a, labels: labels, assigneeName: assigneeName)
+            .map { (label: $0.label, before: $0.before, after: $0.after) }
         return out
     }
 }
