@@ -6,6 +6,7 @@ struct CalendarView: View {
 
     @Environment(SessionStore.self) private var session
     @Environment(ReminderScheduler.self) private var reminders
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var viewModel = CalendarViewModel()
     @State private var selectedDate = Date()
     @State private var selectedAssigneeId: Int?
@@ -55,6 +56,7 @@ struct CalendarView: View {
         NavigationStack {
             LoadableView(state: viewModel.state, loadingText: "예약 불러오는 중…") { _ in
                 VStack(spacing: 0) {
+                    if dynamicTypeSize.isAccessibilitySize { periodBar }
                     modePicker
                     assigneeFilterBar
                     switch mode {
@@ -73,15 +75,9 @@ struct CalendarView: View {
             .toolbar {
                 // 웹 헤더처럼 좌우 이동을 날짜 왼쪽에 둔다 — 뷰마다 따로 머리줄을 두면
                 // 같은 조작이 화면마다 다른 자리에 있고 세로도 그만큼 먹는다.
-                ToolbarItemGroup(placement: .topBarLeading) {
-                    // 웹 `CalendarDirection`·안드로이드 헤더의 '오늘' — 어느 뷰든 오늘이 든 칸으로 간다(늘 누를 수 있다)
-                    Button("오늘") { selectedDate = Date() }
-                    Button { shiftPeriod(-1) } label: { Image(systemName: "chevron.left") }
-                        .accessibilityLabel("이전")
-                    Button { shiftPeriod(1) } label: { Image(systemName: "chevron.right") }
-                        .accessibilityLabel("다음")
-                    DatePicker("", selection: $selectedDate, displayedComponents: .date)
-                        .labelsHidden()
+                // 큰 글자(접근성 크기)에선 툴바가 ⋯ 로 접히고 그 메뉴엔 '오늘'만 남아 이전·다음·날짜에 못 닿는다 — 그땐 화면 맨 위 줄(periodBar)로 내린다.
+                if !dynamicTypeSize.isAccessibilitySize {
+                    ToolbarItemGroup(placement: .topBarLeading) { periodControls }
                 }
                 // 알림 종(웹 헤더와 같은 자리) — 곧 시작은 게스트도 보여 늘 둔다. 1분마다 다시 센다.
                 ToolbarItem(placement: .topBarTrailing) {
@@ -188,6 +184,35 @@ struct CalendarView: View {
     }
 
     // MARK: - 뷰 모드 선택 (일/주/월/년)
+
+    /// 웹 `CalendarDirection`·안드로이드 헤더의 '오늘' — 어느 뷰든 오늘이 든 칸으로 간다(늘 누를 수 있다).
+    @ViewBuilder private var periodButtons: some View {
+        Button("오늘") { selectedDate = Date() }
+        Button { shiftPeriod(-1) } label: { Image(systemName: "chevron.left") }
+            .accessibilityLabel("이전")
+        Button { shiftPeriod(1) } label: { Image(systemName: "chevron.right") }
+            .accessibilityLabel("다음")
+    }
+
+    private var datePicker: some View {
+        DatePicker("날짜", selection: $selectedDate, displayedComponents: .date).labelsHidden()
+    }
+
+    @ViewBuilder private var periodControls: some View {
+        periodButtons
+        datePicker
+    }
+
+    /// 접근성 크기용 — 툴바 대신 화면 맨 위. 날짜는 아랫줄(한 줄엔 안 들어간다).
+    private var periodBar: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 16) { periodButtons }
+            datePicker
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 6)
+    }
 
     private var modePicker: some View {
         Picker("", selection: $mode) {
