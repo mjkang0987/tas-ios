@@ -226,14 +226,18 @@
    - 덤(발견·수정): 변경 이력에 **요청사항·예약경로가 빠져** 바꿔도 안 남던 것 → 웹 `reservationDetailUtils` 와 같은 두 칸 추가(옛 예약 경로 없음 = 전화예약 비교).
    - 확인: 시뮬레이터 — 예약 변경에서 현장방문 → 상세 '현장방문', 변경 이력 '예약경로 전화예약 → 현장방문' · 유닛 236.
 
-18. 🟡 **알림 벨** (`claude/notification-bell`) — 지시자 "알림 벨도 그대로 진행해줘"(2026-10-27, 안드로이드와 같이).
+18. ✅ **알림 벨** (`claude/notification-bell`, v0.28.0) — 지시자 "알림 벨도 그대로 진행해줘"(2026-10-27, 안드로이드와 같이).
    - 웹 `NotificationCenter`(헤더 종) 중 앱에서 지금 쓸 수 있는 칸만: **곧 시작하는 예약**(게스트 포함) + **고객 예약 요청**(로그인·온라인예약).
      쿠폰·회원권 만료 임박은 로그인 확인 뒤, 네이버 알림은 앱에 연동이 없어 뺀다.
    - 툴바의 요청함(트레이) 버튼을 종으로 바꾼다 — 처리할 일(대기 요청)은 빨간 숫자, 곧 시작만 있으면 보라 점(웹 `bellIndicator`). 늘 보인다.
    - 시트 '알림' — 칸이 둘을 넘으면(전체·요청·곧 시작) 위에 세그먼트 탭. 전체에선 요청 칸 + 곧 시작 칸, 곧 시작은 1시간 안 최대 3건, 없으면 오늘 다음 예약 하나('다음 예약'),
      그것도 없으면 '오늘 남은 예약이 없습니다'. 줄: '20분 후' 태그 · 시작 시각 · 고객 · 서비스 · 담당자. 누르면 시트를 닫고 그 예약 상세.
    - 계산은 웹 `features/notifications/upcoming.ts` 이식 `Core/UpcomingReservations.swift`(매장 KST 기준, 1분마다 다시) + 유닛 테스트.
-   - 파일: `Features/Calendar/BookingRequestsView.swift`(버튼·시트 → 알림), `CalendarView.swift`(종 자리·게이트), `Core/UpcomingReservations.swift`, `TASTests/UpcomingReservationsTests.swift`.
+   - 확인: 시뮬레이터 — 게스트 오늘 예약 3건(23·43·128분 후) → 종 보라 점, 시트 '곧 시작하는 예약' 두 줄(1시간 밖 하나는 빠짐), 줄 → 그 예약 상세. 어두운 화면 점 밝게 · 유닛 239.
+     못 본 것: 요청 칸(로그인 필요) — 로직은 기존 요청함 그대로 옮김.
+   - 남김: 글자를 아주 크게(접근성 크기) 하면 툴바가 ⋯ 로 접히고 그 메뉴에 '오늘'만 보여 이전·다음·날짜·종에 못 닿는다 — 이번 전부터 있던 것, P7 점검(3번)에서 툴바째 고친다.
+   - 덤: 불러온 뒤 들어온 요청을 누르면 예약을 다시 읽고 연다(웹 openRequestReservation).
+   - 파일: `Features/Calendar/BookingRequestsView.swift → NotificationCenterView.swift`(버튼·시트 → 알림), `CalendarView.swift`(종 자리·게이트), `Core/UpcomingReservations.swift`, `TASTests/UpcomingReservationsTests.swift`.
 
 ## ✅ 완료 (#37 머지) — 예약 알림(기기 알림) (`claude/reservation-reminder`)
 
