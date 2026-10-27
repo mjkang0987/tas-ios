@@ -103,10 +103,8 @@ struct ReservationInfoCard: View {
         if let onCustomerTap {
             // 카드(예약 상세 버튼) 안이라 Button 을 겹치면 안쪽이 눌리지 않는다 — 안쪽 제스처가 먼저 받는다
             text
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
+                .expandedTapArea()
                 .onTapGesture(perform: onCustomerTap)
-                .padding(.vertical, -12)
         } else {
             text
         }

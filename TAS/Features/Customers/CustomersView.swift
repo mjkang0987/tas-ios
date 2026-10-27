@@ -146,6 +146,7 @@ private struct CustomerRow: View {
                         highlightedText(customer.name, range: nameMatchRange)
                             .font(.tasBody.weight(.bold))
                             .foregroundStyle(Color.textPrimary)
+                            .expandedTapArea()
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint("고객 상세 열기")

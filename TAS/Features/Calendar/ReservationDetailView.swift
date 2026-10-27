@@ -199,7 +199,7 @@ struct ReservationDetailView: View {
             let name = customer?.name ?? "고객 #\(reservation.customerId)"
             if let onCustomerTap, customer != nil {
                 // 웹 고객명 링크 색(#1967D2) — 어두운 모드는 밝힌 파랑
-                Button(name) { onCustomerTap(reservation.customerId) }
+                Button { onCustomerTap(reservation.customerId) } label: { Text(name).expandedTapArea() }
                     .foregroundStyle(Color.linkText)
                     .accessibilityHint("고객 상세 열기")
             } else {
