@@ -17,14 +17,17 @@ struct DayTimelineView: View {
     /// 오늘이면 현재 시각 선을 얹는다.
     var isToday: Bool = false
 
-    private let hourHeight: CGFloat = 56
+    // 칸·블록 치수는 글자 크기를 따라간다 — 고정이면 큰 글자에서 시각·이름이 블록 밖으로 잘린다.
+    @ScaledMetric(relativeTo: .caption2) private var hourHeight: CGFloat = 56
     private let gutterWidth: CGFloat = 40
     private let laneSpacing: CGFloat = 3
     /// 레인 하나가 가질 최소 폭. 겹침이 많아 이보다 좁아져야 할 상황이면 좁히지 않고
     /// 가로로 스크롤한다 — 주·3일 뷰가 쓰는 방식과 같다. 좁히면 시술 칩이 `여…` 처럼
     /// 아무 정보도 없는 말줄임이 되어, 한 줄을 먹으면서 읽히지는 않는다.
-    private let minLaneWidth: CGFloat = 104
-    private let minBlockHeight: CGFloat = 26
+    @ScaledMetric(relativeTo: .caption2) private var minLaneWidth: CGFloat = 104
+    @ScaledMetric(relativeTo: .caption2) private var minBlockHeight: CGFloat = 26
+    /// 칩 줄까지 보이는 블록 높이 — 글자가 커지면 같이 커진다.
+    @ScaledMetric(relativeTo: .caption2) private var chipMinHeight: CGFloat = 54
     private var ptPerMin: CGFloat { hourHeight / 60 }
     private var axisStartMin: Int { startHour * 60 }
     private var totalHeight: CGFloat { CGFloat(max(1, endHour - startHour)) * hourHeight }
@@ -71,6 +74,8 @@ struct DayTimelineView: View {
             ForEach(startHour..<endHour, id: \.self) { h in
                 Text(String(format: "%02d", h))
                     .font(.caption2).monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5) // 시각 칸 폭은 고정 — 큰 글자에선 숫자를 줄여 넣는다(칸을 키우면 예약 폭을 먹는다)
                     .foregroundStyle(Color.textSecondary)
                     .frame(height: hourHeight, alignment: .top)
             }
@@ -93,7 +98,7 @@ struct DayTimelineView: View {
                 }
                 // 칩은 평문보다 위아래 패딩만큼 높다. 임계값을 그대로 두면 60분(56pt)보다
                 // 짧은 블록에서 칩 줄이 잘린다.
-                if p.height > 54 {
+                if p.height > chipMinHeight {
                     ServiceChipList(
                         service: p.reservation.service,
                         colorMap: serviceColorMap,

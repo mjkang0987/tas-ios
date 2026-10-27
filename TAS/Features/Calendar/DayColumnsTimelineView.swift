@@ -22,13 +22,14 @@ struct DayColumnsTimelineView: View {
     /// 날짜 머리를 누르면 그날 일 뷰 — 웹 `Week` 의 `StyledDayHeading`. nil 이면 머리는 글자만.
     var onSelectDay: ((String) -> Void)? = nil
 
-    private let hourHeight: CGFloat = 56
+    // 칸·블록 치수는 글자 크기를 따라간다 — 고정이면 큰 글자에서 시각·이름이 블록 밖으로 잘린다.
+    @ScaledMetric(relativeTo: .caption2) private var hourHeight: CGFloat = 56
     private let gutterWidth: CGFloat = 40
-    private let laneWidth: CGFloat = 64         // 한글 세 글자가 말줄임 없이 들어가는 폭
+    @ScaledMetric(relativeTo: .caption2) private var laneWidth: CGFloat = 64         // 한글 세 글자가 말줄임 없이 들어가는 폭
     private let laneSpacing: CGFloat = 2
     private let columnSpacing: CGFloat = 1
-    private let minBlockHeight: CGFloat = 22
-    private let headerHeight: CGFloat = 44     // 머리가 버튼이라 손가락 크기
+    @ScaledMetric(relativeTo: .caption2) private var minBlockHeight: CGFloat = 22
+    @ScaledMetric(relativeTo: .caption2) private var headerHeight: CGFloat = 44     // 머리가 버튼이라 손가락 크기
 
     /// 가로 스크롤 칸의 보이는 폭 — 칼럼이 다 들어가면 남는 폭만큼 넓혀 꽉 채운다(3일 보기).
     @State private var viewportWidth: CGFloat = 0
@@ -80,6 +81,8 @@ struct DayColumnsTimelineView: View {
             ForEach(startHour..<endHour, id: \.self) { h in
                 Text(String(format: "%02d", h))
                     .font(.caption2).monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5) // 시각 칸 폭은 고정 — 큰 글자에선 숫자를 줄여 넣는다(칸을 키우면 예약 폭을 먹는다)
                     .foregroundStyle(Color.textSecondary)
                     .frame(height: hourHeight, alignment: .top)
             }
