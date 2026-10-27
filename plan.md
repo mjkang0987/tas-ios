@@ -226,7 +226,16 @@
    - 덤(발견·수정): 변경 이력에 **요청사항·예약경로가 빠져** 바꿔도 안 남던 것 → 웹 `reservationDetailUtils` 와 같은 두 칸 추가(옛 예약 경로 없음 = 전화예약 비교).
    - 확인: 시뮬레이터 — 예약 변경에서 현장방문 → 상세 '현장방문', 변경 이력 '예약경로 전화예약 → 현장방문' · 유닛 236.
 
-## 🟡 진행 — 예약 알림(기기 알림) (`claude/reservation-reminder`)
+18. 🟡 **알림 벨** (`claude/notification-bell`) — 지시자 "알림 벨도 그대로 진행해줘"(2026-10-27, 안드로이드와 같이).
+   - 웹 `NotificationCenter`(헤더 종) 중 앱에서 지금 쓸 수 있는 칸만: **곧 시작하는 예약**(게스트 포함) + **고객 예약 요청**(로그인·온라인예약).
+     쿠폰·회원권 만료 임박은 로그인 확인 뒤, 네이버 알림은 앱에 연동이 없어 뺀다.
+   - 툴바의 요청함(트레이) 버튼을 종으로 바꾼다 — 처리할 일(대기 요청)은 빨간 숫자, 곧 시작만 있으면 보라 점(웹 `bellIndicator`). 늘 보인다.
+   - 시트 '알림' — 칸이 둘을 넘으면(전체·요청·곧 시작) 위에 세그먼트 탭. 전체에선 요청 칸 + 곧 시작 칸, 곧 시작은 1시간 안 최대 3건, 없으면 오늘 다음 예약 하나('다음 예약'),
+     그것도 없으면 '오늘 남은 예약이 없습니다'. 줄: '20분 후' 태그 · 시작 시각 · 고객 · 서비스 · 담당자. 누르면 시트를 닫고 그 예약 상세.
+   - 계산은 웹 `features/notifications/upcoming.ts` 이식 `Core/UpcomingReservations.swift`(매장 KST 기준, 1분마다 다시) + 유닛 테스트.
+   - 파일: `Features/Calendar/BookingRequestsView.swift`(버튼·시트 → 알림), `CalendarView.swift`(종 자리·게이트), `Core/UpcomingReservations.swift`, `TASTests/UpcomingReservationsTests.swift`.
+
+## ✅ 완료 (#37 머지) — 예약 알림(기기 알림) (`claude/reservation-reminder`)
 
 ### 요구 (지시자 2026-10-22 — "iOS도 푸시알림 같이 만들어야해")
 - 안드로이드(tas-android 15-1, #25)와 같은 기능: 예약 시각 N분 전 알림. **웹에 없는 기능**이라 동작은 지시자 결정(안드로이드 때)을 따른다:
@@ -442,7 +451,7 @@
 
 > 앱엔 **웹 위임(ASWebAuthenticationSession)** 로그인이 이미 구현돼 있음:
 > `signIn(provider)` → 웹 `/login?nonce&provider`(NextAuth OAuth) → `tasios://auth/callback?code` → `/api/mobile-auth/exchange` → Bearer→Keychain.
-> iOS 소셜 SDK 없이도 **웹 NextAuth에 provider만 켜지면** 로그인 가능. 현재 `AUTH_*_ID`가 `REPLACE…` 플레이스홀더라 비활성.
+> iOS 소셜 SDK 없이도 **웹 NextAuth에 provider만 켜지면** 로그인 가능. **2026-10-27 확인: 웹 운영에 구글·카카오·네이버 키가 실제 값으로 켜져 있다**(로그인 시작 → 각 제공자 인증 페이지로 정상 이동). 남은 건 실계정 로그인 확인(지시자) — 비밀번호 입력은 Claude 가 하지 않는다.
 
 **👤 사용자 준비 — 구글**
 1. Google Cloud Console → OAuth 동의 화면(승인 도메인 `takeaseat.co.kr`)
@@ -841,7 +850,7 @@
 - 설정/관리 `TAS/Features/{Settings,Services,Assignees,Notices,Coupons,Memberships,Revenue}/*` · 모델 `TAS/Models/*`
 
 ## 다음 세션 첫 스텝
-1. (사용자) P0 구글 OAuth + `AUTH_GOOGLE_ID/SECRET` + tas 웹 재배포 — **여전히 최대 병목**.
+1. (사용자) TestFlight 앱에서 실계정 로그인 확인 — 웹 키는 이미 켜짐(2026-10-27 확인).
    로그인이 켜져야 P0 E2E·P1 이관·P4 쿠폰/회원권 발급(백엔드는 이미 배포됨)이 한꺼번에 검증된다.
 2. (Claude) 로그인 후 E2E 3종 한 번에: 구글 로그인 → 게스트 데이터 이관 → 쿠폰·회원권 발급/차감.
 3. (Claude) 로그인 후 온라인 예약 설정 E2E — 슬러그 중복 확인·저장, 연락처 400 가드, 공개 페이지 반영.
