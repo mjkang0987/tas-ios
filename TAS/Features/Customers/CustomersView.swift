@@ -216,13 +216,13 @@ private struct CustomerRow: View {
     }
 
     /// 건수 0인 상태도 웹처럼 전부 — 행마다 배지 개수가 달라지면 훑기 어렵다.
+    /// 큰 글자에선 네 개가 한 줄에 안 들어간다 — 고정 한 줄이면 행이 화면보다 넓어져 왼쪽이 잘렸다. 넘치면 다음 줄로.
     private var counts: some View {
-        HStack(spacing: 4) {
+        WrapLayout(spacing: 4) {
             ForEach(CustomerStats.EffectiveStatus.summaryOrder, id: \.self) { status in
                 StatusCountBadge(status: status, count: stats.count(status))
             }
         }
-        .fixedSize()
     }
 }
 

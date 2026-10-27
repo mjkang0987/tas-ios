@@ -249,11 +249,12 @@ private struct AssigneeStatusText: View {
             .foregroundStyle(color)
     }
 
+    /// 웹 ASSIGNEE_STATUS_TONE(success·warning·neutral). 시스템 초록·주황은 흰 바탕 대비 2.2 라 톤 글자색(4.5 이상)을 쓴다.
     private var color: Color {
         switch status {
-        case .active: return .green
-        case .leave: return .orange
-        case .retired: return .gray
+        case .active: return .successText
+        case .leave: return .warningText
+        case .retired: return .textSecondary
         }
     }
 }
