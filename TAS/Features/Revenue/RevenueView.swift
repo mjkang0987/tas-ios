@@ -480,6 +480,7 @@ final class RevenueViewModel {
 /// 웹처럼 **집계된 숫자를 누르면 그 근거가 되는 예약/고객 목록**이 열린다.
 struct RevenueView: View {
     @Environment(SessionStore.self) private var session
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var viewModel = RevenueViewModel()
     /// 열려 있는 드릴다운이 **무엇인지**만 들고 있는다 — 목록 자체를 들면
     /// 상세에서 예약을 취소·삭제해도 그 행이 그대로 남는다.
@@ -542,20 +543,33 @@ struct RevenueView: View {
     @ViewBuilder private var filters: some View {
         @Bindable var viewModel = viewModel
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
+            // 큰 글자에선 한 줄에 안 들어간다 — 고정 한 줄이면 화면 전체가 옆으로 넘쳤다. 넘치면 다음 줄로.
+            WrapLayout(spacing: 6) {
                 ForEach(RevenueStats.QuickRange.allCases, id: \.self) { q in
                     FilterChip(label: q.rawValue, isSelected: viewModel.quickRange == q) { viewModel.applyQuick(q) }
                 }
             }
-            HStack(spacing: 4) {
-                Button { viewModel.shift(-1) } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
-                    .accessibilityLabel("이전 기간")
-                DatePicker("시작일", selection: $viewModel.rangeStart, displayedComponents: .date).labelsHidden()
-                Text("~").foregroundStyle(Color.textSecondary)
-                DatePicker("종료일", selection: $viewModel.rangeEnd, displayedComponents: .date).labelsHidden()
-                Spacer(minLength: 0)
-                Button { viewModel.shift(1) } label: { Image(systemName: "chevron.right").frame(width: 44, height: 44) }
-                    .accessibilityLabel("다음 기간")
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    // 날짜 둘이 한 줄에 안 들어가 위아래로 — 이전·다음은 맨 위 한 줄
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 4) { shiftButton(-1); shiftButton(1) }
+                        DatePicker("시작일", selection: $viewModel.rangeStart, displayedComponents: .date).labelsHidden()
+                        HStack(spacing: 4) {
+                            Text("~").foregroundStyle(Color.textSecondary)
+                            DatePicker("종료일", selection: $viewModel.rangeEnd, displayedComponents: .date).labelsHidden()
+                        }
+                    }
+                } else {
+                    HStack(spacing: 4) {
+                        shiftButton(-1)
+                        DatePicker("시작일", selection: $viewModel.rangeStart, displayedComponents: .date).labelsHidden()
+                        Text("~").foregroundStyle(Color.textSecondary)
+                        DatePicker("종료일", selection: $viewModel.rangeEnd, displayedComponents: .date).labelsHidden()
+                        Spacer(minLength: 0)
+                        shiftButton(1)
+                    }
+                }
             }
             .buttonStyle(.borderless)
             .onChange(of: viewModel.rangeStart) { _, _ in viewModel.clampRange() }
@@ -565,8 +579,8 @@ struct RevenueView: View {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 6) { viewTabs; Spacer(minLength: 0); modeTabs }
                 VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 6) { viewTabs }
-                    HStack(spacing: 6) { modeTabs }
+                    WrapLayout(spacing: 6) { viewTabs }
+                    WrapLayout(spacing: 6) { modeTabs }
                 }
             }
             if showsCriteria {
@@ -577,6 +591,13 @@ struct RevenueView: View {
                     .foregroundStyle(Color.textSecondary)
             }
         }
+    }
+
+    private func shiftButton(_ delta: Int) -> some View {
+        Button { viewModel.shift(delta) } label: {
+            Image(systemName: delta < 0 ? "chevron.left" : "chevron.right").frame(width: 44, height: 44)
+        }
+        .accessibilityLabel(delta < 0 ? "이전 기간" : "다음 기간")
     }
 
     @ViewBuilder private var viewTabs: some View {
@@ -618,7 +639,9 @@ struct RevenueView: View {
 
     private var kpiGrid: some View {
         let metrics = viewModel.metrics
-        return LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+        // 큰 글자에선 2열이면 금액이 안 들어간다 — 1열로
+        let columns = dynamicTypeSize.isAccessibilitySize ? [GridItem(.flexible())] : [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)]
+        return LazyVGrid(columns: columns, spacing: 8) {
             kpiCard(.sales, value: formatWon(metrics.total),
                     note: metrics.salesTotal > 0 ? "회원권·충전 \(formatWon(metrics.salesTotal)) 포함" : nil)
             kpiCard(.count, value: "\(metrics.count)건")
@@ -790,7 +813,7 @@ private struct RevenueTrendChart: View {
                 )
                 .foregroundStyle(Color.accentColor.gradient)
                 // 막대마다 접근성 요소를 만들어 VoiceOver 로 값을 읽을 수 있게 한다.
-                // (탭으로 여는 상세는 아직 제스처 전용이다 — plan.md P7 잔여 작업)
+                // 탭으로 여는 상세는 제스처 전용 — VoiceOver 는 아래 일별 목록에서 같은 날 예약을 연다.
                 .accessibilityLabel(label(point.index) == "\(point.index)" ? "\(point.index)\(unitLabel)" : label(point.index))
                 .accessibilityValue(formatWon(point.total))
             }
@@ -837,20 +860,28 @@ private struct DailyRevenueRow: View {
     let row: RevenueViewModel.DayRow
     var expanded = false
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
-        HStack {
+        // 큰 글자에선 한 줄에 다 넣으면 날짜·금액이 글자 단위로 쪼개진다 — 날짜 윗줄, 건수·금액 아랫줄
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout())
+        layout {
             VStack(alignment: .leading, spacing: 2) {
                 Text(dateLabel).font(.tasBody.weight(.semibold))
                 Text(yearLabel).font(.caption2).foregroundStyle(Color.textSecondary)
             }
-            Spacer()
-            Text("\(row.count)건").font(.caption).foregroundStyle(Color.textSecondary)
-            Text(formatWon(row.total)).font(.tasBody.weight(.semibold)).monospacedDigit()
-            // 웹 StyledExpandIcon — 펼치면 위로
-            Image(systemName: "chevron.down")
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(Color.textTertiary)
-                .rotationEffect(.degrees(expanded ? 180 : 0))
+            HStack {
+                Spacer(minLength: 0)
+                Text("\(row.count)건").font(.caption).foregroundStyle(Color.textSecondary)
+                Text(formatWon(row.total)).font(.tasBody.weight(.semibold)).monospacedDigit()
+                // 웹 StyledExpandIcon — 펼치면 위로
+                Image(systemName: "chevron.down")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(Color.textTertiary)
+                    .rotationEffect(.degrees(expanded ? 180 : 0))
+            }
         }
         .frame(minHeight: 52)
         .contentShape(Rectangle())
