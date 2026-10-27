@@ -110,8 +110,14 @@ struct CalendarView: View {
                         customersById: viewModel.state.value?.customersById ?? [:],
                         assigneesById: viewModel.state.value?.assigneesById ?? [:],
                         onApplied: { await viewModel.reload() },
-                        // 시트를 상세로 바꿔 띄운다(같은 `.sheet(item:)` — 알림을 닫고 상세가 올라온다)
-                        onOpen: { activeSheet = .detail($0) }
+                        // 시트를 상세로 바꿔 띄운다(같은 `.sheet(item:)` — 알림을 닫고 상세가 올라온다).
+                        // 불러온 뒤 들어온 요청이면 목록에 없으니 다시 읽고 연다(웹 openRequestReservation).
+                        onOpen: { id in
+                            Task {
+                                if !viewModel.allReservations.contains(where: { $0.id == id }) { await viewModel.reload() }
+                                activeSheet = .detail(id)
+                            }
+                        }
                     )
                 case .create:
                     ReservationCreateView(
