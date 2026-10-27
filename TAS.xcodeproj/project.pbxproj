@@ -72,6 +72,7 @@
 		6770D62031D521ADACEDD113 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38BD50E7ED486AE0EF89388F /* RootView.swift */; };
 		6CE7531247DC2E77D4E138A6 /* NameSortTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93EE5F6FCD8758D6355E9E30 /* NameSortTests.swift */; };
 		6D24C8F083ABC2D9A5E0B930 /* TelLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DFC031F031A2C7743D8AA0E /* TelLink.swift */; };
+		6F4C7D4716CF205EFC64494C /* ReservationDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F32DDB54C8E8C51C67E054 /* ReservationDiff.swift */; };
 		70E7862450AEBD9CAC67DFF5 /* Customer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415459BE4E986E005BAB578B /* Customer.swift */; };
 		720CF37DC5121EF5FEE35EE1 /* ServiceColorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2741E286FBD4183F6124ECF5 /* ServiceColorTests.swift */; };
 		72FD6A06AFCF994A21FDFDE7 /* AssigneeScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE22BCB16342CDF48D500A49 /* AssigneeScheduleTests.swift */; };
@@ -91,6 +92,7 @@
 		9628E95DFC090B9E59449D5C /* NoticesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57DE55BC32AC382DF8BAD5E /* NoticesView.swift */; };
 		9B5E6EEA1946C82BC0900E8B /* Coupon.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE25BD9C6BC2C011F0A8BF3B /* Coupon.swift */; };
 		9F1EDAF2961D26B25656F461 /* TimelineLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1D84647E0906FA30D34B929 /* TimelineLayoutTests.swift */; };
+		A1481272E77FC5895BAABE91 /* ReservationDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69AFD8F98987BF68E1DD6DB8 /* ReservationDiffTests.swift */; };
 		A2DCD72D0648803EE2923E4A /* Membership.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AB02DF73BBC91A3E1FC9C24 /* Membership.swift */; };
 		A32777A533326AE37D9AE09E /* CustomersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29808F01307A6B34D129D3B8 /* CustomersView.swift */; };
 		A6960996C90B985830CD821E /* CustomersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E6A3CACE17ED28BF2DFE290 /* CustomersViewModel.swift */; };
@@ -203,6 +205,7 @@
 		5F82486F8ECE5C22233EA8BA /* GoogleSignInManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleSignInManager.swift; sourceTree = "<group>"; };
 		6343948F5BDEC4D17DB1612D /* ActionButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionButtonStyle.swift; sourceTree = "<group>"; };
 		63A7021216C257BC7D810457 /* NameSort.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameSort.swift; sourceTree = "<group>"; };
+		69AFD8F98987BF68E1DD6DB8 /* ReservationDiffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationDiffTests.swift; sourceTree = "<group>"; };
 		6B71C7A5CA9DB9CEBC6387C1 /* Chosung.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chosung.swift; sourceTree = "<group>"; };
 		6BA3D186ED7933CC3D3B0F66 /* CouponDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CouponDecodingTests.swift; sourceTree = "<group>"; };
 		6E68D54449A4BD8C0297045F /* PointSettingsEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointSettingsEditView.swift; sourceTree = "<group>"; };
@@ -254,6 +257,7 @@
 		C35B233C8966E45F530E48D9 /* PointMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointMath.swift; sourceTree = "<group>"; };
 		C3F0351B0627677B7929B775 /* NotificationCenterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationCenterView.swift; sourceTree = "<group>"; };
 		C8430AA115B850BB10351285 /* WebAuthSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAuthSession.swift; sourceTree = "<group>"; };
+		C8F32DDB54C8E8C51C67E054 /* ReservationDiff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReservationDiff.swift; sourceTree = "<group>"; };
 		C962E4F20D8566F76883BB7F /* CustomerDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerDetailView.swift; sourceTree = "<group>"; };
 		CA0C03F28DE0EA73F8728158 /* UpcomingReservationsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpcomingReservationsTests.swift; sourceTree = "<group>"; };
 		CA5BA520F00C877334F1E45F /* ColorAccents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorAccents.swift; sourceTree = "<group>"; };
@@ -312,6 +316,7 @@
 				A5A4BD9CAB4AD9E37E3CE6BD /* KST.swift */,
 				63A7021216C257BC7D810457 /* NameSort.swift */,
 				C35B233C8966E45F530E48D9 /* PointMath.swift */,
+				C8F32DDB54C8E8C51C67E054 /* ReservationDiff.swift */,
 				0D5111A10AA59B3865CBEAF5 /* ReservationOverlap.swift */,
 				8A619A7CC9188F9D0E1395A7 /* ReservationReminder.swift */,
 				BEEBFDC3378C1A15DCB295BE /* RevenueStats.swift */,
@@ -487,6 +492,7 @@
 				340111E07CA667E86FB1FCDE /* PointLedgerTests.swift */,
 				56D04C70208D730C54D4914D /* PointMathTests.swift */,
 				B7FA9768D1E4C8C482543D56 /* ReservationCreateRulesTests.swift */,
+				69AFD8F98987BF68E1DD6DB8 /* ReservationDiffTests.swift */,
 				5B1F15E1A1E8180A342C3566 /* ReservationOverlapTests.swift */,
 				7172449E52DD28D2239F1F9E /* ReservationReminderTests.swift */,
 				DF91E10214D3A6C3D96DD306 /* RevenueStatsTests.swift */,
@@ -784,6 +790,7 @@
 				F4647F5BF3A3FF884EA2122A /* PointLedgerTests.swift in Sources */,
 				0225CD49781CE424484FAEB6 /* PointMathTests.swift in Sources */,
 				51B5960E20D3CA71FFB4A55E /* ReservationCreateRulesTests.swift in Sources */,
+				A1481272E77FC5895BAABE91 /* ReservationDiffTests.swift in Sources */,
 				D8959835934F4F15BC75F99D /* ReservationOverlapTests.swift in Sources */,
 				1B6DEDD5B3CBC045D86E8814 /* ReservationReminderTests.swift in Sources */,
 				4983FECF1BCCFEFC8CF1F7FE /* RevenueStatsTests.swift in Sources */,
@@ -868,6 +875,7 @@
 				311977C4889E76FC21C1E8F5 /* Reservation.swift in Sources */,
 				AF217390F1559CA9F07C87C0 /* ReservationCreateView.swift in Sources */,
 				3723BE09CF0AA253B9E8955C /* ReservationDetailView.swift in Sources */,
+				6F4C7D4716CF205EFC64494C /* ReservationDiff.swift in Sources */,
 				B7AD7386CC658B5C77C9FD9F /* ReservationHistoryView.swift in Sources */,
 				1D548C9EDE1A45747B953E69 /* ReservationInfoCard.swift in Sources */,
 				4DE1A401C24FA83BAE1D26D1 /* ReservationOverlap.swift in Sources */,
@@ -961,7 +969,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.28.1;
+				MARKETING_VERSION = 0.29.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1043,7 +1051,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.28.1;
+				MARKETING_VERSION = 0.29.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

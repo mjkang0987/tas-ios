@@ -70,7 +70,8 @@ TAS/
     PointMath          적립금 산식(적립/사용·취소 환원 · PointRecharge 충전 · PointAdjust 수동 적립/차감 — 화면들이 공용) 공용 유틸
     NameSort           이름 정렬 규칙(고객 가나다순 · 담당자 영문→한글→기타)
     CustomerStats      고객 예약 집계(예약/완료/취소/노쇼 · 최근 시술) — 지난 예약은 완료로 판정
-    RevenueStats       매출 대상·결제완료·신규/재방문 고객 판정(웹 revenue.ts 이식)
+    RevenueStats       매출 대상·결제완료·신규/재방문 고객 판정(웹 revenue.ts 이식) · 가격 없는 예약을 서비스 합계로(불러올 때)
+    ReservationDiff    예약 필드 변경(전 → 후)·과거 시작 판정 — 변경 이력과 예약 변경 확인 공용(웹 getChangedFields·isPastTime)
     Chosung            한글 초성 검색(웹 chosung.ts 이식) · SearchHighlight 검색 매치 하이라이트 구간(웹 search-highlight.ts 이식)
   Models/              Reservation · Customer · Assignee · Service · Store · Notice ·
                        Coupon · Membership · BookingRequest · Common (웹 model.ts 미러링)
