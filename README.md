@@ -114,7 +114,8 @@ TASTests/              유닛 테스트 (XCTest, @testable import TAS)
   `/api/mobile-auth/google`에서 Bearer 교환. `Info.plist`의 `GIDClientID`가 설정되면 활성화,
   없으면 자동으로 웹 위임으로 폴백. 셋업·백엔드 계약: [`docs/GOOGLE_SIGNIN.md`](docs/GOOGLE_SIGNIN.md).
 - **게스트 데이터 이관** — 로그인 직후 로컬 게스트 데이터가 있으면 `/api/migrate-local`로
-  계정에 이관(이미 매장이 있으면 확인 후 진행).
+  계정에 이관(이미 매장이 있으면 확인 후 진행). 이관으로 생긴 담당자가 기존 담당자와 이름이 같으면
+  쌍마다 병합/따로 유지를 묻는다(웹 `GuestMigrationLayer`).
 
 > ⚠️ **백엔드/키 의존**: 웹 위임은 `tas`의 `/api/mobile-auth/*`가, 네이티브 Google은
 > iOS OAuth 클라이언트 ID + `/api/mobile-auth/google`가 준비되어야 실제 로그인이 된다.
@@ -126,7 +127,7 @@ TASTests/              유닛 테스트 (XCTest, @testable import TAS)
 |--------|-----------|--------|
 | 예약   | `/api/reservations` | GET · POST · PUT · PATCH · DELETE |
 | 고객   | `/api/customers`, `/api/customers/merge` | GET · POST |
-| 담당자 | `/api/assignees` | GET · PUT · DELETE |
+| 담당자 | `/api/assignees`, `/api/assignees/merge`(이관 뒤 같은 이름 병합, 로그인 전용) | GET · PUT · DELETE · POST |
 | 서비스 | `/api/services` | GET · PUT |
 | 공지·쿠폰·회원권 | `/api/{notices,coupons,memberships}` | GET · POST · PUT · DELETE |
 | 쿠폰·회원권 발급 | `/api/{coupon-issue,membership-issue}`, `/api/membership-use` | POST · DELETE (로그인 전용) |
