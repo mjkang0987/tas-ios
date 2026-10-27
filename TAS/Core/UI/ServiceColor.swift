@@ -81,6 +81,15 @@ enum ServiceColor {
         return colorMap
     }
 
+    /// 웹 buildCatalogMap — 이름 → 서비스. 옛 이름(`legacyNameMap`)도 현재 서비스로 찾혀 가격·소요시간 합계가 0이 되지 않는다.
+    static func buildCatalogMap(_ catalog: [ServiceItem]) -> [String: ServiceItem] {
+        var map = Dictionary(catalog.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+        for (legacy, current) in legacyNameMap where map[legacy] == nil {
+            if let item = map[current] { map[legacy] = item }
+        }
+        return map
+    }
+
     /// getServiceColor(service, colorMap) — 정확히 일치하는 이름이 없으면
     /// 긴 이름부터 부분 문자열로 훑고, 그래도 없으면 폴백.
     ///

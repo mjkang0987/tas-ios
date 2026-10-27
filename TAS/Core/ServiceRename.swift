@@ -12,8 +12,8 @@ enum ServiceRename {
 
     static func reservationUpdates(_ reservations: [Reservation], originalName: String, updatedName: String,
                                    prevCatalog: [ServiceItem], nextCatalog: [ServiceItem], today: String) -> [Update] {
-        let oldMap = Dictionary(prevCatalog.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
-        let newMap = Dictionary(nextCatalog.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+        let oldMap = ServiceColor.buildCatalogMap(prevCatalog)
+        let newMap = ServiceColor.buildCatalogMap(nextCatalog)
         let oldNames = Set(oldMap.keys)
 
         return reservations.compactMap { r -> Update? in

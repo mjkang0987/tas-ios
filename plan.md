@@ -108,14 +108,14 @@
    예약 상세·예약 등록(겹침 경고·필수 오류)·변경 이력·고객 명단 '최근 서비스'·매출 '담당자별'·온라인예약 설정.
    덤: 한국어 조사(`Josa` — 이/가·은/는·을/를·으로/로)를 받침으로 고른다. 웹은 '가'·'는'을 고정으로 붙여 '수업가'·'테이블를'처럼 틀린다(웹은 그대로).
    확인: 유닛 228건(용어 1·조사 1 추가) · 시뮬레이터(게스트, 업종 음식점) 설정 '메뉴'·'테이블', 예약 상세 '메뉴'·'테이블'.
-10. 🟡 **디자인 맞추기(iOS 먼저)** (`claude/design-theme`, PR #53 머지 v0.21.0 — iOS 끝, 웹·안드로이드 남음) — 지시자 2026-10-24: 세 플랫폼 일관성, 밝은/어두운 두 벌을 **시스템 테마 따라**(웹·안드로이드도 뒤에 넣는다).
+10. ✅ **디자인 맞추기(iOS 먼저)** (`claude/design-theme`, PR #53 머지 v0.21.0 — 웹 tas#310·안드로이드 #28 도 머지) — 지시자 2026-10-24: 세 플랫폼 일관성, 밝은/어두운 두 벌을 **시스템 테마 따라**(웹·안드로이드도 뒤에 넣는다).
    새 공용 `Core/UI/Theme.swift`(시안 승인): 글자색 textPrimary/Secondary/Tertiary(웹 --black·--dark-gray·--dark-gray2) · 선 · 의미 색(성공·경고·안내·주의·파랑·위험 채움·네이버·신규)
    · 글자 단계 tasTitle 18 / tasLarge 16 / tasBody 14 / tasMedium 13 / tasSmall 12 / tasXSmall 11(웹 px = pt, Dynamic Type 따라 커짐 — 시스템 글꼴엔 relativeTo 가 없어 `.custom`)
    · tintText/tintFill(사장님이 고른 색을 어두운 화면에서 밝혀 읽히게). 앱 전체 `.secondary`·`.subheadline`·`.red` 등 → 공용 이름(약 220곳), 루트 기본 글자 14.
    상태 배지 7개에 어두운 색 — 글자 7:1 이상·배지 바탕이 카드와 구분(시험으로 고정). 서비스 칩·신규 배지도 어두운 화면 대응.
    배지 모양은 이미 웹과 같았다(담당자·메모 = 색 채움 + 흰 글자 알약, 상태 = 둥근 4) — 바꾸지 않음.
    확인: 유닛 229건(어두운 배지 대비 1 추가 — 처음 값 예약 6.9·완료 6.5 를 시험이 잡아 고침) · 시뮬레이터 밝은/어두운 예약 상세·월 달력, 큰 글자(XXL)에서 커짐.
-   남음: 웹 어두운 모드(prefers-color-scheme) · 안드로이드 어두운 모드(isSystemInDarkTheme) — 같은 값으로. (TestFlight #101 0.21.0 업로드 완료)
+   ✅ 웹 어두운 모드(tas#310 v0.66.0) · 안드로이드 어두운 모드(#28 → #29 묶음) 모두 머지 — 같은 값. (TestFlight #101 0.21.0 업로드 완료)
 11. ✅ **화면 배치·링크를 웹 그대로** (`claude/web-layout` PR #54 v0.22.0 · `claude/revenue-web` PR #55 v0.23.0 머지, TestFlight #104) — 지시자 2026-10-24: "웹 쓰다가 iOS 테스트하니까 링크 안 걸린 거랑 화면이 한 눈에
    다 안 보이는 게 너무 불편" → "UI iOS에서 어긋나는 거 아니면 웹으로 맞춰줘". 4·5단계가 내용·순서만 맞추고 iOS 목록 골격(큰 칸·넓은 여백)을 남긴 게 원인.
    iOS 고유로 남기는 것: 탭바 · 쓸어서 뒤로/닫기 · 시트 · 기본 날짜/시간 선택기·스위치 · 44pt · Dynamic Type(큰 글자에선 줄바꿈) · VoiceOver.
@@ -297,7 +297,7 @@
 
 ---
 
-## 🟡 PR 대기 — 방문 간격 라벨 주석을 웹에 맞춘다 (`claude/visit-gap-comment`)
+## ✅ 완료 (#36 머지) — 방문 간격 라벨 주석을 웹에 맞춘다 (`claude/visit-gap-comment`)
 
 > 웹 `mjkang0987/tas` v0.64.10(PR #304)이 `formatVisitGap` 28~29일을 `Math.max(floor(days/30), 1)`로 고쳐
 > "0달전"이 사라졌다. 앱은 원래 최소 1달이라 동작은 같고, "웹과 다르다"는 주석만 낡았다.
@@ -309,7 +309,7 @@
 - 웹 `--blue-color`·`--warning-color` 대비 수정은 iOS 가 그 토큰을 안 써서(시스템 색) 해당 없음.
 
 ---
-## 🟡 PR 대기 — 공지 '노출' 체크 하나로 (`claude/notice-single-visible`)
+## ✅ 완료 (#34 머지) — 공지 '노출' 체크 하나로 (`claude/notice-single-visible`)
 
 > 웹 같은 작업: `mjkang0987/tas` PR #272 (release/2026-10-batch 묶음). 웹이 '공개'·'상단 고정' 두 체크를
 > **'노출' 하나(= `visible`, 최대 3개)**로 합쳤다. 앱도 같은 규칙으로 맞춘다.
@@ -836,7 +836,8 @@
   실패 시 크게 죽는 것. **"YAML에 X가 있는가" 단언이 하나 더 늘어나는 순간** 그때 하는 게 신호다.
 - ⬜ 푸시 알림(없음) — APNs 키·등록·백엔드 발송(로그인 기반)
 - ⬜ 로그인 후 다기기 동기화/충돌 처리(웹 `conflict-resolution` 미반영)
-- ⬜ **시술 문자열을 쓰는 기존 계산 2곳 정리**(시술 배지 이식 중 발견, 이번 범위 밖이라 보류) —
+- ✅ **시술 문자열을 쓰는 기존 계산 2곳 정리** (`claude/catalog-legacy-alias`, v0.29.1 — 2026-10-27) — 옛 이름도 현재 서비스로 찾는 `ServiceColor.buildCatalogMap`(웹 이식)을
+  예약 폼·서비스 변경 반영·가격 대체·매출 가격 맵에 씀. 두 번째(조합 문자열 원문 조회)는 그 전에 `RevenueStats.price`(parseServiceString 합산)로 이미 고쳐져 있었다. 원래 기록 —
   둘 다 이식 전부터 있던 버그고, 이제 `ServiceColor`에 도구가 생겨 고치기 쉬워졌다.
   - `ReservationCreateView.catalogMap`에 레거시 별칭이 없다(웹 `buildCatalogMap`은 넣는다).
     옛 이름으로 저장된 예약을 편집하면 소요시간·가격이 0으로 잡힌다.
@@ -848,7 +849,7 @@
   색상값 중복의 절반은 해소됐다: `Core/UI/Badges.swift`의 하드코딩은 `BadgeTone`(웹
   `RESERVATION_STATUS_BADGE_STYLES` 이식)으로 모았다. 남은 건
   `Calendar/BookingRequestsView.swift`의 `BookingRequestKindBadge`로, `A88417`·`6526D9`·`EA4335`를
-  아직 자체 switch로 갖고 있다 — `BadgeTone`을 쓰게 바꾸면 된다.
+  자체 switch로 갖고 있었다 → #64(v0.28.1, 지금 `NotificationCenterView.swift`)에서 `BadgeTone` 글자색으로 바꿈.
   덧붙여 `BookingRequestKindBadge`는 이제 `Core/UI/ServiceChip.swift`의 `ServiceChip`과 **구조가 같다**
   (Text → caption2 semibold → 캡슐 틴트 배경 → 틴트 글자). 상수만 다르다(8/3·0.12 vs 7/3·0.094).
   같이 묶으면 CLAUDE.md의 "공통 영역 컴포넌트화"를 만족하지만, 지금 묶으면 요청함 화면의 픽셀이
