@@ -62,6 +62,10 @@ struct ReservationCreateView: View {
     /// 세우고, 신규 고객 id도 시트 생성 시점의 nextCustomerId 고정값이라 재시도해도 upsert된다.
     @State private var isSaving = false
     @State private var showConflictConfirm = false
+    /// 예약 변경 확인(웹 confirming/pastConfirm) — 바뀌는 칸 목록, 비면 저장할 게 없다.
+    @State private var editChanges: [ReservationDiff.Item] = []
+    @State private var editIsPast = false
+    @State private var showEditConfirm = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case name, tel, price, memo }
@@ -131,6 +135,15 @@ struct ReservationCreateView: View {
                 Button("그래도 저장", role: .destructive) { Task { await save() } }
             } message: {
                 Text("선택한 \(labels.assignee)에게 시간이 겹치는 예약이 \(currentConflicts.count)건 있습니다. 그래도 저장하시겠어요?")
+            }
+            .alert("변경 확인", isPresented: $showEditConfirm) {
+                Button("취소", role: .cancel) {}
+                // 겹침은 이 확인에 함께 적는다 — 알림 창을 둘 이어 띄우면 두 번째가 안 뜰 때가 있다.
+                Button(currentConflicts.isEmpty ? "변경" : "그래도 변경", role: currentConflicts.isEmpty ? nil : .destructive) {
+                    Task { await save() }
+                }
+            } message: {
+                Text(editConfirmMessage)
             }
         }
     }
@@ -503,7 +516,7 @@ struct ReservationCreateView: View {
         assigneeId = assignees.first?.id ?? 0
     }
 
-    /// 편집 모드: 기존 예약 값으로 폼을 채운다. 종료·가격은 수동으로 취급해 자동 재계산이 덮지 않게 한다.
+    /// 편집 모드: 기존 예약 값으로 폼을 채운다. 종료(와 따로 넣은 가격)는 수동으로 취급해 자동 재계산이 덮지 않게 한다.
     private func prefill(from r: Reservation, cal: Calendar) {
         customerId = r.customerId
         if let c = customers.first(where: { $0.id == r.customerId }) {
@@ -521,7 +534,8 @@ struct ReservationCreateView: View {
         startTime = parseTime(r.startTime, on: date, cal: cal) ?? date
         isEndManual = true
         setEndTime(parseTime(r.endTime, on: date, cal: cal) ?? startTime)
-        if let p = r.price { price = p; isPriceManual = true }
+        // 서비스 합계와 같은 가격은 서비스를 바꾸면 따라가게 둔다(웹은 늘 따라간다) — 따로 넣은 가격만 지킨다(ServiceRename 과 같은 판정).
+        if let p = r.price { setPrice(p); isPriceManual = p != totalPrice }
         memo = r.memo ?? ""
         channel = r.channel ?? .phone
         assigneeId = r.assigneeId ?? (assignees.first?.id ?? 0)
@@ -573,14 +587,58 @@ struct ReservationCreateView: View {
         return nil
     }
 
-    /// 저장 시도 — 유효성 통과 후, 담당자 겹침이 있으면 확인 알럿을, 없으면 바로 저장.
+    /// 저장 시도 — 유효성 통과 후, 변경이면 바뀌는 칸을 확인받고(웹 handleConfirmRequest),
+    /// 새 예약은 담당자 겹침이 있으면 확인 알럿을, 없으면 바로 저장.
     private func attemptSave() {
         if let err = validate() { errorMessage = err; return }
-        if currentConflicts.isEmpty {
+        if let editing {
+            editChanges = editDiff(from: editing)
+            // 바뀐 게 없으면 웹처럼 저장 없이 닫는다
+            guard !editChanges.isEmpty else { dismiss(); return }
+            editIsPast = ReservationDiff.isPast(date: KST.dayKey.string(from: date), startTime: timeString(startTime), now: Date())
+            showEditConfirm = true
+        } else if currentConflicts.isEmpty {
             Task { await save() }
         } else {
             showConflictConfirm = true
         }
+    }
+
+    /// 폼 값과 원래 예약의 차이(웹 getChangedFields). 가격 없던 예약은 불러올 때 서비스 합계로 채워져 온다.
+    /// 고객은 앱만 바꿀 수 있어(웹 수정 폼엔 없다) 맨 앞에 따로 넣는다 — 빠지면 고객만 바꾼 저장이 '변경 없음'으로 닫힌다.
+    private func editDiff(from r: Reservation) -> [ReservationDiff.Item] {
+        let name: (Int?) -> String = { id in assignees.first { $0.id == id }?.name ?? "미지정" }
+        var out = ReservationDiff.fields(before: r, after: applyForm(to: r, customerId: r.customerId), labels: labels, assigneeName: name)
+        if customerId != r.customerId {
+            let old = customers.first { $0.id == r.customerId }?.name ?? "고객 #\(r.customerId)"
+            out.insert(ReservationDiff.Item(label: "고객명", before: old, after: customerName.trimmingCharacters(in: .whitespaces)), at: 0)
+        }
+        return out
+    }
+
+    /// 편집: 기존 값 복사 후 폼이 다루는 필드만 덮어써 결제·네이버·상태 등은 보존.
+    private func applyForm(to r: Reservation, customerId: Int) -> Reservation {
+        var updated = r
+        updated.date = KST.dayKey.string(from: date)
+        updated.startTime = timeString(startTime)
+        updated.endTime = timeString(endTime)
+        updated.service = ServiceColor.joinServiceNames(selectedServices)
+        updated.customerId = customerId
+        updated.assigneeId = assigneeId == 0 ? nil : assigneeId
+        updated.price = price
+        let trimmedMemo = memo.trimmingCharacters(in: .whitespaces)
+        updated.memo = trimmedMemo.isEmpty ? nil : trimmedMemo
+        updated.channel = channel
+        return updated
+    }
+
+    private var editConfirmMessage: String {
+        var lines = [editIsPast ? "현재 시간보다 과거입니다. 변경하시겠습니까?" : "수정하시겠습니까?", ""]
+        lines += editChanges.map { "\($0.label): \($0.before.isEmpty ? "없음" : $0.before) → \($0.after.isEmpty ? "없음" : $0.after)" }
+        if !currentConflicts.isEmpty {
+            lines += ["", "선택한 \(labels.assignee)에게 시간이 겹치는 예약이 \(currentConflicts.count)건 있습니다."]
+        }
+        return lines.joined(separator: "\n")
     }
 
     private func save() async {
@@ -606,18 +664,7 @@ struct ReservationCreateView: View {
             let trimmedMemo = memo.trimmingCharacters(in: .whitespaces)
             let resolvedMemo = trimmedMemo.isEmpty ? nil : trimmedMemo
             if let editing {
-                // 편집: 기존 값 복사 후 폼이 다루는 필드만 덮어써 결제·네이버·상태 등은 보존.
-                var updated = editing
-                updated.date = KST.dayKey.string(from: date)
-                updated.startTime = timeString(startTime)
-                updated.endTime = timeString(endTime)
-                updated.service = ServiceColor.joinServiceNames(selectedServices)
-                updated.customerId = resolvedCustomerId
-                updated.assigneeId = assigneeId == 0 ? nil : assigneeId
-                updated.price = price
-                updated.memo = resolvedMemo
-                updated.channel = channel
-                _ = try await service.updateReservation(prev: editing, updated: updated)
+                _ = try await service.updateReservation(prev: editing, updated: applyForm(to: editing, customerId: resolvedCustomerId))
             } else {
                 var reservation = Reservation(
                     id: nextReservationId,

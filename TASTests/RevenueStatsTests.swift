@@ -256,4 +256,14 @@ final class RevenueStatsTests: XCTestCase {
         let stay = RevenueStats.moveRange(today, today, forward: true, today: today)
         XCTAssertEqual(key(stay.1), "2026-10-23")
     }
+
+    func testResolvedPricesFillOnlyMissingFromCatalog() {
+        let catalog = [ServiceItem(name: "커트", durationMinutes: 30, category: "커트", price: 20000),
+                       ServiceItem(name: "클리닉", durationMinutes: 60, category: "케어", price: 40000)]
+        let rs = [Reservation(id: 1, date: "2026-10-27", startTime: "10:00", endTime: "11:00", service: "커트+클리닉", customerId: 1),
+                  Reservation(id: 2, date: "2026-10-27", startTime: "10:00", endTime: "11:00", service: "커트", customerId: 1, price: 0),
+                  Reservation(id: 3, date: "2026-10-27", startTime: "10:00", endTime: "11:00", service: "없는서비스", customerId: 1)]
+        XCTAssertEqual(RevenueStats.withResolvedPrices(rs, catalog: catalog).map(\.price), [60000, 0, nil],
+                       "없으면 합계 · 0원으로 넣은 건 그대로 · 카탈로그에 없으면 비워 둔다")
+    }
 }

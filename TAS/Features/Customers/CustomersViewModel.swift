@@ -86,9 +86,10 @@ final class CustomersViewModel {
             let (cus, res) = try await (customers, reservations)
             let svc = await services
             let asg = await assignees
+            let all = RevenueStats.withResolvedPrices(res.reservations, catalog: svc?.services ?? [])
 
             var byCustomer: [Int: [Reservation]] = [:]
-            for r in res.reservations { byCustomer[r.customerId, default: []].append(r) }
+            for r in all { byCustomer[r.customerId, default: []].append(r) }
 
             let today = KST.dayKey.string(from: Date())
             let assigneesById = Dictionary(
@@ -99,7 +100,7 @@ final class CustomersViewModel {
                 ServiceColor.buildServiceColorMap(catalog: $0.services, storeMap: $0.categoryBaseColors)
             } ?? [:]
             detailData = DetailData(
-                reservations: res.reservations,
+                reservations: all,
                 customersById: Dictionary(cus.customers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first }),
                 assigneesById: assigneesById,
                 services: svc?.services ?? [],
