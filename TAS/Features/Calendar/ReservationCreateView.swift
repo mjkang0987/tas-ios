@@ -4,7 +4,7 @@ import SwiftUI
 ///
 /// 필드 순서/규칙은 웹과 동일:
 /// 고객(기존 검색 or 신규 이름+연락처) → 서비스(다중선택, 소요시간·가격 자동) →
-/// 담당자 → 날짜 → 시작/종료 시간(종료는 소요시간으로 자동) → 가격(자동, 수정 가능) → 메모.
+/// 담당자 → 날짜 → 시작/종료 시간(종료는 소요시간으로 자동) → 가격(자동, 수정 가능) → 예약경로 → 메모.
 /// 저장 시 신규 고객이면 먼저 upsert 후 예약 생성(게스트=로컬/로그인=API 자동 분기).
 /// 담당자 가용성(중복 예약)은 `ReservationOverlap`로 겹침을 감지해 경고·확인한다.
 /// 신규 예약은 선택적으로 "결제완료로 등록"(단일 결제수단 + 적립률 자동 적립)할 수 있다.
@@ -47,6 +47,8 @@ struct ReservationCreateView: View {
     @State private var price = 0
     @State private var isPriceManual = false
     @State private var memo = ""
+    /// 웹 예약경로 — 기본 전화예약, 경로가 없던 옛 예약도 전화예약으로 본다(웹 reservationDetailUtils 와 같다).
+    @State private var channel: ReservationChannel = .phone
     // 프로그램적 변경이 onChange를 통해 "수동 편집"으로 오인되는 것 방지(값이 실제로 바뀔 때만 억제).
     @State private var suppressPriceChange = false
     @State private var suppressEndChange = false
@@ -98,6 +100,7 @@ struct ReservationCreateView: View {
                     priceSection
                     assigneeSection
                     dateTimeSection
+                    channelSection
                     conflictSection
                     paymentSection
                     memoSection
@@ -408,6 +411,24 @@ struct ReservationCreateView: View {
         }
     }
 
+    // MARK: - 예약경로 (웹: 시간 아래)
+
+    /// 웹 select 는 셋뿐. 온라인 신청으로 들어온 예약을 변경할 때는 그 값도 남겨 보여 준다(안 그러면 '전화예약'처럼 보였다).
+    private var channelOptions: [ReservationChannel] {
+        let base: [ReservationChannel] = [.phone, .walkIn, .naver]
+        return base.contains(channel) ? base : [channel] + base
+    }
+
+    private var channelSection: some View {
+        FormField(label: "예약경로") {
+            SelectMenu(title: "예약경로", value: channel.rawValue) {
+                Picker("예약경로", selection: $channel) {
+                    ForEach(channelOptions, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+            }
+        }
+    }
+
     // MARK: - 가격 (웹: 서비스 바로 아래)
 
     private var priceSection: some View {
@@ -502,6 +523,7 @@ struct ReservationCreateView: View {
         setEndTime(parseTime(r.endTime, on: date, cal: cal) ?? startTime)
         if let p = r.price { price = p; isPriceManual = true }
         memo = r.memo ?? ""
+        channel = r.channel ?? .phone
         assigneeId = r.assigneeId ?? (assignees.first?.id ?? 0)
     }
 
@@ -594,6 +616,7 @@ struct ReservationCreateView: View {
                 updated.assigneeId = assigneeId == 0 ? nil : assigneeId
                 updated.price = price
                 updated.memo = resolvedMemo
+                updated.channel = channel
                 _ = try await service.updateReservation(prev: editing, updated: updated)
             } else {
                 var reservation = Reservation(
@@ -607,7 +630,7 @@ struct ReservationCreateView: View {
                     status: .active,
                     price: price,
                     memo: resolvedMemo,
-                    channel: .phone
+                    channel: channel
                 )
                 // 결제완료로 등록: 단일 결제수단 + 적립률 자동 적립.
                 var earned = 0
