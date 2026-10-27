@@ -457,8 +457,7 @@ final class RevenueViewModel {
 
             let assigneesById = Dictionary(asg.assignees.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             let customersById = Dictionary(cus.customers.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-            var prices: [String: Int] = [:]
-            for item in svc.services { prices[item.name] = item.price }
+            let prices = ServiceColor.buildCatalogMap(svc.services).mapValues(\.price)
             let serviceColorMap = ServiceColor.buildServiceColorMap(catalog: svc.services, storeMap: svc.categoryBaseColors)
 
             state = .loaded(Data(

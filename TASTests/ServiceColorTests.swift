@@ -119,4 +119,13 @@ final class ServiceColorTests: XCTestCase {
         XCTAssertNil(Color(hex: "#ab"))
         XCTAssertNil(Color(hex: "not-a-color"))
     }
+
+    func testCatalogMapFindsLegacyNames() {
+        let catalog = [ServiceItem(name: "일반펌", durationMinutes: 120, category: "펌", price: 80000)]
+        let map = ServiceColor.buildCatalogMap(catalog)
+        XCTAssertEqual(map["남자 일반펌"]?.price, 80000, "옛 이름도 현재 서비스 가격·시간으로 — 웹 buildCatalogMap")
+        XCTAssertNil(map["매직"])
+        let r = Reservation(id: 1, date: "2026-10-27", startTime: "10:00", endTime: "12:00", service: "남자 일반펌", customerId: 1)
+        XCTAssertEqual(RevenueStats.withResolvedPrices([r], catalog: catalog).first?.price, 80000)
+    }
 }

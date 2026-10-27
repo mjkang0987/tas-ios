@@ -77,9 +77,7 @@ struct ReservationCreateView: View {
     ]
 
     private static let seoul = TimeZone(identifier: "Asia/Seoul")!
-    private var catalogMap: [String: ServiceItem] {
-        Dictionary(catalog.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
-    }
+    private var catalogMap: [String: ServiceItem] { ServiceColor.buildCatalogMap(catalog) }
     private var totalDuration: Int { selectedServices.compactMap { catalogMap[$0]?.durationMinutes }.reduce(0, +) }
     private var totalPrice: Int { selectedServices.compactMap { catalogMap[$0]?.price }.reduce(0, +) }
 
