@@ -296,10 +296,10 @@ private struct BookingRequestKindBadge: View {
 
     private var tint: Color {
         switch kind {
-        // 연한 같은 색 바탕 위 글자 — 상태 배지와 같은 진한 값(대비 4.5 이상)
-        case .new: return Color(hex: "806600") ?? .orange
-        case .change: return Color(hex: "6526D9") ?? .purple
-        case .cancel: return Color(hex: "C5221F") ?? .red
+        // 상태 배지와 같은 톤 글자색 — 밝은 화면 진한 값(대비 4.5 이상), 어두운 화면은 밝힌 값(고정 hex 면 어두운 바탕에 묻혔다)
+        case .new: return BadgeTone.requested.foreground
+        case .change: return BadgeTone.paid.foreground
+        case .cancel: return BadgeTone.noshow.foreground
         }
     }
 }
