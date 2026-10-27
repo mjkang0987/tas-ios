@@ -133,7 +133,8 @@ struct DetailSheet: View {
                     pointSettings: store?.pointSettings,
                     service: TASService(),
                     onChanged: reload,
-                    mergeCandidates: data.customersById.values.filter { $0.id != id },
+                    // 게스트는 합치기 없음 — 웹 게스트와 같다(웹 병합은 서버 API 라 로컬에선 숨김, 지시자 2026-10-21·10-27)
+                    mergeCandidates: session.isGuest ? [] : data.customersById.values.filter { $0.id != id },
                     reservationCounts: Dictionary(grouping: data.reservations, by: \.customerId).mapValues(\.count),
                     assigneesById: data.assigneesById,
                     onReservationTap: { open(.reservation($0.id)) }

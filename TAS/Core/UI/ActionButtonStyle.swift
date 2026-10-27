@@ -55,3 +55,13 @@ extension View {
         buttonStyle(.borderedProminent).tint(.brandFill).environment(\.colorScheme, .light)
     }
 }
+
+extension View {
+    /// 글자 링크(고객명·연락처)처럼 작은 누르는 자리를 넓힌다 — 보이는 크기·배치는 그대로, 위아래로 손가락 크기(44pt 안팎)만큼.
+    /// Button·Link 의 label 안쪽에 붙인다(바깥에 붙이면 버튼이 넓어진 자리를 받지 않는다).
+    func expandedTapArea(vertical: CGFloat = 14, horizontal: CGFloat = 4) -> some View {
+        padding(.vertical, vertical).padding(.horizontal, horizontal)
+            .contentShape(Rectangle())
+            .padding(.vertical, -vertical).padding(.horizontal, -horizontal)
+    }
+}
