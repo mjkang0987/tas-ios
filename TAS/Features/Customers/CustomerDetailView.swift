@@ -134,33 +134,24 @@ struct CustomerDetailView: View {
             .frame(maxWidth: .infinity).padding(.vertical, 6)
     }
 
-    /// 연락처·적립금·노쇼(웹 `StyledInfoList`) + 방문 통계·첫 방문(웹엔 없는 iOS 정보 — 작게 유지, 지시자 2026-10-23).
+    /// 연락처·적립금·노쇼(웹 `StyledInfoList`). 방문 통계·첫 방문 줄은 웹에 없어 뺐다(지시자 2026-10-27).
     private var infoRows: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // 웹 StyledInfoList — 13 글자, 줄 간격 4, 이름 칸 고정 폭
-            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 4) {
-                GridRow {
-                    label("연락처")
-                    if customer.formattedTel.isEmpty { Text("-") } else { TelLink(customer: customer) }
-                }
-                GridRow { label("적립금"); Text(formatWon(customer.points ?? 0)) }
-                GridRow {
-                    label("노쇼")
-                    // 웹 StyledNoshowCount — 있으면 노쇼 색 굵게
-                    Text("\(stats.noshow)회")
-                        .fontWeight(stats.noshow > 0 ? .bold : .regular)
-                        .foregroundStyle(stats.noshow > 0 ? CustomerStats.EffectiveStatus.noshow.tone.foreground : .primary)
-                }
+        // 웹 StyledInfoList — 13 글자, 줄 간격 4, 이름 칸 고정 폭
+        Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 4) {
+            GridRow {
+                label("연락처")
+                if customer.formattedTel.isEmpty { Text("-") } else { TelLink(customer: customer) }
             }
-            .font(.tasMedium)
-
-            // 웹과 같은 4버킷 — 상태 없는 지난 예약은 '완료'로 친다.
-            let counts = stats.total > 0 ? CustomerStats.EffectiveStatus.allCases.map { "\($0.label) \(stats.count($0))" } : []
-            let first = customer.firstVisitDate.flatMap { $0.isEmpty ? nil : ["첫 방문 \($0)"] } ?? []
-            if !(counts + first).isEmpty {
-                Text((counts + first).joined(separator: " · ")).font(.tasSmall).foregroundStyle(Color.textSecondary)
+            GridRow { label("적립금"); Text(formatWon(customer.points ?? 0)) }
+            GridRow {
+                label("노쇼")
+                // 웹 StyledNoshowCount — 있으면 노쇼 색 굵게
+                Text("\(stats.noshow)회")
+                    .fontWeight(stats.noshow > 0 ? .bold : .regular)
+                    .foregroundStyle(stats.noshow > 0 ? CustomerStats.EffectiveStatus.noshow.tone.foreground : .primary)
             }
         }
+        .font(.tasMedium)
     }
 
     private func label(_ text: String) -> some View {
