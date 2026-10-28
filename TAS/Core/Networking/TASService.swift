@@ -140,6 +140,13 @@ struct TASService {
         let _: OkResponse = try await client.delete("api/assignees", body: Body(id: id))
     }
 
+    /// 담당자 병합 — POST /api/assignees/merge (body=`{sourceId, targetId}`, owner). 예약은 target 으로 옮기고 source 삭제.
+    /// 게스트 이관 뒤 같은 이름 쌍에만 쓴다(웹 `GuestMigrationLayer`) — 로그인 전용.
+    func mergeAssignees(sourceId: Int, targetId: Int) async throws {
+        struct Body: Encodable { let sourceId: Int; let targetId: Int }
+        let _: OkResponse = try await client.post("api/assignees/merge", body: Body(sourceId: sourceId, targetId: targetId))
+    }
+
     /// 서비스 카탈로그 + 카테고리 색 저장 — PUT /api/services (body=`{services, categoryBaseColors}`).
     @discardableResult
     func saveServices(_ services: [ServiceItem], categoryBaseColors: [String: String]) async throws -> ServicesResponse {
@@ -490,9 +497,9 @@ struct TASService {
     /// 반환하며, `confirm: true`로 재요청하면 진행한다. owner가 아니면 403.
     func migrateLocal(_ snapshot: GuestSnapshot, confirm: Bool) async throws -> MigrateOutcome {
         do {
-            let _: EmptyResponse = try await client.post(
+            let resp: MigrateLocalResponse = try await client.post(
                 "api/migrate-local", body: MigrateLocalBody(snapshot: snapshot, confirm: confirm))
-            return .migrated
+            return .migrated(newAssigneeIds: resp.newAssigneeLegacyIds ?? [])
         } catch APIError.server(let status, let message) where status == 409 || message == "ALREADY_SETUP" {
             return .alreadySetup
         }
@@ -501,8 +508,13 @@ struct TASService {
 
 /// `/api/migrate-local` 결과.
 enum MigrateOutcome: Equatable {
-    case migrated
+    case migrated(newAssigneeIds: [Int])   // 이관으로 새로 생긴 담당자 id — 같은 이름 병합 확인용
     case alreadySetup   // 409 ALREADY_SETUP — 사용자 확인(confirm) 필요
+}
+
+/// migrate-local 응답 `{ok, status, newAssigneeLegacyIds}`.
+struct MigrateLocalResponse: Decodable {
+    var newAssigneeLegacyIds: [Int]?
 }
 
 /// migrate-local 요청 body — 스냅샷 필드를 최상위로 평탄화하고 `confirm` 플래그를 더한다.

@@ -18,6 +18,15 @@ struct RootView: View {
             } message: {
                 Text("이미 설정된 매장이 있습니다. 이 기기의 게스트 데이터를 계정으로 이관할까요?")
             }
+            // 이관 뒤 기존 담당자와 이름이 같은 새 담당자 — 쌍마다 하나씩(웹 GuestMigrationLayer '담당자 병합').
+            .alert("\(session.labels.assignee) 병합", isPresented: assigneeMergeBinding, presenting: session.assigneeMergePairs.first) { _ in
+                Button("따로 유지") { Task { await session.resolveAssigneeMerge(merge: false) } }
+                // 웹처럼 병합이 기본
+                Button("병합") { Task { await session.resolveAssigneeMerge(merge: true) } }.keyboardShortcut(.defaultAction)
+            } message: { pair in
+                // 업종 용어(선생님·룸 등)에 와/과·라면/이라면이 갈리지 않게 문구를 짰다
+                Text("게스트 데이터에 기존과 이름이 같은 \(session.labels.assignee.josa(.iGa)) 있습니다. 둘이 같다면 병합을 선택해 예약을 합쳐주세요.\n\n\(pair.existingAssignee.name) + \(pair.newAssignee.name) (게스트)")
+            }
             .alert("알림", isPresented: migrationMessageBinding) {
                 Button("확인", role: .cancel) { session.migrationMessage = nil }
             } message: {
@@ -41,12 +50,18 @@ struct RootView: View {
                 GuestOnboardingView()
             }
         case .signedIn:
-            MainTabView()
+            // 이관·병합이 끝나면 새로 만들어 서버 데이터를 다시 받는다(웹 clearLocalAndReload)
+            MainTabView().id(session.dataEpoch)
         }
     }
 
     private var migrationConfirmBinding: Binding<Bool> {
         Binding(get: { session.pendingMigration }, set: { if !$0 { session.pendingMigration = false } })
+    }
+
+    /// 병합 요청 중엔 내려 두고, 끝나면 다음 쌍을 띄운다. 닫기는 버튼 동작(resolveAssigneeMerge)이 맡는다.
+    private var assigneeMergeBinding: Binding<Bool> {
+        Binding(get: { !session.assigneeMergePairs.isEmpty && !session.isMergingAssignee }, set: { _ in })
     }
 
     private var migrationMessageBinding: Binding<Bool> {
